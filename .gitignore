@@ -30,3 +30,8 @@
 *.exe
 *.out
 *.app
+/.vs/AutomataSimulator
+/Automata.6ddc565c/x64/Debug
+/packages/Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7
+/Tests/x64/Debug
+/x64/Debug
