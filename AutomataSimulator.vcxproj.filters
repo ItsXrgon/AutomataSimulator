@@ -21,6 +21,15 @@
     <ClInclude Include="AutomataSimulator\src\FiniteAutomata\Transition\Transition.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="AutomataSimulator\src\FiniteAutomata\DeterministicFiniteAutomaton\DeterministicFiniteAutomaton.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AutomataSimulator\src\FiniteAutomata\NonDeterministicFiniteAutomaton\NonDeterministicFiniteAutomaton.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AutomataSimulator\src\FiniteAutomata\FiniteAutomaton.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AutomataSimulator\src\FiniteAutomata\State\State.cpp">
@@ -29,5 +38,29 @@
     <ClCompile Include="AutomataSimulator\src\FiniteAutomata\Transition\Transition.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="AutomataSimulator\src\FiniteAutomata\DeterministicFiniteAutomaton\DeterministicFiniteAutomaton.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AutomataSimulator\src\FiniteAutomata\NonDeterministicFiniteAutomaton\NonDeterministicFiniteAutomaton.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AutomataSimulator\src\FiniteAutomata\FiniteAutomatonException.h">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AutomataSimulator\src\FiniteAutomata\FiniteAutomaton.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include=".git\hooks\pre-commit.sh">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".gitattributes" />
+    <None Include=".gitignore" />
+    <None Include="README.md" />
+    <None Include=".clang-format" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="LICENSE.txt" />
   </ItemGroup>
 </Project>

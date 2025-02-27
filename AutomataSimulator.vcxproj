@@ -21,10 +21,27 @@
   <ItemGroup>
     <ClInclude Include="AutomataSimulator\src\FiniteAutomata\State\State.h" />
     <ClInclude Include="AutomataSimulator\src\FiniteAutomata\Transition\Transition.h" />
+    <ClInclude Include="AutomataSimulator\src\FiniteAutomata\DeterministicFiniteAutomaton\DeterministicFiniteAutomaton.h" />
+    <ClInclude Include="AutomataSimulator\src\FiniteAutomata\NonDeterministicFiniteAutomaton\NonDeterministicFiniteAutomaton.h" />
+    <ClInclude Include="AutomataSimulator\src\FiniteAutomata\FiniteAutomaton.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include=".git\hooks\pre-commit.sh" />
+    <ClCompile Include="AutomataSimulator\src\FiniteAutomata\FiniteAutomatonException.h" />
     <ClCompile Include="AutomataSimulator\src\FiniteAutomata\State\State.cpp" />
     <ClCompile Include="AutomataSimulator\src\FiniteAutomata\Transition\Transition.cpp" />
+    <ClCompile Include="AutomataSimulator\src\FiniteAutomata\DeterministicFiniteAutomaton\DeterministicFiniteAutomaton.cpp" />
+    <ClCompile Include="AutomataSimulator\src\FiniteAutomata\NonDeterministicFiniteAutomaton\NonDeterministicFiniteAutomaton.cpp" />
+    <ClCompile Include="AutomataSimulator\src\FiniteAutomata\FiniteAutomaton.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".clang-format" />
+    <None Include=".gitattributes" />
+    <None Include=".gitignore" />
+    <None Include="README.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="LICENSE.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -35,7 +52,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
@@ -82,7 +99,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;AUTOMATASIMULATOR_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
