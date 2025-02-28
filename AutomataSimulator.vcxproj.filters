@@ -50,7 +50,7 @@
     <ClCompile Include="AutomataSimulator\src\FiniteAutomata\FiniteAutomaton.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include=".git\hooks\pre-commit.sh">
+    <ClCompile Include=".git\hooks\pre-commit">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
