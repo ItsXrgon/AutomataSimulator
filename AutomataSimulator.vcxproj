@@ -26,7 +26,6 @@
     <ClInclude Include="AutomataSimulator\src\FiniteAutomata\FiniteAutomaton.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include=".git\hooks\pre-commit" />
     <ClCompile Include="AutomataSimulator\src\FiniteAutomata\FiniteAutomatonException.h" />
     <ClCompile Include="AutomataSimulator\src\FiniteAutomata\State\State.cpp" />
     <ClCompile Include="AutomataSimulator\src\FiniteAutomata\Transition\Transition.cpp" />
