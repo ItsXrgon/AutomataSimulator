@@ -1,5 +1,6 @@
+#define AUTOMATASIMULATOR_EXPORTS
 #include "State.h"
-#include <iostream>
+#include "../FiniteAutomatonException.h"
 
 State::State(const std::string &label, const bool &isAccept) {
 	this->label = label;
@@ -75,6 +76,7 @@ void State::removeTransitionTo(const std::string &input, const std::string &toSt
 			return;
 		}
 	}
+	throw TransitionNotFoundException("Transition not found: " + key + " -> " + input + " -> " + toStateKey);
 }
 
 void State::clearTransitionsTo(const std::string &toStateKey) {

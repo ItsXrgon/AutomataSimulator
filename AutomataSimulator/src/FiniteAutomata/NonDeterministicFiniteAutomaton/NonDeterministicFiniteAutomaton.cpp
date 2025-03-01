@@ -1,3 +1,4 @@
+#define AUTOMATASIMULATOR_EXPORTS
 #include "NonDeterministicFiniteAutomaton.h"
 #include "../FiniteAutomatonException.h"
 
@@ -43,7 +44,7 @@ void NonDeterministicFiniteAutomaton::addAlphabet(const std::set<std::string> &a
 void NonDeterministicFiniteAutomaton::addTransitionBetween(const std::string &fromStateKey, const std::string &input,
                                                            const std::string &toStateKey) {
 	// Check if the input is in the alphabet
-	if (alphabet.find(input) == alphabet.end()) {
+	if (input != "" && alphabet.find(input) == alphabet.end()) {
 		throw InvalidTransitionException("Input not in alphabet: " + input);
 	}
 
@@ -56,7 +57,7 @@ void NonDeterministicFiniteAutomaton::addTransitionBetween(const std::string &fr
 		}
 	}
 	if (!toStateExists) {
-		throw InvalidTransitionException("To state does not exist: " + toStateKey);
+		throw StateNotFoundException(toStateKey);
 	}
 
 	// Check if the "from" state exists
@@ -68,23 +69,15 @@ void NonDeterministicFiniteAutomaton::addTransitionBetween(const std::string &fr
 		}
 	}
 	if (!fromStateExists) {
-		throw InvalidTransitionException("From state does not exist: " + fromStateKey);
+		throw StateNotFoundException(fromStateKey);
 	}
 
 	State *fromState = getState(fromStateKey);
 	// Check if the transition already exists
 	for (auto &transition : fromState->getTransitions()) {
-		if (transition.getInput() == input) {
+		if (transition.getInput() == input && transition.getToStateKey() == toStateKey) {
 			throw InvalidTransitionException("Transition already exists: " + fromStateKey + " -> " + input + " -> " +
 			                                 toStateKey);
-		}
-	}
-
-	// Check if the transition is deterministic
-	for (auto &transition : fromState->getTransitions()) {
-		if (transition.getInput() == input) {
-			throw InvalidTransitionException("Transition is not deterministic: " + fromStateKey + " -> " + input +
-			                                 " -> " + toStateKey);
 		}
 	}
 
@@ -97,12 +90,15 @@ void NonDeterministicFiniteAutomaton::reset() {
 }
 
 bool NonDeterministicFiniteAutomaton::processInput(const std::string &input) {
+	// Check if the start state is set
 	if (startState.empty()) {
 		throw InvalidStartStateException("Start state is not set");
 	}
+	// Check if the alphabet is set
 	if (alphabet.empty()) {
 		throw InvalidAlphabetException("Alphabet is not set");
 	}
+
 	if (currentStates.empty()) {
 		currentStates.insert(startState);
 	}

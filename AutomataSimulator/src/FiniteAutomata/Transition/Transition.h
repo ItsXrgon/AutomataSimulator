@@ -7,9 +7,6 @@
 #define AUTOMATASIMULATOR_API __declspec(dllimport)
 #endif
 
-// Forward declaration of State for circular dependency.
-class State;
-
 /**
  * @brief Represents a transition between two states in an automaton.
  * A transition is defined by a "from" state, a "to" state, and an input value.

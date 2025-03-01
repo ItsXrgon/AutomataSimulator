@@ -1,5 +1,5 @@
+#define AUTOMATASIMULATOR_EXPORTS 
 #include "Transition.h"
-#include "../State/State.h"
 
 Transition::Transition(const std::string &fromStateKey, const std::string &toStateKey, const std::string &input)
     : fromStateKey(fromStateKey), toStateKey(toStateKey), input(input) {

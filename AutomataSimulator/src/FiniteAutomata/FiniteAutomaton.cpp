@@ -1,3 +1,4 @@
+#define AUTOMATASIMULATOR_EXPORTS
 #include "FiniteAutomaton.h"
 #include "FiniteAutomatonException.h"
 
@@ -12,11 +13,6 @@ void FiniteAutomaton::addState(const std::string &label) {
 		if (existingState.getKey() == state.getKey()) {
 			throw InvalidAutomatonDefinitionException("State with label " + state.getLabel() + " already exists");
 		}
-	}
-
-	// Check if the state is the first state
-	if (states.empty()) {
-		setStartState(state.getKey());
 	}
 
 	states.push_back(state);
@@ -55,9 +51,6 @@ void FiniteAutomaton::removeState(const std::string &key) {
 }
 
 void FiniteAutomaton::setAlphabet(const std::set<std::string> &alphabet) {
-	if (alphabet.empty()) {
-		throw InvalidAlphabetException("Alphabet cannot be empty");
-	}
 	this->alphabet = alphabet;
 }
 
@@ -66,27 +59,19 @@ std::set<std::string> FiniteAutomaton::getAlphabet() const {
 }
 
 void FiniteAutomaton::addAlphabet(const std::set<std::string> &alphabet) {
-	if (alphabet.empty()) {
-		throw InvalidAlphabetException("Alphabet to add cannot be empty");
-	}
 	for (const auto &symbol : alphabet) {
 		this->alphabet.insert(symbol);
 	}
 }
 
 void FiniteAutomaton::setStartState(const std::string &key) {
-	bool stateExists = false;
 	for (const auto &state : states) {
 		if (state.getKey() == key) {
-			stateExists = true;
-			break;
+			startState = key;
+			return;
 		}
 	}
-	if (!stateExists) {
-		throw StateNotFoundException(key);
-	}
-
-	startState = key;
+	throw StateNotFoundException(key);
 }
 
 void FiniteAutomaton::addTransitionBetween(const std::string &fromStateKey, const std::string &input,
@@ -128,18 +113,20 @@ void FiniteAutomaton::addAcceptState(const std::string &key) {
 	for (auto &state : states) {
 		if (state.getKey() == key) {
 			state.setIsAccept(true);
-			break;
+			return;
 		}
 	}
+	throw StateNotFoundException(key);
 }
 
 void FiniteAutomaton::removeAcceptState(const std::string &key) {
 	for (auto &state : states) {
 		if (state.getKey() == key) {
 			state.setIsAccept(false);
-			break;
+			return;
 		}
 	}
+	throw StateNotFoundException(key);
 }
 
 void FiniteAutomaton::clearAcceptStates() {

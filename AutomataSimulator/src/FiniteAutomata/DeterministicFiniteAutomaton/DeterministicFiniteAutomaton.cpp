@@ -1,3 +1,4 @@
+#define AUTOMATASIMULATOR_EXPORTS 
 #include "DeterministicFiniteAutomaton.h"
 #include "../FiniteAutomatonException.h"
 
@@ -50,7 +51,7 @@ void DeterministicFiniteAutomaton::addTransitionBetween(const std::string &fromS
 		}
 	}
 	if (!toStateExists) {
-		throw InvalidTransitionException("To state does not exist: " + toStateKey);
+		throw StateNotFoundException(toStateKey);
 	}
 
 	// Check if the "from" state exists
@@ -62,13 +63,13 @@ void DeterministicFiniteAutomaton::addTransitionBetween(const std::string &fromS
 		}
 	}
 	if (!fromStateExists) {
-		throw InvalidTransitionException("From state does not exist: " + fromStateKey);
+		throw StateNotFoundException(fromStateKey);
 	}
 
 	State *fromState = getState(fromStateKey);
 	// Check if the transition already exists
 	for (auto &transition : fromState->getTransitions()) {
-		if (transition.getInput() == input) {
+		if (transition.getInput() == input && transition.getToStateKey() == toStateKey) {
 			throw InvalidTransitionException("Transition already exists: " + fromStateKey + " -> " + input + " -> " +
 			                                 toStateKey);
 		}
@@ -77,7 +78,7 @@ void DeterministicFiniteAutomaton::addTransitionBetween(const std::string &fromS
 	// Check if the transition is deterministic
 	for (auto &transition : fromState->getTransitions()) {
 		if (transition.getInput() == input) {
-			throw InvalidTransitionException("Transition is not deterministic: " + fromStateKey + " -> " + input +
+			throw InvalidAutomatonDefinitionException("Transition is not deterministic: " + fromStateKey + " -> " + input +
 			                                 " -> " + toStateKey);
 		}
 	}
@@ -100,6 +101,7 @@ bool DeterministicFiniteAutomaton::processInput(const std::string &input) {
 	for (const auto &transition : state->getTransitions()) {
 		if (transition.getInput() == input) {
 			state = getState(transition.getToStateKey());
+			currentState = state->getKey();
 			return state->getIsAccept();
 		}
 	}
@@ -107,6 +109,12 @@ bool DeterministicFiniteAutomaton::processInput(const std::string &input) {
 }
 
 bool DeterministicFiniteAutomaton::simulate(const std::vector<std::string> &input) {
+	if (startState.empty()) {
+		throw InvalidStartStateException("Start state is not set");
+	}
+	if (alphabet.empty()) {
+		throw InvalidAlphabetException("Alphabet is not set");
+	}
 	State *currentState = getState(getStartState());
 
 	for (const auto &value : input) {

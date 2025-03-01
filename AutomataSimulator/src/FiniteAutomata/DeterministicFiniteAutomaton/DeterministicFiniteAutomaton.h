@@ -40,18 +40,21 @@ class AUTOMATASIMULATOR_API DeterministicFiniteAutomaton : public FiniteAutomato
 	/**
 	 * @brief Gets the current state of the automaton.
 	 * @return The current state of the automaton or start state if not set.
+	 * @throws StateNotFoundException If the state is not found.
 	 */
 	std::string getCurrentState() const;
 
 	/**
 	 * @brief Sets the alphabet of the DFA automaton.
 	 * @param alphabet The strings to add.
+	 * @throws InvalidAlphabetException If the alphabet contains an epsilon.
 	 */
 	void setAlphabet(const std::set<std::string> &alphabet) override;
 
 	/**
 	 * @brief Adds strings to the alphabet of the DFA automaton.
 	 * @param alphabet The set of strings to add.
+	 * @throws InvalidAlphabetException If the alphabet contains an epsilon.
 	 */
 	void addAlphabet(const std::set<std::string> &alphabet) override;
 
@@ -60,6 +63,8 @@ class AUTOMATASIMULATOR_API DeterministicFiniteAutomaton : public FiniteAutomato
 	 * @param fromKey The key of the state to transition from.
 	 * @param input The input of the transition.
 	 * @param toKey The key of the state to transition to.
+	 * @throws StateNotFoundException If the to or form states are not found.
+	 * @throws InvalidTransitionException If the transition violates DFA constraints.
 	 */
 	void addTransitionBetween(const std::string &fromKey, const std::string &input, const std::string &toKey) override;
 
@@ -81,6 +86,8 @@ class AUTOMATASIMULATOR_API DeterministicFiniteAutomaton : public FiniteAutomato
 	 * @brief Simulates the DFA on a given input string.
 	 * @param input The input string to process.
 	 * @return True if the input is accepted, false otherwise.
+	 * @throws InvalidStartStateException If the start state is not set.
+	 * @throws InvalidAlphabetException If the alphabet is not set.
 	 */
 	bool simulate(const std::vector<std::string> &input) override;
 };
