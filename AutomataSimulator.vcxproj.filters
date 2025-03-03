@@ -30,6 +30,21 @@
     <ClInclude Include="AutomataSimulator\src\FiniteAutomata\FiniteAutomaton.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="AutomataSimulator\src\PushdownAutomata\State\State.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Tests\Transition.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AutomataSimulator\src\PushdownAutomata\PushdownAutomata.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AutomataSimulator\src\PushdownAutomata\PushdownAutomataException.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AutomataSimulator\src\PushdownAutomata\Transition\Transition.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AutomataSimulator\src\FiniteAutomata\State\State.cpp">
@@ -48,6 +63,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="AutomataSimulator\src\FiniteAutomata\FiniteAutomaton.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AutomataSimulator\src\PushdownAutomata\State\State.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AutomataSimulator\src\PushdownAutomata\Transition\Transition.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AutomataSimulator\src\PushdownAutomata\PushdownAutomata.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

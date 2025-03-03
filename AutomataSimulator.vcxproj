@@ -24,6 +24,11 @@
     <ClInclude Include="AutomataSimulator\src\FiniteAutomata\DeterministicFiniteAutomaton\DeterministicFiniteAutomaton.h" />
     <ClInclude Include="AutomataSimulator\src\FiniteAutomata\NonDeterministicFiniteAutomaton\NonDeterministicFiniteAutomaton.h" />
     <ClInclude Include="AutomataSimulator\src\FiniteAutomata\FiniteAutomaton.h" />
+    <ClInclude Include="AutomataSimulator\src\PushdownAutomata\PushdownAutomata.h" />
+    <ClInclude Include="AutomataSimulator\src\PushdownAutomata\PushdownAutomataException.h" />
+    <ClInclude Include="AutomataSimulator\src\PushdownAutomata\State\State.h" />
+    <ClInclude Include="AutomataSimulator\src\PushdownAutomata\Transition\Transition.h" />
+    <ClInclude Include="Tests\Transition.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AutomataSimulator\src\FiniteAutomata\FiniteAutomatonException.h" />
@@ -32,6 +37,9 @@
     <ClCompile Include="AutomataSimulator\src\FiniteAutomata\DeterministicFiniteAutomaton\DeterministicFiniteAutomaton.cpp" />
     <ClCompile Include="AutomataSimulator\src\FiniteAutomata\NonDeterministicFiniteAutomaton\NonDeterministicFiniteAutomaton.cpp" />
     <ClCompile Include="AutomataSimulator\src\FiniteAutomata\FiniteAutomaton.cpp" />
+    <ClCompile Include="AutomataSimulator\src\PushdownAutomata\PushdownAutomata.cpp" />
+    <ClCompile Include="AutomataSimulator\src\PushdownAutomata\State\State.cpp" />
+    <ClCompile Include="AutomataSimulator\src\PushdownAutomata\Transition\Transition.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".clang-format" />

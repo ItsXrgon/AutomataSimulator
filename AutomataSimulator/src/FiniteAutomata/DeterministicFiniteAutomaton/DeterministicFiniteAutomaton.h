@@ -19,7 +19,7 @@
 class AUTOMATASIMULATOR_API DeterministicFiniteAutomaton : public FiniteAutomaton {
   private:
 	/**
-	 * @brief Finite set of states. Formally defined as Q.
+	 * @brief The current state of the automaton.
 	 */
 	std::string currentState;
 

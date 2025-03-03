@@ -2,6 +2,7 @@
 #include "State/State.h"
 #include "Transition/Transition.h"
 #include <set>
+#include <stack>
 #include <vector>
 
 #ifdef AUTOMATASIMULATOR_EXPORTS
@@ -10,13 +11,20 @@
 #define AUTOMATASIMULATOR_API __declspec(dllimport)
 #endif
 
+const std::string &INITIAL_STACK_SYMBOL = "$";
+
 /**
  * @brief Represents a finite automaton.
  * A finite automaton is defined by a finite set of states, a finite set of input symbols, a start state, and a finite
  * set of accept states.
  */
-class AUTOMATASIMULATOR_API FiniteAutomaton {
+class AUTOMATASIMULATOR_API PushdownAutomata {
   protected:
+	/**
+	 * @brief The current state of the automaton.
+	 */
+	std::string currentState;
+
 	/**
 	 * @brief Finite set of states. Formally defined as Q.
 	 */
@@ -33,6 +41,11 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	std::string startState;
 
 	/**
+	 * @brief Stack for the pushdown automaton.
+	 */
+	std::stack<std::string> stack;
+
+	/**
 	 * @brief Gets the state with the key provided.
 	 * @param key The key of the state to get.
 	 * @return The state with the specified key.
@@ -43,12 +56,12 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	/**
 	 * @brief Constructs a new Finite Automaton object.
 	 */
-	FiniteAutomaton();
+	PushdownAutomata();
 
 	/**
 	 * @brief Destructor for the Finite Automaton object.
 	 */
-	virtual ~FiniteAutomaton();
+	virtual ~PushdownAutomata();
 
 	/**
 	 * @brief Adds a state to the automaton.
@@ -82,7 +95,7 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	 * @param alphabet The strings to add.
 	 * @throws InvalidAlphabetException If the alphabet is empty.
 	 */
-	virtual void setAlphabet(const std::set<std::string> &alphabet);
+	void setAlphabet(const std::set<std::string> &alphabet);
 
 	/**
 	 * @brief Gets the alphabet of the automaton.
@@ -116,8 +129,11 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	 * @param fromKey The key of the state to transition from.
 	 * @param input The input of the transition.
 	 * @param toKey The key of the state to transition to.
+	 * @param stackSymbol The top of the stack symbol.
+	 * @param pushSymbol The symbol to be pushed onto the stack.
 	 */
-	void addTransitionBetween(const std::string &fromKey, const std::string &input, const std::string &toKey);
+	void addTransitionBetween(const std::string &fromKey, const std::string &input, const std::string &toKey,
+	                          const std::string &stackSymbol, const std::string &pushSymbol);
 
 	/**
 	 * @brief Remove a transition between 2 states.
@@ -125,7 +141,8 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	 * @param input The input of the transition.
 	 * @param toKey The key of the state the transition points to.
 	 */
-	void removeTransitionBetween(const std::string &fromKey, const std::string &input, const std::string &toKey);
+	void removeTransitionBetween(const std::string &fromKey, const std::string &input, const std::string &toKey,
+	                             const std::string &stackSymbol, const std::string &pushSymbol);
 
 	/**
 	 * @brief Clears transitions between 2 states from the automaton.

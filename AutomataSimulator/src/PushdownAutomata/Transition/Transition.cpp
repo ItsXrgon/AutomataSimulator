@@ -1,9 +1,11 @@
 #define AUTOMATASIMULATOR_EXPORTS
 #include "Transition.h"
 
-Transition::Transition(const std::string &fromStateKey, const std::string &toStateKey, const std::string &input)
-    : fromStateKey(fromStateKey), toStateKey(toStateKey), input(input) {
-	key = fromStateKey + "-" + toStateKey + "-" + input;
+Transition::Transition(const std::string &fromStateKey, const std::string &toStateKey, const std::string &input,
+                       const std::string &stackSymbol, const std::string &pushSymbol)
+    : fromStateKey(fromStateKey), toStateKey(toStateKey), input(input), stackSymbol(stackSymbol),
+      pushSymbol(pushSymbol) {
+	key = fromStateKey + "-" + toStateKey + "-" + input + "-" + stackSymbol + "-" + pushSymbol;
 }
 
 Transition::Transition(const Transition &other)
@@ -15,12 +17,15 @@ Transition &Transition::operator=(const Transition &other) {
 		toStateKey = other.toStateKey;
 		input = other.input;
 		key = other.key;
+		stackSymbol = other.stackSymbol;
+		pushSymbol = other.pushSymbol;
 	}
 	return *this;
 }
 
 Transition::Transition(Transition &&other) noexcept
-    : fromStateKey(other.fromStateKey), toStateKey(other.toStateKey), input(other.input), key(other.key) {}
+    : fromStateKey(other.fromStateKey), toStateKey(other.toStateKey), input(other.input),
+      stackSymbol(other.stackSymbol), pushSymbol(other.pushSymbol), key(other.key) {}
 
 Transition &Transition::operator=(Transition &&other) noexcept {
 	if (this != &other) {
@@ -28,6 +33,8 @@ Transition &Transition::operator=(Transition &&other) noexcept {
 		toStateKey = other.toStateKey;
 		input = other.input;
 		key = other.key;
+		stackSymbol = other.stackSymbol;
+		pushSymbol = other.pushSymbol;
 	}
 	return *this;
 }
@@ -60,4 +67,20 @@ void Transition::setInput(const std::string &input) {
 
 std::string Transition::getInput() const {
 	return input;
+}
+
+void Transition::setStackSymbol(const std::string &stackSymbol) {
+	this->stackSymbol = stackSymbol;
+}
+
+std::string Transition::getStackSymbol() const {
+	return stackSymbol;
+}
+
+void Transition::setPushSymbol(const std::string &pushSymbol) {
+	this->pushSymbol = pushSymbol;
+}
+
+std::string Transition::getPushSymbol() const {
+	return pushSymbol;
 }
