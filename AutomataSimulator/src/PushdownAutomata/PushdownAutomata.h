@@ -64,6 +64,19 @@ class AUTOMATASIMULATOR_API PushdownAutomata {
 	virtual ~PushdownAutomata();
 
 	/**
+	 * @brief Sets the current state of the automaton.
+	 * @param state The key of the state to set.
+	 * @throws StateNotFoundException If the state is not found.
+	 */
+	void setCurrentState(const std::string &state);
+
+	/**
+	 * @brief Gets the current state of the automaton.
+	 * @return The current state of the automaton.
+	 */
+	std::string getCurrentState() const;
+
+	/**
 	 * @brief Adds a state to the automaton.
 	 * @param label The label for the state.
 	 */
@@ -197,7 +210,7 @@ class AUTOMATASIMULATOR_API PushdownAutomata {
 	 * @throws InvalidStartStateException If the start state is not set.
 	 * @throws InvalidAlphabetException If the alphabet is not set.
 	 */
-	bool processInput(const std::string &input);
+	virtual bool processInput(const std::string &input) = 0;
 
 	/**
 	 * @brief Simulates the automaton on a given input string.
@@ -206,5 +219,5 @@ class AUTOMATASIMULATOR_API PushdownAutomata {
 	 * @throws InvalidStartStateException If the start state is not set.
 	 * @throws InvalidAlphabetException If the alphabet is not set.
 	 */
-	bool simulate(const std::vector<std::string> &input);
+	virtual bool simulate(const std::vector<std::string> &input) = 0;
 };

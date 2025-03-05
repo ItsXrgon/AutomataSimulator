@@ -18,6 +18,17 @@ void FiniteAutomaton::addState(const std::string &label) {
 	states.push_back(state);
 }
 
+void FiniteAutomaton::setCurrentState(const std::string &state) {
+	currentState = state;
+}
+
+std::string FiniteAutomaton::getCurrentState() const {
+	if (currentState.empty()) {
+		return getStartState();
+	}
+	return currentState;
+}
+
 std::vector<State> FiniteAutomaton::getStates() const {
 	return states;
 }

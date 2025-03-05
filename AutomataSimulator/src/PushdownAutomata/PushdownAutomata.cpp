@@ -8,6 +8,17 @@ PushdownAutomata::PushdownAutomata() : startState("") {
 
 PushdownAutomata::~PushdownAutomata() {}
 
+void PushdownAutomata::setCurrentState(const std::string &state) {
+	currentState = state;
+}
+
+std::string PushdownAutomata::getCurrentState() const {
+	if (currentState.empty()) {
+		return getStartState();
+	}
+	return currentState;
+}
+
 void PushdownAutomata::addState(const std::string &label) {
 	State state(label, false);
 	// Check if the state already exists

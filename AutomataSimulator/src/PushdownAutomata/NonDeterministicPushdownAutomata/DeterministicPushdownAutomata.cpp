@@ -1,6 +1,6 @@
 #define AUTOMATASIMULATOR_EXPORTS
 #include "NonDeterministicFiniteAutomaton.h"
-#include "../FiniteAutomatonException.h"
+#include "../PushdownAutomataException.h"
 
 void NonDeterministicFiniteAutomaton::addEpsilonClosure(std::unordered_set<std::string> &states) {
 	std::queue<std::string> stateQueue;
@@ -31,14 +31,6 @@ void NonDeterministicFiniteAutomaton::addEpsilonClosure(std::unordered_set<std::
 			}
 		}
 	}
-}
-
-std::string NonDeterministicFiniteAutomaton::decideRandomState(const std::unordered_set<std::string> &states) {
-	// Randomly choose a state from the set of states
-	int randomIndex = rand() % states.size();
-	auto it = states.begin();
-	std::advance(it, randomIndex);
-	return *it;
 }
 
 void NonDeterministicFiniteAutomaton::setAlphabet(const std::set<std::string> &alphabet) {
@@ -107,28 +99,36 @@ bool NonDeterministicFiniteAutomaton::processInput(const std::string &input) {
 		throw InvalidAlphabetException("Alphabet is not set");
 	}
 
-	possibleCurrentStates.clear();
+	if (possibleCurrentStates.empty()) {
+		possibleCurrentStates.insert(startState);
+	}
+
 	std::unordered_set<std::string> nextStates;
 
-	State *state = getState(currentState);
-	for (const auto &transition : state->getTransitions()) {
-		if (transition.getInput() == input) {
-			nextStates.insert(transition.getToStateKey());
+	// Process epsilon closures for current states
+	addEpsilonClosure(possibleCurrentStates);
+
+	// Process the input and compute all possible next states
+	for (const auto &stateKey : possibleCurrentStates) {
+		State *state = getState(stateKey);
+		for (const auto &transition : state->getTransitions()) {
+			if (transition.getInput() == input) {
+				nextStates.insert(transition.getToStateKey());
+			}
 		}
 	}
 
-	if (nextStates.empty()) {
-		return getState(currentState)->getIsAccept();
-	}
-
-	addEpsilonClosure(nextStates);
+	// Update current states to the next states
 	possibleCurrentStates = nextStates;
 
-	currentState = decideRandomState(possibleCurrentStates);
+	// Process epsilon closures for the next states
+	addEpsilonClosure(possibleCurrentStates);
 
-	// We're in an accept state if the current state is an accept state
-	if (getState(currentState)->getIsAccept()) {
-		return true;
+	// We're in an accept state if any of the possible current states is an accept state
+	for (const auto &stateKey : possibleCurrentStates) {
+		if (getState(stateKey)->getIsAccept()) {
+			return true;
+		}
 	}
 
 	return false;

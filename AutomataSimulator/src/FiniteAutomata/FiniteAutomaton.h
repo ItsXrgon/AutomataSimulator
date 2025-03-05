@@ -18,6 +18,11 @@
 class AUTOMATASIMULATOR_API FiniteAutomaton {
   protected:
 	/**
+	 * @brief The current state of the automaton.
+	 */
+	std::string currentState;
+
+	/**
 	 * @brief Finite set of states. Formally defined as Q.
 	 */
 	std::vector<State> states;
@@ -49,6 +54,19 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	 * @brief Destructor for the Finite Automaton object.
 	 */
 	virtual ~FiniteAutomaton();
+
+	/**
+	 * @brief Sets the current state of the automaton.
+	 * @param state The key of the state to set.
+	 * @throws StateNotFoundException If the state is not found.
+	 */
+	void setCurrentState(const std::string &state);
+
+	/**
+	 * @brief Gets the current state of the automaton.
+	 * @return The current state of the automaton.
+	 */
+	std::string getCurrentState() const;
 
 	/**
 	 * @brief Adds a state to the automaton.
@@ -117,7 +135,7 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	 * @param input The input of the transition.
 	 * @param toKey The key of the state to transition to.
 	 */
-	void addTransitionBetween(const std::string &fromKey, const std::string &input, const std::string &toKey);
+	virtual void addTransitionBetween(const std::string &fromKey, const std::string &input, const std::string &toKey);
 
 	/**
 	 * @brief Remove a transition between 2 states.
@@ -171,7 +189,7 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	/**
 	 * @brief Resets the automaton to its start state.
 	 */
-	void reset();
+	virtual void reset() = 0;
 
 	/**
 	 * @brief Moves the automaton to the next state based on the input.
@@ -180,7 +198,7 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	 * @throws InvalidStartStateException If the start state is not set.
 	 * @throws InvalidAlphabetException If the alphabet is not set.
 	 */
-	bool processInput(const std::string &input);
+	virtual bool processInput(const std::string &input) = 0;
 
 	/**
 	 * @brief Simulates the automaton on a given input string.
@@ -189,5 +207,5 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	 * @throws InvalidStartStateException If the start state is not set.
 	 * @throws InvalidAlphabetException If the alphabet is not set.
 	 */
-	bool simulate(const std::vector<std::string> &input);
+	virtual bool simulate(const std::vector<std::string> &input) = 0;
 };

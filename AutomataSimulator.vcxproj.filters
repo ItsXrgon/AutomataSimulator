@@ -45,6 +45,12 @@
     <ClInclude Include="AutomataSimulator\src\PushdownAutomata\Transition\Transition.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="AutomataSimulator\src\PushdownAutomata\NonDeterministicPushdownAutomata\DeterministicPushdownAutomata.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AutomataSimulator\src\PushdownAutomata\DeterministicPushdownAutomata\DeterministicPushdownAutomata.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AutomataSimulator\src\FiniteAutomata\State\State.cpp">
@@ -72,6 +78,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="AutomataSimulator\src\PushdownAutomata\PushdownAutomata.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AutomataSimulator\src\PushdownAutomata\NonDeterministicPushdownAutomata\DeterministicPushdownAutomata.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AutomataSimulator\src\PushdownAutomata\DeterministicPushdownAutomata\DeterministicPushdownAutomata.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

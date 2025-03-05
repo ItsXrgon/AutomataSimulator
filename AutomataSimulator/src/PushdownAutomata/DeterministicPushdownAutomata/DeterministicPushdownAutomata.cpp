@@ -1,4 +1,4 @@
-#define AUTOMATASIMULATOR_EXPORTS
+#define AUTOMATASIMULATOR_EXPORTS 
 #include "DeterministicFiniteAutomaton.h"
 #include "../FiniteAutomatonException.h"
 
@@ -10,6 +10,17 @@ bool DeterministicFiniteAutomaton::checkAlphabetValidity(const std::set<std::str
 		}
 	}
 	return true;
+}
+
+void DeterministicFiniteAutomaton::setCurrentState(const std::string &state) {
+	currentState = state;
+}
+
+std::string DeterministicFiniteAutomaton::getCurrentState() const {
+	if (currentState.empty()) {
+		return getStartState();
+	}
+	return currentState;
 }
 
 void DeterministicFiniteAutomaton::setAlphabet(const std::set<std::string> &alphabet) {
@@ -67,8 +78,8 @@ void DeterministicFiniteAutomaton::addTransitionBetween(const std::string &fromS
 	// Check if the transition is deterministic
 	for (auto &transition : fromState->getTransitions()) {
 		if (transition.getInput() == input) {
-			throw InvalidAutomatonDefinitionException("Transition is not deterministic: " + fromStateKey + " -> " +
-			                                          input + " -> " + toStateKey);
+			throw InvalidAutomatonDefinitionException("Transition is not deterministic: " + fromStateKey + " -> " + input +
+			                                 " -> " + toStateKey);
 		}
 	}
 

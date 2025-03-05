@@ -60,8 +60,9 @@ bool State::getIsAccept() const {
 	return isAccept;
 }
 
-void State::addTransitionTo(const std::string &input, const std::string &toStateKey) {
-	Transition transition = Transition(key, toStateKey, input);
+void State::addTransitionTo(const std::string &input, const std::string &toStateKey, const std::string &stackSymbol,
+                            const std::string &pushSymbol) {
+	Transition transition = Transition(key, toStateKey, input, stackSymbol, pushSymbol);
 	transitions.push_back(transition);
 }
 
@@ -69,9 +70,11 @@ std::vector<Transition> State::getTransitions() const {
 	return this->transitions;
 }
 
-void State::removeTransitionTo(const std::string &input, const std::string &toStateKey) {
+void State::removeTransitionTo(const std::string &input, const std::string &toStateKey, const std::string &stackSymbol,
+                               const std::string &pushSymbol) {
 	for (auto it = transitions.begin(); it != transitions.end(); ++it) {
-		if (it->getInput() == input && it->getToStateKey() == toStateKey) {
+		if (it->getInput() == input && it->getToStateKey() == toStateKey && it->getStackSymbol() == stackSymbol &&
+		    it->getPushSymbol() == pushSymbol) {
 			transitions.erase(it);
 			return;
 		}
