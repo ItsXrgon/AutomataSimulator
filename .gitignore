@@ -1,36 +1,46 @@
-# Prerequisites
-*.d
+# Build artifacts
+/build/
+/bin/
+/lib/
+/CMakeFiles/
+/CMakeCache.txt
+Makefile
+cmake_install.cmake
+compile_commands.json
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
+# Visual Studio-specific
+*.sln
+*.vcxproj*
+*.filters
+*.user
+*.vs/
+
+# IDE-specific
+.idea/
+.vscode/
+*.code-workspace
+
+# macOS/Linux (optional if cross-platform)
+*.DS_Store
+
+# Windows
+Thumbs.db
 *.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
+*.pdb
+*.exe
 *.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
 *.lib
+*.exp
+
+# Logs and temp files
+*.log
+*.tmp
+*.cache
 
 # Executables
 *.exe
 *.out
 *.app
-/.vs/AutomataSimulator
 /Automata.6ddc565c/x64/Debug
 /packages/Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7
 /Tests/x64/Debug

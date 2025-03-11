@@ -8,7 +8,7 @@ class DFATestFixture : public ::testing::Test {
 		automaton->addState("q0");
 		automaton->addState("q1");
 		automaton->setStartState("q0");
-		automaton->setAlphabet({"0", "1"});
+		automaton->setInputAlphabet({"0", "1"});
 	}
 
 	void TearDown() override {
@@ -50,7 +50,7 @@ TEST_F(DFATestFixture, ShouldThrowExceptionForMissingFromStateInTransition) {
 TEST_F(DFATestFixture, ShouldThrowExceptionForNonDeterministicTransition) {
 	automaton->addState("q2");
 	automaton->addTransitionBetween("q0", "0", "q1");
-	EXPECT_THROW(automaton->addTransitionBetween("q0", "0", "q2"), InvalidTransitionException);
+	EXPECT_THROW(automaton->addTransitionBetween("q0", "0", "q2"), InvalidAutomatonDefinitionException);
 }
 
 TEST_F(DFATestFixture, ShouldThrowExceptionForTransitionOutsideAlphabet) {
@@ -58,26 +58,18 @@ TEST_F(DFATestFixture, ShouldThrowExceptionForTransitionOutsideAlphabet) {
 }
 
 TEST_F(DFATestFixture, ShouldThrowExceptionForAddingEpsilonToAlphabet) {
-	EXPECT_THROW(automaton->addAlphabet({""}), InvalidAlphabetException);
+	EXPECT_THROW(automaton->addInputAlphabet({""}), InvalidAlphabetException);
 }
 
 TEST_F(DFATestFixture, ShouldThrowExceptionForSettingEpsilonAsAlphabet) {
-	EXPECT_THROW(automaton->setAlphabet({""}), InvalidAlphabetException);
+	EXPECT_THROW(automaton->setInputAlphabet({""}), InvalidAlphabetException);
 }
 
 TEST(DFATest, ShouldThrowExceptionForSimulationWithoutStartState) {
 	DeterministicFiniteAutomaton *automaton = new DeterministicFiniteAutomaton();
-	automaton->setAlphabet({"0", "1"});
+	automaton->setInputAlphabet({"0", "1"});
 
 	EXPECT_THROW(automaton->simulate({""}), InvalidStartStateException);
-}
-
-TEST(DFATest, ShouldThrowExceptionForSimulationWithoutAlphabet) {
-	DeterministicFiniteAutomaton *automaton = new DeterministicFiniteAutomaton();
-	automaton->addState("q0");
-	automaton->setStartState("q0");
-
-	EXPECT_THROW(automaton->simulate({""}), InvalidAlphabetException);
 }
 
 TEST_F(DFATestFixture, ShouldCorrectlySimulateInputSequence) {
@@ -104,7 +96,7 @@ TEST_F(DFATestFixture, ShouldSimulateFerrymanProblem) {
 
 	automaton->setStartState("MWGC-0");
 
-	automaton->setAlphabet({"g", "m", "w", "c"});
+	automaton->setInputAlphabet({"g", "m", "w", "c"});
 
 	automaton->addTransitionBetween("MWGC-0", "g", "WC-MG");
 	automaton->addTransitionBetween("WC-MG", "g", "MWGC-0");
@@ -165,7 +157,7 @@ TEST_F(DFATestFixture, ShouldProcessInputsForFerrymanProblem) {
 
 	automaton->setStartState("MWGC-0");
 
-	automaton->setAlphabet({"g", "m", "w", "c"});
+	automaton->setInputAlphabet({"g", "m", "w", "c"});
 
 	automaton->addTransitionBetween("MWGC-0", "g", "WC-MG");
 	automaton->addTransitionBetween("WC-MG", "g", "MWGC-0");

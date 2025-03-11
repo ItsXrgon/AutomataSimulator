@@ -19,40 +19,52 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AutomataSimulator\src\FiniteAutomata\State\State.h" />
-    <ClInclude Include="AutomataSimulator\src\FiniteAutomata\Transition\Transition.h" />
-    <ClInclude Include="AutomataSimulator\src\FiniteAutomata\DeterministicFiniteAutomaton\DeterministicFiniteAutomaton.h" />
-    <ClInclude Include="AutomataSimulator\src\FiniteAutomata\NonDeterministicFiniteAutomaton\NonDeterministicFiniteAutomaton.h" />
-    <ClInclude Include="AutomataSimulator\src\FiniteAutomata\FiniteAutomaton.h" />
-    <ClInclude Include="AutomataSimulator\src\PushdownAutomata\DeterministicPushdownAutomata\DeterministicPushdownAutomata.h" />
-    <ClInclude Include="AutomataSimulator\src\PushdownAutomata\NonDeterministicPushdownAutomata\DeterministicPushdownAutomata.h" />
-    <ClInclude Include="AutomataSimulator\src\PushdownAutomata\PushdownAutomata.h" />
-    <ClInclude Include="AutomataSimulator\src\PushdownAutomata\PushdownAutomataException.h" />
-    <ClInclude Include="AutomataSimulator\src\PushdownAutomata\State\State.h" />
-    <ClInclude Include="AutomataSimulator\src\PushdownAutomata\Transition\Transition.h" />
+    <ClInclude Include="src\FiniteAutomata\FAState\FAState.h" />
+    <ClInclude Include="src\FiniteAutomata\FATransition\FATransition.h" />
+    <ClInclude Include="src\FiniteAutomata\DeterministicFiniteAutomaton\DeterministicFiniteAutomaton.h" />
+    <ClInclude Include="src\FiniteAutomata\NonDeterministicFiniteAutomaton\NonDeterministicFiniteAutomaton.h" />
+    <ClInclude Include="src\FiniteAutomata\FiniteAutomaton.h" />
+    <ClInclude Include="src\PushdownAutomata\DeterministicPushdownAutomaton\DeterministicPushdownAutomaton.h" />
+    <ClInclude Include="src\PushdownAutomata\NonDeterministicPushdownAutomaton\NonDeterministicPushdownAutomaton.h" />
+    <ClInclude Include="src\PushdownAutomata\PushdownAutomaton.h" />
+    <ClInclude Include="src\PushdownAutomata\PushdownAutomatonException.h" />
+    <ClInclude Include="src\PushdownAutomata\PDAState\PDAState.h" />
+    <ClInclude Include="src\PushdownAutomata\PDATransition\PDATransition.h" />
+    <ClInclude Include="src\TuringMachine\Direction.h" />
+    <ClInclude Include="src\TuringMachine\Tape\Tape.h" />
     <ClInclude Include="Tests\Transition.h" />
+    <ClInclude Include="src\TuringMachine\TuringMachine.h" />
+    <ClInclude Include="src\TuringMachine\TMState\TMState.h" />
+    <ClInclude Include="src\TuringMachine\TMTransition\TMTransition.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AutomataSimulator\src\FiniteAutomata\FiniteAutomatonException.h" />
-    <ClCompile Include="AutomataSimulator\src\FiniteAutomata\State\State.cpp" />
-    <ClCompile Include="AutomataSimulator\src\FiniteAutomata\Transition\Transition.cpp" />
-    <ClCompile Include="AutomataSimulator\src\FiniteAutomata\DeterministicFiniteAutomaton\DeterministicFiniteAutomaton.cpp" />
-    <ClCompile Include="AutomataSimulator\src\FiniteAutomata\NonDeterministicFiniteAutomaton\NonDeterministicFiniteAutomaton.cpp" />
-    <ClCompile Include="AutomataSimulator\src\FiniteAutomata\FiniteAutomaton.cpp" />
-    <ClCompile Include="AutomataSimulator\src\PushdownAutomata\DeterministicPushdownAutomata\DeterministicPushdownAutomata.cpp" />
-    <ClCompile Include="AutomataSimulator\src\PushdownAutomata\NonDeterministicPushdownAutomata\DeterministicPushdownAutomata.cpp" />
-    <ClCompile Include="AutomataSimulator\src\PushdownAutomata\PushdownAutomata.cpp" />
-    <ClCompile Include="AutomataSimulator\src\PushdownAutomata\State\State.cpp" />
-    <ClCompile Include="AutomataSimulator\src\PushdownAutomata\Transition\Transition.cpp" />
+    <ClCompile Include="src\FiniteAutomata\FiniteAutomatonException.h" />
+    <ClCompile Include="src\FiniteAutomata\FAState\FAState.cpp" />
+    <ClCompile Include="src\FiniteAutomata\FATransition\FATransition.cpp" />
+    <ClCompile Include="src\FiniteAutomata\DeterministicFiniteAutomaton\DeterministicFiniteAutomaton.cpp" />
+    <ClCompile Include="src\FiniteAutomata\NonDeterministicFiniteAutomaton\NonDeterministicFiniteAutomaton.cpp" />
+    <ClCompile Include="src\FiniteAutomata\FiniteAutomaton.cpp" />
+    <ClCompile Include="src\PushdownAutomata\DeterministicPushdownAutomaton\DeterministicPushdownAutomaton.cpp" />
+    <ClCompile Include="src\PushdownAutomata\NonDeterministicPushdownAutomaton\NonDeterministicPushdownAutomaton.cpp" />
+    <ClCompile Include="src\PushdownAutomata\PushdownAutomaton.cpp" />
+    <ClCompile Include="src\PushdownAutomata\PDAState\PDAState.cpp" />
+    <ClCompile Include="src\PushdownAutomata\PDATransition\PDATransition.cpp" />
+    <ClCompile Include="src\TuringMachine\TuringMachine.cpp" />
+    <ClCompile Include="src\TuringMachine\Tape\Tape.cpp" />
+    <ClCompile Include="src\TuringMachine\TMState\TMState.cpp" />
+    <ClCompile Include="src\TuringMachine\TMTransition\TMTransition.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".clang-format" />
     <None Include=".gitattributes" />
     <None Include=".gitignore" />
+    <None Include="ClassDiagram.cd" />
     <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="CMakeLists.txt" />
     <Text Include="LICENSE.txt" />
+    <Text Include="src\CMakeLists.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

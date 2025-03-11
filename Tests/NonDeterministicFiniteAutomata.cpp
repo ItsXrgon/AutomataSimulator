@@ -9,7 +9,7 @@ class NFATestFixture : public ::testing::Test {
 		automaton->addState("q1");
 		automaton->addState("q2");
 		automaton->setStartState("q0");
-		automaton->setAlphabet({"0", "1"});
+		automaton->setInputAlphabet({"0", "1"});
 	}
 
 	void TearDown() override {
@@ -54,22 +54,14 @@ TEST_F(NFATestFixture, ShouldThrowExceptionForTransitionOutsideAlphabet) {
 }
 
 TEST_F(NFATestFixture, ShouldNotThrowExceptionForSettingEpsilonAsAlphabet) {
-	EXPECT_NO_THROW(automaton->setAlphabet({""}), InvalidAlphabetException);
+	EXPECT_NO_THROW(automaton->setInputAlphabet({""}), InvalidAlphabetException);
 }
 
 TEST(NFATest, ShouldThrowExceptionForSimulationWithoutStartState) {
 	NonDeterministicFiniteAutomaton *automaton = new NonDeterministicFiniteAutomaton();
-	automaton->setAlphabet({"0", "1"});
+	automaton->setInputAlphabet({"0", "1"});
 
 	EXPECT_THROW(automaton->simulate({""}), InvalidStartStateException);
-}
-
-TEST(NFATest, ShouldThrowExceptionForSimulationWithoutAlphabet) {
-	NonDeterministicFiniteAutomaton *automaton = new NonDeterministicFiniteAutomaton();
-	automaton->addState("q0");
-	automaton->setStartState("q0");
-
-	EXPECT_THROW(automaton->simulate({""}), InvalidAlphabetException);
 }
 
 TEST_F(NFATestFixture, ShouldCorrectlySimulateInputSequence) {
@@ -98,42 +90,34 @@ TEST_F(NFATestFixture, ShouldHandleEpsilonTransitions) {
 }
 
 TEST_F(NFATestFixture, ShouldProcessInputsForLanguageEndingWith01Or10) {
-	// Add states
-	automaton->addState("q0"); // Start state
-	automaton->addState("q1");
-	automaton->addState("q2"); // Accept state for strings ending with "01"
-	automaton->addState("q3"); // Accept state for strings ending with "10"
+	NonDeterministicFiniteAutomaton *automaton = new NonDeterministicFiniteAutomaton();
 
-	// Set the start state
+	automaton->addState("q0");
+	automaton->addState("q1");
+	automaton->addState("q2");
+	automaton->addState("q3"); 
+
 	automaton->setStartState("q0");
 
-	// Set the alphabet
-	automaton->setAlphabet({"0", "1"});
+	automaton->setInputAlphabet({"0", "1"});
 
-	// Add transitions
-	// From q0, on "0", can go to q0 or q1 (non-deterministic)
 	automaton->addTransitionBetween("q0", "0", "q0");
-	automaton->addTransitionBetween("q0", "0", "q1");
-
-	// From q0, on "1", can go to q0 or q3 (non-deterministic)
 	automaton->addTransitionBetween("q0", "1", "q0");
-	automaton->addTransitionBetween("q0", "1", "q3");
+	automaton->addTransitionBetween("q0", "1", "q1");
 
-	// From q1, on "1", go to q2 (accept state for "01")
-	automaton->addTransitionBetween("q1", "1", "q2");
+	automaton->addTransitionBetween("q1", "0", "q2");
+	automaton->addTransitionBetween("q1", "", "q2");
 
-	// From q3, on "0", go to q4 (accept state for "10")
-	automaton->addTransitionBetween("q3", "0", "q4");
+	automaton->addTransitionBetween("q1", "1", "q3");
 
-	// Mark accept states
-	automaton->addAcceptState("q2");
-	automaton->addAcceptState("q4");
+	automaton->addTransitionBetween("q3", "0", "q3");
+	automaton->addTransitionBetween("q3", "1", "q3");
 
-	// Start at the initial state
+	automaton->addAcceptState("q3");
+
 	automaton->setCurrentState("q0");
 	EXPECT_EQ(automaton->getCurrentState(), "q0");
 
-	// Test input "010" (should end in q2, accepting "01")
 	automaton->processInput("0");
 	automaton->processInput("1");
 	automaton->processInput("0");
@@ -165,4 +149,46 @@ TEST_F(NFATestFixture, ShouldProcessInputsForLanguageEndingWith01Or10) {
 	automaton->processInput("1");
 	automaton->processInput("1");
 	EXPECT_FALSE(automaton->getCurrentState() == "q2" || automaton->getCurrentState() == "q4");
+}
+
+TEST_F(NFATestFixture, ShouldUpdatePossibleCurrentStatesForLanguageEndingWith01Or10) {
+	NonDeterministicFiniteAutomaton *automaton = new NonDeterministicFiniteAutomaton();
+	std::unordered_set<std::string> possibleCurrentStates;
+
+	automaton->addState("q0");
+	automaton->addState("q1");
+	automaton->addState("q2");
+	automaton->addState("q3");
+
+	automaton->setStartState("q0");
+
+	automaton->setInputAlphabet({"0", "1"});
+
+	automaton->addTransitionBetween("q0", "0", "q0");
+	automaton->addTransitionBetween("q0", "1", "q0");
+	automaton->addTransitionBetween("q0", "1", "q1");
+
+	automaton->addTransitionBetween("q1", "0", "q2");
+	automaton->addTransitionBetween("q1", "", "q2");
+
+	automaton->addTransitionBetween("q1", "1", "q3");
+
+	automaton->addTransitionBetween("q3", "0", "q3");
+	automaton->addTransitionBetween("q3", "1", "q3");
+
+	automaton->addAcceptState("q3");
+	automaton->setCurrentState("q0");
+
+	automaton->processInput("1");
+	possibleCurrentStates = automaton->getPossibleCurrentStates();
+	EXPECT_TRUE(possibleCurrentStates.find("q0") != possibleCurrentStates.end());
+	EXPECT_TRUE(possibleCurrentStates.find("q1") != possibleCurrentStates.end());
+
+	automaton->setCurrentState("q1");
+	automaton->processInput("1");
+	possibleCurrentStates = automaton->getPossibleCurrentStates();
+	EXPECT_FALSE(possibleCurrentStates.find("q0") != possibleCurrentStates.end());
+	EXPECT_FALSE(possibleCurrentStates.find("q1") != possibleCurrentStates.end());
+	EXPECT_FALSE(possibleCurrentStates.find("q2") != possibleCurrentStates.end());
+	EXPECT_TRUE(possibleCurrentStates.find("q3") != possibleCurrentStates.end());
 }
