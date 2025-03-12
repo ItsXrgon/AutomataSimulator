@@ -40,21 +40,21 @@ TEST_F(DFATestFixture, ShouldThrowExceptionForDuplicateState) {
 }
 
 TEST_F(DFATestFixture, ShouldThrowExceptionForMissingToStateInTransition) {
-	EXPECT_THROW(automaton->addTransitionBetween("q0", "0", "q2"), StateNotFoundException);
+	EXPECT_THROW(automaton->addTransition("q0", "0", "q2"), StateNotFoundException);
 }
 
 TEST_F(DFATestFixture, ShouldThrowExceptionForMissingFromStateInTransition) {
-	EXPECT_THROW(automaton->addTransitionBetween("q2", "0", "q0"), StateNotFoundException);
+	EXPECT_THROW(automaton->addTransition("q2", "0", "q0"), StateNotFoundException);
 }
 
 TEST_F(DFATestFixture, ShouldThrowExceptionForNonDeterministicTransition) {
 	automaton->addState("q2");
-	automaton->addTransitionBetween("q0", "0", "q1");
-	EXPECT_THROW(automaton->addTransitionBetween("q0", "0", "q2"), InvalidAutomatonDefinitionException);
+	automaton->addTransition("q0", "0", "q1");
+	EXPECT_THROW(automaton->addTransition("q0", "0", "q2"), InvalidAutomatonDefinitionException);
 }
 
 TEST_F(DFATestFixture, ShouldThrowExceptionForTransitionOutsideAlphabet) {
-	EXPECT_THROW(automaton->addTransitionBetween("q0", "x", "q1"), InvalidTransitionException);
+	EXPECT_THROW(automaton->addTransition("q0", "x", "q1"), InvalidTransitionException);
 }
 
 TEST_F(DFATestFixture, ShouldThrowExceptionForAddingEpsilonToAlphabet) {
@@ -74,8 +74,8 @@ TEST(DFATest, ShouldThrowExceptionForSimulationWithoutStartState) {
 
 TEST_F(DFATestFixture, ShouldCorrectlySimulateInputSequence) {
 	automaton->addState("q2");
-	automaton->addTransitionBetween("q0", "0", "q1");
-	automaton->addTransitionBetween("q1", "1", "q2");
+	automaton->addTransition("q0", "0", "q1");
+	automaton->addTransition("q1", "1", "q2");
 	automaton->addAcceptState("q2");
 
 	EXPECT_TRUE(automaton->simulate({"0", "1"}));  // Accepts "01"
@@ -98,35 +98,35 @@ TEST_F(DFATestFixture, ShouldSimulateFerrymanProblem) {
 
 	automaton->setInputAlphabet({"g", "m", "w", "c"});
 
-	automaton->addTransitionBetween("MWGC-0", "g", "WC-MG");
-	automaton->addTransitionBetween("WC-MG", "g", "MWGC-0");
+	automaton->addTransition("MWGC-0", "g", "WC-MG");
+	automaton->addTransition("WC-MG", "g", "MWGC-0");
 
-	automaton->addTransitionBetween("WC-MG", "m", "MWC-G");
-	automaton->addTransitionBetween("MWC-G", "m", "WC-MG");
+	automaton->addTransition("WC-MG", "m", "MWC-G");
+	automaton->addTransition("MWC-G", "m", "WC-MG");
 
-	automaton->addTransitionBetween("MWC-G", "w", "C-MWG");
-	automaton->addTransitionBetween("MWC-G", "c", "W-MGC");
+	automaton->addTransition("MWC-G", "w", "C-MWG");
+	automaton->addTransition("MWC-G", "c", "W-MGC");
 
-	automaton->addTransitionBetween("C-MWG", "w", "MWC-G");
-	automaton->addTransitionBetween("C-MWG", "g", "MGC-W");
+	automaton->addTransition("C-MWG", "w", "MWC-G");
+	automaton->addTransition("C-MWG", "g", "MGC-W");
 
-	automaton->addTransitionBetween("W-MGC", "c", "MWC-G");
-	automaton->addTransitionBetween("W-MGC", "g", "MWG-C");
+	automaton->addTransition("W-MGC", "c", "MWC-G");
+	automaton->addTransition("W-MGC", "g", "MWG-C");
 
-	automaton->addTransitionBetween("MGC-W", "g", "C-MWG");
-	automaton->addTransitionBetween("MGC-W", "c", "G-MWC");
+	automaton->addTransition("MGC-W", "g", "C-MWG");
+	automaton->addTransition("MGC-W", "c", "G-MWC");
 
-	automaton->addTransitionBetween("MWG-C", "g", "W-MGC");
-	automaton->addTransitionBetween("MWG-C", "w", "G-MWC");
+	automaton->addTransition("MWG-C", "g", "W-MGC");
+	automaton->addTransition("MWG-C", "w", "G-MWC");
 
-	automaton->addTransitionBetween("G-MWC", "c", "MGC-W");
-	automaton->addTransitionBetween("G-MWC", "w", "MWG-C");
-	automaton->addTransitionBetween("G-MWC", "m", "MG-WC");
+	automaton->addTransition("G-MWC", "c", "MGC-W");
+	automaton->addTransition("G-MWC", "w", "MWG-C");
+	automaton->addTransition("G-MWC", "m", "MG-WC");
 
-	automaton->addTransitionBetween("MG-WC", "m", "G-MWC");
-	automaton->addTransitionBetween("MG-WC", "g", "0-MWGC");
+	automaton->addTransition("MG-WC", "m", "G-MWC");
+	automaton->addTransition("MG-WC", "g", "0-MWGC");
 
-	automaton->addTransitionBetween("0-MWGC", "g", "MG-WC");
+	automaton->addTransition("0-MWGC", "g", "MG-WC");
 
 	automaton->addAcceptState("0-MWGC");
 
@@ -159,35 +159,35 @@ TEST_F(DFATestFixture, ShouldProcessInputsForFerrymanProblem) {
 
 	automaton->setInputAlphabet({"g", "m", "w", "c"});
 
-	automaton->addTransitionBetween("MWGC-0", "g", "WC-MG");
-	automaton->addTransitionBetween("WC-MG", "g", "MWGC-0");
+	automaton->addTransition("MWGC-0", "g", "WC-MG");
+	automaton->addTransition("WC-MG", "g", "MWGC-0");
 
-	automaton->addTransitionBetween("WC-MG", "m", "MWC-G");
-	automaton->addTransitionBetween("MWC-G", "m", "WC-MG");
+	automaton->addTransition("WC-MG", "m", "MWC-G");
+	automaton->addTransition("MWC-G", "m", "WC-MG");
 
-	automaton->addTransitionBetween("MWC-G", "w", "C-MWG");
-	automaton->addTransitionBetween("MWC-G", "c", "W-MGC");
+	automaton->addTransition("MWC-G", "w", "C-MWG");
+	automaton->addTransition("MWC-G", "c", "W-MGC");
 
-	automaton->addTransitionBetween("C-MWG", "w", "MWC-G");
-	automaton->addTransitionBetween("C-MWG", "g", "MGC-W");
+	automaton->addTransition("C-MWG", "w", "MWC-G");
+	automaton->addTransition("C-MWG", "g", "MGC-W");
 
-	automaton->addTransitionBetween("W-MGC", "c", "MWC-G");
-	automaton->addTransitionBetween("W-MGC", "g", "MWG-C");
+	automaton->addTransition("W-MGC", "c", "MWC-G");
+	automaton->addTransition("W-MGC", "g", "MWG-C");
 
-	automaton->addTransitionBetween("MGC-W", "g", "C-MWG");
-	automaton->addTransitionBetween("MGC-W", "c", "G-MWC");
+	automaton->addTransition("MGC-W", "g", "C-MWG");
+	automaton->addTransition("MGC-W", "c", "G-MWC");
 
-	automaton->addTransitionBetween("MWG-C", "g", "W-MGC");
-	automaton->addTransitionBetween("MWG-C", "w", "G-MWC");
+	automaton->addTransition("MWG-C", "g", "W-MGC");
+	automaton->addTransition("MWG-C", "w", "G-MWC");
 
-	automaton->addTransitionBetween("G-MWC", "c", "MGC-W");
-	automaton->addTransitionBetween("G-MWC", "w", "MWG-C");
-	automaton->addTransitionBetween("G-MWC", "m", "MG-WC");
+	automaton->addTransition("G-MWC", "c", "MGC-W");
+	automaton->addTransition("G-MWC", "w", "MWG-C");
+	automaton->addTransition("G-MWC", "m", "MG-WC");
 
-	automaton->addTransitionBetween("MG-WC", "m", "G-MWC");
-	automaton->addTransitionBetween("MG-WC", "g", "0-MWGC");
+	automaton->addTransition("MG-WC", "m", "G-MWC");
+	automaton->addTransition("MG-WC", "g", "0-MWGC");
 
-	automaton->addTransitionBetween("0-MWGC", "g", "MG-WC");
+	automaton->addTransition("0-MWGC", "g", "MG-WC");
 
 	automaton->addAcceptState("0-MWGC");
 

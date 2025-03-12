@@ -43,19 +43,19 @@ TEST_F(NPDATestFixture, ShouldThrowExceptionForDuplicateState) {
 }
 
 TEST_F(NPDATestFixture, ShouldThrowExceptionForMissingToStateInTransition) {
-	EXPECT_THROW(automaton->addTransitionBetween("q0", "0", "q3", "Z", "AZ"), StateNotFoundException);
+	EXPECT_THROW(automaton->addTransition("q0", "0", "q3", "Z", "AZ"), StateNotFoundException);
 }
 
 TEST_F(NPDATestFixture, ShouldThrowExceptionForMissingFromStateInTransition) {
-	EXPECT_THROW(automaton->addTransitionBetween("q3", "0", "q0", "Z", "AZ"), StateNotFoundException);
+	EXPECT_THROW(automaton->addTransition("q3", "0", "q0", "Z", "AZ"), StateNotFoundException);
 }
 
 TEST_F(NPDATestFixture, ShouldThrowExceptionForTransitionOutsideAlphabet) {
-	EXPECT_THROW(automaton->addTransitionBetween("q0", "x", "q1", "Z", "AZ"), InvalidTransitionException);
+	EXPECT_THROW(automaton->addTransition("q0", "x", "q1", "Z", "AZ"), InvalidTransitionException);
 }
 
 TEST_F(NPDATestFixture, ShouldThrowExceptionForPushSymbolOutsideStackAlphabet) {
-	EXPECT_THROW(automaton->addTransitionBetween("q0", "0", "q1", "Z", "AB"), InvalidTransitionException);
+	EXPECT_THROW(automaton->addTransition("q0", "0", "q1", "Z", "AB"), InvalidTransitionException);
 }
 
 TEST(NPDATest, ShouldThrowExceptionForSimulationWithoutStartState) {
@@ -67,8 +67,8 @@ TEST(NPDATest, ShouldThrowExceptionForSimulationWithoutStartState) {
 }
 
 TEST_F(NPDATestFixture, ShouldCorrectlySimulateInputSequence) {
-	automaton->addTransitionBetween("q0", "0", "q1", "Z", "AZ");
-	automaton->addTransitionBetween("q1", "1", "q2", "A", "");
+	automaton->addTransition("q0", "0", "q1", "Z", "AZ");
+	automaton->addTransition("q1", "1", "q2", "A", "");
 	automaton->addAcceptState("q2");
 
 	EXPECT_TRUE(automaton->simulate({"0", "1"}));  // Accepts "01"
@@ -76,16 +76,16 @@ TEST_F(NPDATestFixture, ShouldCorrectlySimulateInputSequence) {
 }
 
 TEST_F(NPDATestFixture, ShouldHandleMultipleTransitions) {
-	automaton->addTransitionBetween("q0", "0", "q1", "Z", "AZ");
-	automaton->addTransitionBetween("q0", "0", "q2", "Z", "BZ");
+	automaton->addTransition("q0", "0", "q1", "Z", "AZ");
+	automaton->addTransition("q0", "0", "q2", "Z", "BZ");
 	automaton->addAcceptState("q1");
 
 	EXPECT_TRUE(automaton->simulate({"0"})); // Accepts "0" (can be in q1 or q2)
 }
 
 TEST_F(NPDATestFixture, ShouldHandleEpsilonTransitions) {
-	automaton->addTransitionBetween("q0", "", "q1", "Z", "AZ"); // Epsilon transition
-	automaton->addTransitionBetween("q1", "1", "q2", "A", "");
+	automaton->addTransition("q0", "", "q1", "Z", "AZ"); // Epsilon transition
+	automaton->addTransition("q1", "1", "q2", "A", "");
 	automaton->addAcceptState("q2");
 
 	EXPECT_TRUE(automaton->simulate({"1"})); // Accepts "1" (via epsilon transition)
@@ -107,18 +107,18 @@ TEST_F(NPDATestFixture, ShouldProcessInputsForLanguageEndingWith01Or10) {
 
 	// Add transitions
 	// From q0, on "0", can go to q0 or q1 (non-deterministic)
-	automaton->addTransitionBetween("q0", "0", "q0", "Z", "AZ");
-	automaton->addTransitionBetween("q0", "0", "q1", "Z", "AZ");
+	automaton->addTransition("q0", "0", "q0", "Z", "AZ");
+	automaton->addTransition("q0", "0", "q1", "Z", "AZ");
 
 	// From q0, on "1", can go to q0 or q3 (non-deterministic)
-	automaton->addTransitionBetween("q0", "1", "q0", "Z", "AZ");
-	automaton->addTransitionBetween("q0", "1", "q3", "Z", "AZ");
+	automaton->addTransition("q0", "1", "q0", "Z", "AZ");
+	automaton->addTransition("q0", "1", "q3", "Z", "AZ");
 
 	// From q1, on "1", go to q2 (accept state for "01")
-	automaton->addTransitionBetween("q1", "1", "q2", "A", "");
+	automaton->addTransition("q1", "1", "q2", "A", "");
 
 	// From q3, on "0", go to q4 (accept state for "10")
-	automaton->addTransitionBetween("q3", "0", "q4", "A", "");
+	automaton->addTransition("q3", "0", "q4", "A", "");
 
 	// Mark accept states
 	automaton->addAcceptState("q2");

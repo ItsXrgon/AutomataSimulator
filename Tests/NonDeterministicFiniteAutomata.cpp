@@ -42,15 +42,15 @@ TEST_F(NFATestFixture, ShouldThrowExceptionForDuplicateState) {
 }
 
 TEST_F(NFATestFixture, ShouldThrowExceptionForMissingToStateInTransition) {
-	EXPECT_THROW(automaton->addTransitionBetween("q0", "0", "q3"), StateNotFoundException);
+	EXPECT_THROW(automaton->addTransition("q0", "0", "q3"), StateNotFoundException);
 }
 
 TEST_F(NFATestFixture, ShouldThrowExceptionForMissingFromStateInTransition) {
-	EXPECT_THROW(automaton->addTransitionBetween("q3", "0", "q0"), StateNotFoundException);
+	EXPECT_THROW(automaton->addTransition("q3", "0", "q0"), StateNotFoundException);
 }
 
 TEST_F(NFATestFixture, ShouldThrowExceptionForTransitionOutsideAlphabet) {
-	EXPECT_THROW(automaton->addTransitionBetween("q0", "x", "q1"), InvalidTransitionException);
+	EXPECT_THROW(automaton->addTransition("q0", "x", "q1"), InvalidTransitionException);
 }
 
 TEST_F(NFATestFixture, ShouldNotThrowExceptionForSettingEpsilonAsAlphabet) {
@@ -65,8 +65,8 @@ TEST(NFATest, ShouldThrowExceptionForSimulationWithoutStartState) {
 }
 
 TEST_F(NFATestFixture, ShouldCorrectlySimulateInputSequence) {
-	automaton->addTransitionBetween("q0", "0", "q1");
-	automaton->addTransitionBetween("q1", "1", "q2");
+	automaton->addTransition("q0", "0", "q1");
+	automaton->addTransition("q1", "1", "q2");
 	automaton->addAcceptState("q2");
 
 	EXPECT_TRUE(automaton->simulate({"0", "1"}));  // Accepts "01"
@@ -74,16 +74,16 @@ TEST_F(NFATestFixture, ShouldCorrectlySimulateInputSequence) {
 }
 
 TEST_F(NFATestFixture, ShouldHandleMultipleTransitions) {
-	automaton->addTransitionBetween("q0", "0", "q1");
-	automaton->addTransitionBetween("q0", "0", "q2");
+	automaton->addTransition("q0", "0", "q1");
+	automaton->addTransition("q0", "0", "q2");
 	automaton->addAcceptState("q1");
 
 	EXPECT_TRUE(automaton->simulate({"0"})); // Accepts "0" (can be in q1 or q2)
 }
 
 TEST_F(NFATestFixture, ShouldHandleEpsilonTransitions) {
-	automaton->addTransitionBetween("q0", "", "q1"); // Epsilon transition
-	automaton->addTransitionBetween("q1", "1", "q2");
+	automaton->addTransition("q0", "", "q1"); // Epsilon transition
+	automaton->addTransition("q1", "1", "q2");
 	automaton->addAcceptState("q2");
 
 	EXPECT_TRUE(automaton->simulate({"1"})); // Accepts "1" (via epsilon transition)
@@ -101,17 +101,17 @@ TEST_F(NFATestFixture, ShouldProcessInputsForLanguageEndingWith01Or10) {
 
 	automaton->setInputAlphabet({"0", "1"});
 
-	automaton->addTransitionBetween("q0", "0", "q0");
-	automaton->addTransitionBetween("q0", "1", "q0");
-	automaton->addTransitionBetween("q0", "1", "q1");
+	automaton->addTransition("q0", "0", "q0");
+	automaton->addTransition("q0", "1", "q0");
+	automaton->addTransition("q0", "1", "q1");
 
-	automaton->addTransitionBetween("q1", "0", "q2");
-	automaton->addTransitionBetween("q1", "", "q2");
+	automaton->addTransition("q1", "0", "q2");
+	automaton->addTransition("q1", "", "q2");
 
-	automaton->addTransitionBetween("q1", "1", "q3");
+	automaton->addTransition("q1", "1", "q3");
 
-	automaton->addTransitionBetween("q3", "0", "q3");
-	automaton->addTransitionBetween("q3", "1", "q3");
+	automaton->addTransition("q3", "0", "q3");
+	automaton->addTransition("q3", "1", "q3");
 
 	automaton->addAcceptState("q3");
 
@@ -164,17 +164,17 @@ TEST_F(NFATestFixture, ShouldUpdatePossibleCurrentStatesForLanguageEndingWith01O
 
 	automaton->setInputAlphabet({"0", "1"});
 
-	automaton->addTransitionBetween("q0", "0", "q0");
-	automaton->addTransitionBetween("q0", "1", "q0");
-	automaton->addTransitionBetween("q0", "1", "q1");
+	automaton->addTransition("q0", "0", "q0");
+	automaton->addTransition("q0", "1", "q0");
+	automaton->addTransition("q0", "1", "q1");
 
-	automaton->addTransitionBetween("q1", "0", "q2");
-	automaton->addTransitionBetween("q1", "", "q2");
+	automaton->addTransition("q1", "0", "q2");
+	automaton->addTransition("q1", "", "q2");
 
-	automaton->addTransitionBetween("q1", "1", "q3");
+	automaton->addTransition("q1", "1", "q3");
 
-	automaton->addTransitionBetween("q3", "0", "q3");
-	automaton->addTransitionBetween("q3", "1", "q3");
+	automaton->addTransition("q3", "0", "q3");
+	automaton->addTransition("q3", "1", "q3");
 
 	automaton->addAcceptState("q3");
 	automaton->setCurrentState("q0");
