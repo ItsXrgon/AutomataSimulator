@@ -1,4 +1,5 @@
 #pragma once
+#include "../AutomatonException/AutomatonException.h"
 #include "FAState/FAState.h"
 #include "FATransition/FATransition.h"
 #include <set>
@@ -11,11 +12,6 @@
 #else
 #define AUTOMATASIMULATOR_API __declspec(dllimport)
 #endif
-
-/**
- * @brief Default simulation depth.
- */
-extern const int DEFAULT_SIMULATION_DEPTH;
 
 /**
  * @brief Represents a finite automaton.
@@ -67,17 +63,17 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	 * @param key The key of the state to get.
 	 * @return The state with the specified key.
 	 */
-	FAState *getState(const std::string &key);
+	FAState *getStateInternal(const std::string &key);
 
 	/**
 	 * @brief Checks if the transition states exist.
 	 * @param fromKey The key of the state to transition from.
-	 * @param input The input of the transition.
 	 * @param toKey The key of the state to transition to.
+	 * @param input The input of the transition.
 	 * @throws StateNotFoundException If the to or form states are not found.
 	 */
-	void validateTransition(const std::string &fromStateKey, const std::string &input,
-	                        const std::string &toStateKey) const;
+	void validateTransition(const std::string &fromStateKey, const std::string &toStateKey, const std::string &input);
+
   public:
 	/**
 	 * @brief Constructs a new Finite Automaton object.
@@ -103,7 +99,6 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	 */
 	bool inputAlphabetSymbolExists(const std::string &symbol) const;
 
-
 	/**
 	 * @brief Adds a state to the automaton.
 	 * @param label The label of the state.
@@ -121,13 +116,6 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	void updateStateLabel(const std::string &key, const std::string &label);
 
 	/**
-	 * @brief Sets the current state of the automaton.
-	 * @param state The key of the state to set.
-	 * @throws StateNotFoundException If the state is not found.
-	 */
-	void setCurrentState(const std::string &state);
-
-	/**
 	 * @brief Gets the current state of the automaton, defaulting to the start state if not set.
 	 * @return The current state of the automaton.
 	 * @throws StateNotFoundException If the current state and start state are not set.
@@ -135,10 +123,11 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	std::string getCurrentState() const;
 
 	/**
-	 * @brief Gets the states of the automaton.
-	 * @return The states of the automaton.
+	 * @brief Sets the current state of the automaton.
+	 * @param state The key of the state to set.
+	 * @throws StateNotFoundException If the state is not found.
 	 */
-	std::vector<FAState> getStates();
+	virtual void setCurrentState(const std::string &state);
 
 	/**
 	 * @brief Gets the state with the key provided.
@@ -149,11 +138,17 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	FAState getState(const std::string &key) const;
 
 	/**
+	 * @brief Gets the states of the automaton.
+	 * @return The states of the automaton.
+	 */
+	std::vector<FAState> getStates();
+
+	/**
 	 * @brief Removes a state from the automaton.
 	 * @param key The key of the state to remove.
 	 * @throws StateNotFoundException If the state is not found.
 	 */
-	void removeState(const std::string &key);
+	virtual void removeState(const std::string &key);
 
 	/**
 	 * @brief Removes states from the automaton.
@@ -161,12 +156,12 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	 * @param key The keys of the states to remove.
 	 * @throws StateNotFoundException If one of the states are not found.
 	 */
-	void removeStates(const std::vector<std::string> &keys);
+	virtual void removeStates(const std::vector<std::string> &keys);
 
 	/**
 	 * @brief Clears the states of the automaton.
 	 */
-	void clearStates();
+	virtual void clearStates();
 
 	/**
 	 * @brief Sets the input alphabet.
@@ -206,13 +201,6 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	void clearInputAlphabet();
 
 	/**
-	 * @brief Sets the start state key of the automaton.
-	 * @param key The state key.
-	 * @throws StateNotFoundException If the state is not in the automaton.
-	 */
-	virtual void setStartState(const std::string &key);
-
-	/**
 	 * @brief Gets the start state key of the automaton.
 	 * @return The start state key of the automaton.
 	 * @throws InvalidStartStateException If the start state is not set.
@@ -220,15 +208,22 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	std::string getStartState() const;
 
 	/**
+	 * @brief Sets the start state key of the automaton.
+	 * @param key The state key.
+	 * @throws StateNotFoundException If the state is not in the automaton.
+	 */
+	virtual void setStartState(const std::string &key);
+
+	/**
 	 * @brief Add a transition to the automaton.
 	 * @param fromStateKey The key of the state to transition from.
-	 * @param input The input of the transition.
 	 * @param toStateKey The key of the state to transition to.
+	 * @param input The input of the transition.
 	 * @throws StateNotFoundException If the to or from states are not found.
 	 * @throws InvalidTransitionException If the transition violates automaton constraints.
 	 */
-	virtual void addTransition(const std::string &fromStateKey, const std::string &input,
-	                           const std::string &toStateKey);
+	virtual void addTransition(const std::string &fromStateKey, const std::string &toStateKey,
+	                           const std::string &input);
 	/**
 	 * @brief Updates the input of a transition.
 	 * @param transitionKey The key of the transition.
@@ -327,12 +322,12 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	virtual bool processInput(const std::string &input) = 0;
 
 	/**
-	 * @brief Simulates the automaton on a given input string and depth. 
+	 * @brief Simulates the automaton on a given input string and depth.
 	 * @param input The input strings to process.
 	 * @param simulationDepth The maximum number of transitions to simulate. Default is 50.
 	 * @return True if the input is accepted, false otherwise.
 	 * @throws InvalidStartStateException If the start state is not set.
 	 * @throws SimulationDepthExceededException If the simulation depth is exceeded.
 	 */
-	virtual bool simulate(const std::vector<std::string> &input, const int &simulationDepth = DEFAULT_SIMULATION_DEPTH) = 0;
+	virtual bool simulate(const std::vector<std::string> &input, const int &simulationDepth = 50) = 0;
 };

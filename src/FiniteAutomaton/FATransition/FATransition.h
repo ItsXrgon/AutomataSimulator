@@ -1,4 +1,5 @@
 #pragma once
+#include "../../AutomatonException/AutomatonException.h"
 #include <string>
 
 #ifdef AUTOMATASIMULATOR_EXPORTS
@@ -33,7 +34,13 @@ class AUTOMATASIMULATOR_API FATransition {
 	 */
 	std::string input;
 
+	/**
+	 * @brief Validates the format of a transition key
+	 */
+	static void validateTransitionKeyFormat(const std::string &key);
+
   public:
+	FATransition() = default;
 	/**
 	 * @brief Constructs a new Transition object.
 	 * @param fromState The state key from which the transition starts.

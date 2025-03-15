@@ -1,5 +1,6 @@
 #pragma once
 #include "../FATransition/FATransition.h"
+#include "../../AutomatonException/AutomatonException.h"
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -55,6 +56,8 @@ class AUTOMATASIMULATOR_API FAState {
 	FATransition *getTransition(const std::string &key);
 
   public:
+	FAState() = default;
+
 	/**
 	 * @brief Constructs a new State object.
 	 * @param label The label for the state.
@@ -132,11 +135,11 @@ class AUTOMATASIMULATOR_API FAState {
 
 	/**
 	 * @brief Adds a transition to the state's transitions vector.
-	 * @param input The input of the transition.
 	 * @param toStateKey The to state key of the transition.
+	 * @param input The input of the transition.
 	 * @throws InvalidTransitionException If the transition already exists.
 	 */
-	void addTransitionTo(const std::string &input, const std::string &toStateKey);
+	void addTransition(const std::string &toStateKey, const std::string &input);
 
 	/**
 	 * @brief Gets a transition input.

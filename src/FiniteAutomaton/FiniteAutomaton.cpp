@@ -1,21 +1,36 @@
 #define AUTOMATASIMULATOR_EXPORTS
 #include "FiniteAutomaton.h"
-#include "FiniteAutomatonException.h"
 
-const int DEFAULT_SIMULATION_DEPTH = 50;
-
-FiniteAutomaton::FiniteAutomaton() : startState("") {}
+FiniteAutomaton::FiniteAutomaton()
+    : startState(""), inputAlphabetCacheInvalidated(false), statesCacheInvalidated(false) {}
 
 FiniteAutomaton::~FiniteAutomaton() {}
 
-void FiniteAutomaton::validateTransition(const std::string &fromStateKey, const std::string &input,
-                                         const std::string &toStateKey) const {
+void FiniteAutomaton::validateTransition(const std::string &fromStateKey, const std::string &toStateKey,
+                                         const std::string &input) {
 	if (!stateExists(fromStateKey)) {
 		throw StateNotFoundException(fromStateKey);
 	}
 	if (!stateExists(toStateKey)) {
 		throw StateNotFoundException(toStateKey);
 	}
+	FAState *fromState = getStateInternal(fromStateKey);
+	std::string transitionKey = FATransition::generateTransitionKey(fromStateKey, toStateKey, input);
+
+	// Check if the new transition would be a duplicate
+	if (fromState->transitionExists(transitionKey)) {
+		throw InvalidTransitionException("Transition already exists: " + fromStateKey + " -> " + input + " -> " +
+		                                 toStateKey);
+	}
+}
+
+FAState *FiniteAutomaton::getStateInternal(const std::string &key) {
+	auto it = states.find(key);
+	// Check if state exists
+	if (it == states.end()) {
+		throw StateNotFoundException(key);
+	}
+	return &(it->second);
 }
 
 bool FiniteAutomaton::stateExists(const std::string &key) const {
@@ -45,19 +60,18 @@ void FiniteAutomaton::updateStateLabel(const std::string &key, const std::string
 		throw InvalidAutomatonDefinitionException("State with label " + label + " already exists");
 	}
 
-	FAState *state = getState(key);
+	FAState *state = getStateInternal(key);
 
 	state->setLabel(label);
-	statesCacheInvalidated = true;
-}
 
-void FiniteAutomaton::setCurrentState(const std::string &key) {
-	// Check if state exists
-	if (!stateExists(key)) {
-		throw StateNotFoundException(key);
+	if (key == startState) {
+		startState = label;
 	}
 
-	currentState = key;
+	states[state->getKey()] = *state;
+	states.erase(key);
+
+	statesCacheInvalidated = true;
 }
 
 std::string FiniteAutomaton::getCurrentState() const {
@@ -74,6 +88,24 @@ std::string FiniteAutomaton::getCurrentState() const {
 	return currentState;
 }
 
+void FiniteAutomaton::setCurrentState(const std::string &key) {
+	// Check if state exists
+	if (!stateExists(key)) {
+		throw StateNotFoundException(key);
+	}
+
+	currentState = key;
+}
+
+FAState FiniteAutomaton::getState(const std::string &key) const {
+	auto it = states.find(key);
+	// Check if state exists
+	if (it == states.end()) {
+		throw StateNotFoundException(key);
+	}
+	return it->second;
+}
+
 std::vector<FAState> FiniteAutomaton::getStates() {
 	// if the conversion cache from unordered_map to vector is not valid then recompute
 	if (statesCacheInvalidated) {
@@ -86,28 +118,16 @@ std::vector<FAState> FiniteAutomaton::getStates() {
 	return cachedStates;
 }
 
-FAState *FiniteAutomaton::getState(const std::string &key) {
-	auto it = states.find(key);
-	// Check if state exists
-	if (it == states.end()) {
-		throw StateNotFoundException(key);
-	}
-	return &(it->second);
-}
-
-FAState FiniteAutomaton::getState(const std::string &key) const {
-	auto it = states.find(key);
-	// Check if state exists
-	if (it == states.end()) {
-		throw StateNotFoundException(key);
-	}
-	return it->second;
-}
-
 void FiniteAutomaton::removeState(const std::string &key) {
 	// Check if state exists
 	if (!stateExists(key)) {
 		throw StateNotFoundException(key);
+	}
+	if (key == startState) {
+		startState = "";
+	}
+	if (key == currentState) {
+		currentState = "";
 	}
 	states.erase(key);
 	statesCacheInvalidated = true;
@@ -137,19 +157,26 @@ void FiniteAutomaton::removeStates(const std::vector<std::string> &keys) {
 	// If no missing states found then we remove
 	for (const auto &key : keys) {
 		states.erase(key);
+		if (key == startState) {
+			startState = "";
+		}
+		if (key == currentState) {
+			currentState = "";
+		}
 	}
 	statesCacheInvalidated = true;
 }
 
 void FiniteAutomaton::clearStates() {
 	states.clear();
+	currentState = "";
+	startState = "";
 	statesCacheInvalidated = true;
 }
 
 void FiniteAutomaton::setInputAlphabet(const std::vector<std::string> &inputAlphabet) {
 	this->inputAlphabet = std::unordered_set<std::string>(inputAlphabet.begin(), inputAlphabet.end());
 	inputAlphabetCacheInvalidated = true;
-	
 }
 
 void FiniteAutomaton::addInputAlphabet(const std::vector<std::string> &inputAlphabet) {
@@ -214,6 +241,13 @@ void FiniteAutomaton::clearInputAlphabet() {
 	inputAlphabetCacheInvalidated = true;
 }
 
+std::string FiniteAutomaton::getStartState() const {
+	if (startState.empty()) {
+		throw InvalidStartStateException("Start state is not set");
+	}
+	return startState;
+}
+
 void FiniteAutomaton::setStartState(const std::string &key) {
 	// Check if the state exists
 	if (!stateExists(key)) {
@@ -227,11 +261,11 @@ void FiniteAutomaton::setStartState(const std::string &key) {
 	}
 }
 
-void FiniteAutomaton::addTransition(const std::string &fromStateKey, const std::string &input,
-                                    const std::string &toStateKey) {
-	validateTransition(fromStateKey, input, toStateKey);
-	FAState *state = getState(fromStateKey);
-	state->addTransitionTo(input, toStateKey);
+void FiniteAutomaton::addTransition(const std::string &fromStateKey, const std::string &toStateKey,
+                                    const std::string &input) {
+	validateTransition(fromStateKey, toStateKey, input);
+	FAState *state = getStateInternal(fromStateKey);
+	state->addTransition(toStateKey, input);
 	statesCacheInvalidated = true;
 }
 
@@ -247,23 +281,13 @@ void FiniteAutomaton::updateTransitionInput(const std::string &transitionKey, co
 		return;
 	}
 
-	// Check if the transition key is valid or not by checking if states exist
-	if (!stateExists(fromStateKey) || !stateExists(toStateKey)) {
-		throw TransitionNotFoundException(transitionKey);
-	}
+	// Validate state existence and transition not being a duplicate
+	validateTransition(fromStateKey, toStateKey, input);
 
-
-	FAState *fromState = getState(fromStateKey);
-
+	FAState *fromState = getStateInternal(fromStateKey);
 	// Check if the old transition exists
 	if (!fromState->transitionExists(transitionKey)) {
 		throw TransitionNotFoundException(transitionKey);
-	}
-
-	// Check if the new transition would be a duplicate
-	if (fromState->transitionExists(newTransitionKey)) {
-		throw InvalidTransitionException("Transition already exists: " + fromStateKey + " -> " + input + " -> " +
-		                                 toStateKey);
 	}
 
 	fromState->setTransitionInput(transitionKey, input);
@@ -283,60 +307,64 @@ void FiniteAutomaton::updateTransitionFromState(const std::string &transitionKey
 		return;
 	}
 
-	FAState *newFromState = getState(fromStateKey);
+	// Validate state existence and transition not being a duplicate
+	validateTransition(fromStateKey, toStateKey, input);
 
-	// Check if the new transition would be a duplicate
-	if (newFromState->transitionExists(newTransitionKey)) {
-		throw InvalidTransitionException("Transition already exists: " + fromStateKey + " -> " + input + " -> " +
-		                                 toStateKey);
+	FAState *oldFromState = getStateInternal(oldFromStateKey);
+	// Check if the old transition exists
+	if (!oldFromState->transitionExists(transitionKey)) {
+		throw TransitionNotFoundException(transitionKey);
 	}
 
-	FAState *oldFromState = getState(oldFromStateKey);
+	FAState *newFromState = getStateInternal(fromStateKey);
 
 	// Remove the transition from the old from state
-	oldFromState->removeTransition(input);
+	oldFromState->removeTransition(transitionKey);
 	// Add the transition to the new from state
-	newFromState->addTransitionTo(input, toStateKey);
+	newFromState->addTransition(toStateKey, input);
 	statesCacheInvalidated = true;
 }
 
-void FiniteAutomaton::updateTransitionToState(const std::string& transitionKey, const std::string& toStateKey) {
+void FiniteAutomaton::updateTransitionToState(const std::string &transitionKey, const std::string &toStateKey) {
 	std::string input = FATransition::getInputFromKey(transitionKey);
 	std::string fromStateKey = FATransition::getFromStateFromKey(transitionKey);
 
 	std::string newTransitionKey = FATransition::generateTransitionKey(fromStateKey, toStateKey, input);
+
 	// Do we even need to update?
 	if (transitionKey == newTransitionKey) {
 		return;
 	}
 
-	// Check if new to state exists
-	if (!stateExists(toStateKey)) {
-		throw StateNotFoundException(toStateKey);
-	}
+	// Validate state existence and transition not being a duplicate
+	validateTransition(fromStateKey, toStateKey, input);
 
-	FAState *fromState = getState(toStateKey);
+	FAState *fromState = getStateInternal(fromStateKey);
+	// Check if the old transition exists
+	if (!fromState->transitionExists(transitionKey)) {
+		throw TransitionNotFoundException(transitionKey);
+	}
 
 	fromState->setTransitionToState(transitionKey, toStateKey);
 	statesCacheInvalidated = true;
 }
 
-void FiniteAutomaton::removeTransition(const std::string& transitionKey) {
+void FiniteAutomaton::removeTransition(const std::string &transitionKey) {
 	std::string fromStateKey = FATransition::getFromStateFromKey(transitionKey);
-	
-	FAState *fromState = getState(fromStateKey);
+
+	FAState *fromState = getStateInternal(fromStateKey);
 	fromState->removeTransition(transitionKey);
 	statesCacheInvalidated = true;
 }
 
 void FiniteAutomaton::clearTransitionsBetween(const std::string &fromStateKey, const std::string &toStateKey) {
-	FAState *fromState = getState(fromStateKey);
+	FAState *fromState = getStateInternal(fromStateKey);
 	fromState->clearTransitionsTo(toStateKey);
 	statesCacheInvalidated = true;
 }
 
 void FiniteAutomaton::clearStateTransitions(const std::string &stateKey) {
-	FAState *state = getState(stateKey);
+	FAState *state = getStateInternal(stateKey);
 	state->clearTransitions();
 	statesCacheInvalidated = true;
 }
@@ -348,22 +376,15 @@ void FiniteAutomaton::clearTransitions() {
 	statesCacheInvalidated = true;
 }
 
-std::string FiniteAutomaton::getStartState() const {
-	if (startState.empty()) {
-		throw InvalidStartStateException("Start state is not set");
-	}
-	return startState;
-}
-
 void FiniteAutomaton::addAcceptState(const std::string &stateKey) {
-	FAState *state = getState(stateKey);
+	FAState *state = getStateInternal(stateKey);
 
 	state->setIsAccept(true);
 	statesCacheInvalidated = true;
 }
 
 void FiniteAutomaton::removeAcceptState(const std::string &stateKey) {
-	FAState *state = getState(stateKey);
+	FAState *state = getStateInternal(stateKey);
 
 	state->setIsAccept(false);
 	statesCacheInvalidated = true;

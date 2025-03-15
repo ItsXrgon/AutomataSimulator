@@ -35,24 +35,33 @@ FATransition &FATransition::operator=(FATransition &&other) noexcept {
 FATransition::~FATransition() {}
 
 std::string FATransition::generateTransitionKey(const std::string &fromStateKey, const std::string &toStateKey,
-                                              const std::string &input) {
+                                                const std::string &input) {
 	return fromStateKey + "-" + toStateKey + "-" + input;
 }
 
-std::string FATransition::getFromStateFromKey(const std::string &key) {
-	std::string delimiter = "-";
-	return key.substr(0, key.find(delimiter));
+void FATransition::validateTransitionKeyFormat(const std::string &key) {
+	// Expected format: fromState-toState-input
+	int delimiterCount = std::count(key.begin(), key.end(), '-');
+	if (delimiterCount != 2) {
+		throw TransitionNotFoundException("Invalid FA transition key format: " + key);
+	}
 }
 
+std::string FATransition::getFromStateFromKey(const std::string &key) {
+	validateTransitionKeyFormat(key);
+	return key.substr(0, key.find('-'));
+}
 
 std::string FATransition::getToStateFromKey(const std::string &key) {
-	std::string delimiter = "-";
-	return key.substr(key.find(delimiter) + 1, key.find_last_of(delimiter) - key.find(delimiter) - 1);
+	validateTransitionKeyFormat(key);
+	size_t firstDelimiter = key.find('-');
+	size_t lastDelimiter = key.find_last_of('-');
+	return key.substr(firstDelimiter + 1, lastDelimiter - firstDelimiter - 1);
 }
 
 std::string FATransition::getInputFromKey(const std::string &key) {
-	std::string delimiter = "-";
-	return key.substr(key.find_last_of(delimiter) + 1);
+	validateTransitionKeyFormat(key);
+	return key.substr(key.find_last_of('-') + 1);
 }
 
 std::string FATransition::getKey() const {

@@ -1,18 +1,20 @@
 #define AUTOMATASIMULATOR_EXPORTS
 #include "DeterministicFiniteAutomaton.h"
-#include "../FiniteAutomatonException.h"
+#include <iostream>
 
 void DeterministicFiniteAutomaton::checkAlphabetValidity(const std::vector<std::string> &inputAlphabet) const {
 	for (auto &symbol : inputAlphabet) {
 		if (symbol == "") {
-			throw InvalidTransitionException("DFA transition cannot have epsilon as input");
+			throw InvalidAlphabetException("DFA alphabet can not include epsilon");
 		}
 	}
 }
 
 bool DeterministicFiniteAutomaton::checkTransitionDeterminisim(const std::string &fromStateKey,
                                                                const std::string &input) {
-	FAState *fromState = getState(fromStateKey);
+	FAState *fromState = getStateInternal(fromStateKey);
+
+	// in a DFA, we can't have multiple transitions with the same input symbol
 	for (auto &transition : fromState->getTransitions()) {
 		if (transition.getInput() == input) {
 			return false;
@@ -33,11 +35,12 @@ void DeterministicFiniteAutomaton::addInputAlphabet(const std::vector<std::strin
 	FiniteAutomaton::addInputAlphabet(inputAlphabet);
 }
 
-void DeterministicFiniteAutomaton::addTransition(const std::string &fromStateKey, const std::string &input,
-                                                 const std::string &toStateKey) {
+void DeterministicFiniteAutomaton::addTransition(const std::string &fromStateKey, const std::string &toStateKey,
+                                                 const std::string &input) {
+	validateTransition(fromStateKey, toStateKey, input);
 
 	// Check if the input is in the alphabet
-	if (!FiniteAutomaton::inputAlphabetSymbolExists(input)) {
+	if (!inputAlphabetSymbolExists(input)) {
 		throw InvalidTransitionException("Input not in alphabet: " + input);
 	}
 
@@ -47,15 +50,22 @@ void DeterministicFiniteAutomaton::addTransition(const std::string &fromStateKey
 		                                          " -> " + toStateKey);
 	}
 
-	FiniteAutomaton::addTransition(fromStateKey, input, toStateKey);
+	FiniteAutomaton::addTransition(fromStateKey, toStateKey, input);
 }
 
 void DeterministicFiniteAutomaton::updateTransitionInput(const std::string &transitionKey, const std::string &input) {
 	std::string fromStateKey = FATransition::getFromStateFromKey(transitionKey);
+	std::string toStateKey = FATransition::getToStateFromKey(transitionKey);
+	
+	// Check if the input is in the alphabet
+	if (!inputAlphabetSymbolExists(input)) {
+		throw InvalidTransitionException("Input not in alphabet: " + input);
+	}
+
+	validateTransition(fromStateKey, toStateKey, input);
 
 	// Check if the transition is deterministic
 	if (!checkTransitionDeterminisim(fromStateKey, input)) {
-		std::string toStateKey = FATransition::getToStateFromKey(transitionKey);
 		throw InvalidAutomatonDefinitionException("Transition is not deterministic: " + fromStateKey + " -> " + input +
 		                                          " -> " + toStateKey);
 	}
@@ -66,10 +76,12 @@ void DeterministicFiniteAutomaton::updateTransitionInput(const std::string &tran
 void DeterministicFiniteAutomaton::updateTransitionFromState(const std::string &transitionKey,
                                                              const std::string &fromStateKey) {
 	std::string input = FATransition::getInputFromKey(transitionKey);
+	std::string toStateKey = FATransition::getToStateFromKey(transitionKey);
+
+	validateTransition(fromStateKey, toStateKey, input);
 
 	// Check if the transition is deterministic
 	if (!checkTransitionDeterminisim(fromStateKey, input)) {
-		std::string toStateKey = FATransition::getToStateFromKey(transitionKey);
 		throw InvalidAutomatonDefinitionException("Transition is not deterministic: " + fromStateKey + " -> " + input +
 		                                          " -> " + toStateKey);
 	}
@@ -78,13 +90,13 @@ void DeterministicFiniteAutomaton::updateTransitionFromState(const std::string &
 }
 
 bool DeterministicFiniteAutomaton::processInput(const std::string &input) {
-	FAState *simulationCurrentState = FiniteAutomaton::getState(currentState);
+	FAState *simulationCurrentState = getStateInternal(currentState);
 
 	// Loop over the transitions and traverse the match if any
 	for (const auto &transition : simulationCurrentState->getTransitions()) {
 		if (transition.getInput() == input) {
 			// Update state
-			simulationCurrentState = getState(transition.getToStateKey());
+			simulationCurrentState = getStateInternal(transition.getToStateKey());
 			// Break after match is found
 			break;
 		}
@@ -95,18 +107,18 @@ bool DeterministicFiniteAutomaton::processInput(const std::string &input) {
 	return simulationCurrentState->getIsAccept();
 }
 
-bool DeterministicFiniteAutomaton::simulate(const std::vector<std::string> &input,
-                                            const int &simulationDepth = DEFAULT_SIMULATION_DEPTH) {
-	FAState *simulationCurrentState = getState(getStartState());
+bool DeterministicFiniteAutomaton::simulate(const std::vector<std::string> &input, const int &simulationDepth) {
+	FAState *simulationCurrentState = getStateInternal(getStartState());
 
 	int simulationDepthCounter = 0;
+
 	// Loop over the input and look for matching transitions
 	for (const auto &value : input) {
 		// Loop over the transitions and traverse the match if any
 		for (auto &transition : simulationCurrentState->getTransitions()) {
 			if (transition.getInput() == value) {
 				// Update state if match is found
-				simulationCurrentState = getState(transition.getToStateKey());
+				simulationCurrentState = getStateInternal(transition.getToStateKey());
 				simulationDepthCounter++;
 				break;
 			}

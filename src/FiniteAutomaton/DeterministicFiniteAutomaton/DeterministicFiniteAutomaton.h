@@ -28,8 +28,11 @@ class AUTOMATASIMULATOR_API DeterministicFiniteAutomaton : public FiniteAutomato
 
 	/**
 	 * @brief Checks the determinism of a transition.
-	 * @return True if alphabet is valid.
-	 * @throws StateNotFoundException If the form state is not found.
+	 * @param fromStateKey The key of the state to transition from.
+	 * @param toStateKey The key of the state to transition to.
+	 * @param input The input of the transition.
+	 * @return True if transition is deterministic.
+	 * @throws TransitionNotFoundException If the transition is not found.
 	 */
 	bool checkTransitionDeterminisim(const std::string &fromStateKey, const std::string &input);
 
@@ -51,14 +54,14 @@ class AUTOMATASIMULATOR_API DeterministicFiniteAutomaton : public FiniteAutomato
 	/**
 	 * @brief Add a transition to the automaton.
 	 * @param fromStateKey The key of the state to transition from.
-	 * @param input The input of the transition.
 	 * @param toStateKey The key of the state to transition to.
+	 * @param input The input of the transition.
 	 * @throws StateNotFoundException If the to or from states are not found.
 	 * @throws InvalidTransitionException If the transition violates automaton constraints.
 	 * @throws InvalidAutomatonDefinitionException If the transition is non deterministic
 	 */
-	virtual void addTransition(const std::string &fromStateKey, const std::string &input,
-	                           const std::string &toStateKey);
+	void addTransition(const std::string &fromStateKey, const std::string &toStateKey, const std::string &input);
+
 	/**
 	 * @brief Updates the input of a transition.
 	 * @param transitionKey The key of the transition.
@@ -68,7 +71,7 @@ class AUTOMATASIMULATOR_API DeterministicFiniteAutomaton : public FiniteAutomato
 	 * @throws TransitionNotFoundException If the transition violates automaton constraints.
 	 * @throws InvalidAutomatonDefinitionException If the transition is non deterministic
 	 */
-	virtual void updateTransitionInput(const std::string &transitionKey, const std::string &input);
+	void updateTransitionInput(const std::string &transitionKey, const std::string &input);
 
 	/**
 	 * @brief Updates the input of a transition.
@@ -79,7 +82,7 @@ class AUTOMATASIMULATOR_API DeterministicFiniteAutomaton : public FiniteAutomato
 	 * @throws InvalidTransitionException If the transition violates automaton constraints.
 	 * @throws InvalidAutomatonDefinitionException If the transition is non deterministic
 	 */
-	virtual void updateTransitionFromState(const std::string &transitionKey, const std::string &fromStateKey);
+	void updateTransitionFromState(const std::string &transitionKey, const std::string &fromStateKey);
 
 	/**
 	 * @brief Moves the automaton to the next state based on the input.
@@ -97,6 +100,5 @@ class AUTOMATASIMULATOR_API DeterministicFiniteAutomaton : public FiniteAutomato
 	 * @throws InvalidStartStateException If the start state is not set.
 	 * @throws SimulationDepthExceededException If the simulation depth is exceeded.
 	 */
-	bool simulate(const std::vector<std::string> &input,
-	              const int &simulationDepth = DEFAULT_SIMULATION_DEPTH) override;
+	bool simulate(const std::vector<std::string> &input, const int &simulationDepth = 50) override;
 };
