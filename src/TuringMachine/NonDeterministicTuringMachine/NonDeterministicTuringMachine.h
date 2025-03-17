@@ -1,5 +1,5 @@
 #pragma once
-#include "../PushdownAutomaton.h"
+#include "../TuringMachine.h"
 #include <set>
 #include <unordered_set>
 #include <vector>
@@ -10,10 +10,6 @@
 #define AUTOMATASIMULATOR_API __declspec(dllimport)
 #endif
 
-struct NPDAConfiguration {
-	std::string stateKey;
-	std::stack<std::string> stack;
-};
 /**
  * @brief Represents a deterministic pushdown automaton.
  * @brief A deterministic pushdown automaton is defined by a
@@ -25,7 +21,7 @@ struct NPDAConfiguration {
  * @brief - Finite set of accept states.
  * @brief - Current state.
  */
-class AUTOMATASIMULATOR_API NonDeterministicPushdownAutomaton : public PushdownAutomaton {
+class AUTOMATASIMULATOR_API NonDeterministicTuringMachine : public TuringMachine {
   private:
 	/**
 	 * @brief Adds all states reachable by epsilon transitions to the set of states.
@@ -37,10 +33,11 @@ class AUTOMATASIMULATOR_API NonDeterministicPushdownAutomaton : public PushdownA
 	 * @brief Gets all next states for a set of states and an input symbol.
 	 * @param currentStates The set of current states.
 	 * @param input The input symbol.
+	 * @param readSymbol The symbol read from the tape.
 	 * @return The set of next states.
 	 */
 	std::unordered_set<std::string> getNextPossibleStates(const std::unordered_set<std::string> &currentStates,
-	                                                      const std::string &input, const std::string &stackSymbol);
+	                                                      const std::string &input, const std::string &readSymbol);
 
 	/**
 	 * @brief Decides a random state from a set of states.
@@ -48,7 +45,6 @@ class AUTOMATASIMULATOR_API NonDeterministicPushdownAutomaton : public PushdownA
 	 * @return A random state from the set.
 	 */
 	std::string decideRandomState(const std::unordered_set<std::string> &states);
-	std::string serializeStack(const std::stack<std::string> &stack);
 
   public:
 	/**

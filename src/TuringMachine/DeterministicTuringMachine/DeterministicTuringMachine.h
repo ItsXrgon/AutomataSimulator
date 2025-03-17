@@ -1,5 +1,5 @@
-#pragma once oi
-#include "../PushdownAutomaton.h"
+#pragma once
+#include "../TuringMachine.h"
 #include <set>
 #include <vector>
 
@@ -20,7 +20,7 @@
  * @brief - Finite set of accept states.
  * @brief - Current state.
  */
-class AUTOMATASIMULATOR_API DeterministicPushdownAutomaton : public PushdownAutomaton {
+class AUTOMATASIMULATOR_API DeterministicTuringMachine : public TuringMachine {
   private:
 	/**
 	 * @brief Checks the determinism of a transition.
@@ -42,8 +42,8 @@ class AUTOMATASIMULATOR_API DeterministicPushdownAutomaton : public PushdownAuto
 	 * @throws InvalidTransitionException If the transition violates automaton constraints.
 	 * @throws InvalidAutomatonDefinitionException If the transition is non deterministic
 	 */
-	void addTransition(const std::string &fromStateKey, const std::string &toStateKey, const std::string &input,
-	                   const std::string &stackSymbol, const std::string &pushSymbol);
+	virtual void addTransition(const std::string &fromStateKey, const std::string &toStateKey, const std::string &input,
+	                           const std::string &readSymbol, const std::string &writeSymbol, TMDirection direction);
 
 	/**
 	 * @brief Updates the input of a transition.
@@ -53,7 +53,7 @@ class AUTOMATASIMULATOR_API DeterministicPushdownAutomaton : public PushdownAuto
 	 * @throws TransitionNotFoundException If the transition with the input from the key is not found.
 	 * @throws InvalidAutomatonDefinitionException If the transition violates automaton constraints.
 	 */
-	void updateTransitionInput(const std::string &transitionKey, const std::string &input);
+	virtual void updateTransitionInput(const std::string &transitionKey, const std::string &input);
 
 	/**
 	 * @brief Updates the input of a transition.
@@ -63,7 +63,7 @@ class AUTOMATASIMULATOR_API DeterministicPushdownAutomaton : public PushdownAuto
 	 * @throws TransitionNotFoundException If the transition with the input from the key is not found.
 	 * @throws InvalidTransitionException If the transition violates automaton constraints.
 	 */
-	void updateTransitionFromState(const std::string &transitionKey, const std::string &fromStateKey);
+	virtual void updateTransitionFromState(const std::string &transitionKey, const std::string &fromStateKey);
 
 	/**
 	 * @brief Updates the stack symbol of a transition.
@@ -73,7 +73,7 @@ class AUTOMATASIMULATOR_API DeterministicPushdownAutomaton : public PushdownAuto
 	 * @throws TransitionNotFoundException If the transition with the input from the key is not found.
 	 * @throws InvalidTransitionException If the transition violates automaton constraints.
 	 */
-	void updateTransitionStackSymbol(const std::string &transitionKey, const std::string &stackSymbol);
+	virtual void updateTransitionReadSymbol(const std::string &transitionKey, const std::string &stackSymbol);
 
 	/**
 	 * @brief Moves the automaton to the next state based on the input.

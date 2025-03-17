@@ -1,4 +1,5 @@
 #pragma once
+#include "../../AutomatonException/AutomatonException.h"
 #include "../PDATransition/PDATransition.h"
 #include <string>
 #include <unordered_map>
@@ -52,15 +53,17 @@ class AUTOMATASIMULATOR_API PDAState {
 	 * @param key The key of the transition to get.
 	 * @return The transition with the specified key.
 	 */
-	PDATransition *getTransition(const std::string &key);
+	PDATransition *getTransitionInternal(const std::string &key);
 
   public:
+	PDAState() = default;
+
 	/**
 	 * @brief Constructs a new State object.
 	 * @param label The label for the state.
-	 * @param isAccept The boolean indicating whether it is an accept state.
+	 * @param isAccept Whether the state is an accept state or not.
 	 */
-	PDAState(const std::string &label, const bool &isAccept);
+	PDAState(const std::string &label, const bool &isAccept = false);
 
 	/**
 	 * @brief Copy constructor for the State object.
@@ -132,19 +135,27 @@ class AUTOMATASIMULATOR_API PDAState {
 
 	/**
 	 * @brief Adds a transition to the state's transitions vector.
-	 * @param input The input of the transition.
 	 * @param toStateKey The to state key of the transition.
+	 * @param input The input of the transition.
 	 * @param stackSymbol The top of the stack symbol.
 	 * @param pushSymbol The symbol to be pushed onto the stack.
 	 */
-	void addTransitionTo(const std::string &input, const std::string &toStateKey, const std::string &stackSymbol,
-	                     const std::string &pushSymbol);
+	void addTransition(const std::string &toStateKey, const std::string &input, const std::string &stackSymbol,
+	                   const std::string &pushSymbol);
 	/**
 	 * @brief Gets a transition input.
 	 * @param transitionKey The key of the transition.
 	 * @return The input of the transition.
 	 */
 	std::string getTransitionInput(const std::string &transitionKey);
+
+	/**
+	 * @brief Gets the transition with the key provided.
+	 * @param key The key of the transition to get.
+	 * @return The transition with the specified key.
+	 * @throw TransitionNotFoundException If transition is not found.
+	 */
+	PDATransition getTransition(const std::string &key); 
 
 	/**
 	 * @brief Sets a transition input.

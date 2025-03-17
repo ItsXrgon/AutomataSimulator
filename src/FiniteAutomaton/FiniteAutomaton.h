@@ -102,8 +102,9 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	/**
 	 * @brief Adds a state to the automaton.
 	 * @param label The label of the state.
+	 * @param isAccept Whether the state is an accept state or not.
 	 */
-	void addState(const std::string &label);
+	void addState(const std::string &label, const bool &isAccept = false);
 
 	/**
 	 * @brief Updates the label of a state.
@@ -146,17 +147,19 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	/**
 	 * @brief Removes a state from the automaton.
 	 * @param key The key of the state to remove.
+	 * @param strict If true, will throw an exception if the state is used in transitions.
 	 * @throws StateNotFoundException If the state is not found.
 	 */
-	virtual void removeState(const std::string &key);
+	virtual void removeState(const std::string &key, const bool &strict = true);
 
 	/**
 	 * @brief Removes states from the automaton.
 	 * @brief If a state is not found, it will be ignored.
 	 * @param key The keys of the states to remove.
+	 * @param strict If true, will throw an exception if the states are used in transitions.
 	 * @throws StateNotFoundException If one of the states are not found.
 	 */
-	virtual void removeStates(const std::vector<std::string> &keys);
+	virtual void removeStates(const std::vector<std::string> &keys, const bool &strict = true);
 
 	/**
 	 * @brief Clears the states of the automaton.
@@ -166,8 +169,9 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	/**
 	 * @brief Sets the input alphabet.
 	 * @param inputAlphabet The value to load into the tape.
+	 * @param strict If true, will throw an exception if the old symbols are used in transitions.
 	 */
-	void setInputAlphabet(const std::vector<std::string> &inputAlphabet);
+	void setInputAlphabet(const std::vector<std::string> &inputAlphabet, const bool &strict = true);
 
 	/**
 	 * @brief Adds to the input alphabet.
@@ -184,21 +188,24 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	/**
 	 * @brief Remove a symbol from the input alphabet
 	 * @param symbol The symbol to remove
+	 * @param strict If true, will throw an exception if the alphabet symbol is used in transitions.
 	 * @throws InputAlphabetSymbolNotFoundException If the alphabet symbol is not found.
 	 */
-	void removeInputAlphabetSymbol(const std::string &symbol);
+	void removeInputAlphabetSymbol(const std::string &symbol, const bool &strict = true);
 
 	/**
 	 * @brief Remove symbols from the input alphabet
 	 * @param symbols The symbols to remove
+	 * @param strict If true, will throw an exception if the alphabet symbols are used in transitions.
 	 * @throws InputAlphabetSymbolNotFoundException If any of the alphabet symbols are not found.
 	 */
-	void removeInputAlphabetSymbols(const std::vector<std::string> &symbols);
+	void removeInputAlphabetSymbols(const std::vector<std::string> &symbols, const bool &strict = true);
 
 	/**
 	 * @brief Clears the input alphabet of the automaton.
+	 * @param strict If true, will throw an exception if the alphabet symbols are used in transitions.
 	 */
-	void clearInputAlphabet();
+	void clearInputAlphabet(const bool &strict = true);
 
 	/**
 	 * @brief Gets the start state key of the automaton.
@@ -290,11 +297,25 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	void addAcceptState(const std::string &stateKey);
 
 	/**
+	 * @brief Marks states as accept states in the automaton.
+	 * @param keys The keys of the states to mark as an accept state.
+	 * @throws StateNotFoundException If the state is not found.
+	 */
+	void addAcceptStates(const std::vector<std::string> &keys);
+
+	/**
 	 * @brief Removes a state from the accept states of the automaton.
 	 * @param key The key of the state to remove from the accept states.
 	 * @throws StateNotFoundException If the state is not found.
 	 */
 	void removeAcceptState(const std::string &stateKey);
+
+	/**
+	 * @brief Removes states from the accept states of the automaton.
+	 * @param keys The keys of the states to mark as an accept state.
+	 * @throws StateNotFoundException If the state is not found.
+	 */
+	void removeAcceptStates(const std::vector<std::string> &keys);
 
 	/**
 	 * @brief Clears the accept states of the automaton.

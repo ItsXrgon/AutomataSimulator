@@ -87,8 +87,8 @@ void NonDeterministicFiniteAutomaton::setCurrentState(const std::string &state) 
 	possibleCurrentStatesCacheInvalidated = true;
 }
 
-void NonDeterministicFiniteAutomaton::removeState(const std::string &key) {
-	FiniteAutomaton::removeState(key);
+void NonDeterministicFiniteAutomaton::removeState(const std::string &key, const bool &strict) {
+	FiniteAutomaton::removeState(key, strict);
 
 	if (possibleCurrentStates.find(key) != possibleCurrentStates.end()) {
 		possibleCurrentStates.erase(key);
@@ -96,8 +96,9 @@ void NonDeterministicFiniteAutomaton::removeState(const std::string &key) {
 	possibleCurrentStatesCacheInvalidated = true;
 }
 
-void NonDeterministicFiniteAutomaton::removeStates(const std::vector<std::string> &keys) {
-	FiniteAutomaton::removeStates(keys);
+void NonDeterministicFiniteAutomaton::removeStates(const std::vector<std::string> &keys, const bool &strict) {
+	FiniteAutomaton::removeStates(keys, strict);
+	
 	for (const auto &key : keys) {
 		if (possibleCurrentStates.find(key) != possibleCurrentStates.end()) {
 			possibleCurrentStates.erase(key);
@@ -199,17 +200,31 @@ bool NonDeterministicFiniteAutomaton::processInput(const std::string &input) {
 }
 
 bool NonDeterministicFiniteAutomaton::simulate(const std::vector<std::string> &input, const int &simulationDepth) {
-	// Keep track of all current possible states
-	std::unordered_set<std::string> simulationCurrentStates;
+	// Start with the initial state
+	std::unordered_set<std::string> currentStates;
+	currentStates.insert(startState);
 
-	// Start with the initial state and its epsilon closure
-	simulationCurrentStates.insert(getStartState());
-	addEpsilonClosure(simulationCurrentStates);
+	// Compute epsilon closure of the initial state
+	addEpsilonClosure(currentStates);
 
 	// Process each input symbol
-	for (size_t i = 0; i < input.size(); i++) {
-		// Use our helper method to get all next possible states
-		std::unordered_set<std::string> nextStates = getNextPossibleStates(simulationCurrentStates, input[i]);
+	for (size_t inputIdx = 0; inputIdx < input.size(); inputIdx++) {
+		// Get next states for current input symbol
+		std::unordered_set<std::string> nextStates;
+
+		for (const auto &stateKey : currentStates) {
+			FAState *state = getStateInternal(stateKey);
+
+			// Find all transitions that match the current input
+			for (const auto &transition : state->getTransitions()) {
+				if (transition.getInput() == input[inputIdx]) {
+					nextStates.insert(transition.getToStateKey());
+				}
+			}
+		}
+
+		// Compute epsilon closure of the resulting states
+		addEpsilonClosure(nextStates);
 
 		// If no valid transitions are found, input is rejected
 		if (nextStates.empty()) {
@@ -217,17 +232,16 @@ bool NonDeterministicFiniteAutomaton::simulate(const std::vector<std::string> &i
 		}
 
 		// Update current states to the next states
-		simulationCurrentStates = nextStates;
+		currentStates = nextStates;
 
-		// Safety check to avoid infinite loops (e.g., due to epsilon cycles)
-		// We compare with i to ensure we're making progress through the input
-		if (i > simulationDepth) {
+		// Check simulation depth to prevent infinite loops
+		if (inputIdx >= simulationDepth) {
 			throw SimulationDepthExceededException(simulationDepth);
 		}
 	}
 
-	// Check if any of the final states is an accepting state
-	for (const auto &stateKey : simulationCurrentStates) {
+	// After processing all input, check if any of the current states is an accepting state
+	for (const auto &stateKey : currentStates) {
 		if (getStateInternal(stateKey)->getIsAccept()) {
 			return true;
 		}

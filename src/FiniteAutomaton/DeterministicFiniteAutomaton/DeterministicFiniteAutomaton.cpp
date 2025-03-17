@@ -23,10 +23,10 @@ bool DeterministicFiniteAutomaton::checkTransitionDeterminisim(const std::string
 	return true;
 }
 
-void DeterministicFiniteAutomaton::setInputAlphabet(const std::vector<std::string> &inputAlphabet) {
+void DeterministicFiniteAutomaton::setInputAlphabet(const std::vector<std::string> &inputAlphabet, const bool &strict) {
 	checkAlphabetValidity(inputAlphabet);
 
-	FiniteAutomaton::setInputAlphabet(inputAlphabet);
+	FiniteAutomaton::setInputAlphabet(inputAlphabet, strict);
 }
 
 void DeterministicFiniteAutomaton::addInputAlphabet(const std::vector<std::string> &inputAlphabet) {
@@ -56,7 +56,7 @@ void DeterministicFiniteAutomaton::addTransition(const std::string &fromStateKey
 void DeterministicFiniteAutomaton::updateTransitionInput(const std::string &transitionKey, const std::string &input) {
 	std::string fromStateKey = FATransition::getFromStateFromKey(transitionKey);
 	std::string toStateKey = FATransition::getToStateFromKey(transitionKey);
-	
+
 	// Check if the input is in the alphabet
 	if (!inputAlphabetSymbolExists(input)) {
 		throw InvalidTransitionException("Input not in alphabet: " + input);
@@ -90,44 +90,59 @@ void DeterministicFiniteAutomaton::updateTransitionFromState(const std::string &
 }
 
 bool DeterministicFiniteAutomaton::processInput(const std::string &input) {
-	FAState *simulationCurrentState = getStateInternal(currentState);
+	const std::vector<FATransition> &transitions = getStateInternal(currentState)->getTransitions();
 
-	// Loop over the transitions and traverse the match if any
-	for (const auto &transition : simulationCurrentState->getTransitions()) {
+	for (const auto &transition : transitions) {
 		if (transition.getInput() == input) {
-			// Update state
-			simulationCurrentState = getStateInternal(transition.getToStateKey());
-			// Break after match is found
+			currentState = transition.getToStateKey();
 			break;
 		}
 	}
 
-	// Update current state and return whether state is accept or not
-	currentState = simulationCurrentState->getKey();
-	return simulationCurrentState->getIsAccept();
+	return getStateInternal(currentState)->getIsAccept();
 }
 
 bool DeterministicFiniteAutomaton::simulate(const std::vector<std::string> &input, const int &simulationDepth) {
-	FAState *simulationCurrentState = getStateInternal(getStartState());
+	size_t inputIdx = 0;
+	size_t currentDepth = 0;
+	std::string simulationCurrentState = getStartState();
 
-	int simulationDepthCounter = 0;
+	while (currentDepth <= simulationDepth) {
+		bool transitioned = false;
+		const std::vector<FATransition> &transitions = getStateInternal(simulationCurrentState)->getTransitions();
 
-	// Loop over the input and look for matching transitions
-	for (const auto &value : input) {
-		// Loop over the transitions and traverse the match if any
-		for (auto &transition : simulationCurrentState->getTransitions()) {
-			if (transition.getInput() == value) {
-				// Update state if match is found
-				simulationCurrentState = getStateInternal(transition.getToStateKey());
-				simulationDepthCounter++;
+		// First try to process the next input symbol if available
+		if (inputIdx < input.size()) {
+			std::string currentInput = input[inputIdx];
+
+			for (const auto &transition : transitions) {
+				if (transition.getInput() == currentInput) {
+					// Process transition
+					simulationCurrentState = transition.getToStateKey();
+					transitioned = true;
+					inputIdx++;
+					break;
+				}
+			}
+		}
+		currentDepth++;
+
+		// Exit conditions:
+		// 1) No transition available and all input processed
+		// 2) Simulation depth exceeded
+		if (!transitioned) {
+			if (inputIdx <= input.size()) {
+				inputIdx++;
+			} else {
 				break;
 			}
 		}
-		// Simulation depth exceeded
-		if (simulationDepthCounter > simulationDepth) {
-			throw SimulationDepthExceededException(simulationDepth);
-		}
 	}
 
-	return simulationCurrentState->getIsAccept();
+	// Check if we exceeded simulation depth
+	if (currentDepth > simulationDepth) {
+		throw SimulationDepthExceededException(simulationDepth);
+	}
+
+	return getStateInternal(simulationCurrentState)->getIsAccept();
 }

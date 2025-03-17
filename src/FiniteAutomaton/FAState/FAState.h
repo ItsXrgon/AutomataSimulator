@@ -53,7 +53,7 @@ class AUTOMATASIMULATOR_API FAState {
 	 * @param key The key of the transition to get.
 	 * @return The transition with the specified key.
 	 */
-	FATransition *getTransition(const std::string &key);
+	FATransition *getTransitionInternal(const std::string &key);
 
   public:
 	FAState() = default;
@@ -61,9 +61,9 @@ class AUTOMATASIMULATOR_API FAState {
 	/**
 	 * @brief Constructs a new State object.
 	 * @param label The label for the state.
-	 * @param isAccept The boolean indicating whether it is an accept state.
+	 * @param isAccept Whether the state is an accept state or not.
 	 */
-	FAState(const std::string &label, const bool &isAccept);
+	FAState(const std::string &label, const bool &isAccept = false);
 
 	/**
 	 * @brief Copy constructor for the State object.
@@ -140,6 +140,14 @@ class AUTOMATASIMULATOR_API FAState {
 	 * @throws InvalidTransitionException If the transition already exists.
 	 */
 	void addTransition(const std::string &toStateKey, const std::string &input);
+
+	/**
+	 * @brief Gets the transition with the key provided.
+	 * @param key The key of the transition to get.
+	 * @return The transition with the specified key.
+	 * @throw TransitionNotFoundException If transition is not found.
+	 */
+	FATransition getTransition(const std::string &key); 
 
 	/**
 	 * @brief Gets a transition input.

@@ -50,6 +50,15 @@ class AUTOMATASIMULATOR_API StackAlphabetSymbolNotFoundException : public Automa
 };
 
 /**
+ * @brief Thrown when a tape alphabet symbol is not found in the automaton.
+ */
+class AUTOMATASIMULATOR_API TapeAlphabetSymbolNotFoundException : public AutomatonException {
+  public:
+	TapeAlphabetSymbolNotFoundException(const std::string &symbol)
+	    : AutomatonException("Tape alphabet symbol not found: " + symbol) {}
+};
+
+/**
  * @brief Thrown when a transition is not found in the automaton.
  */
 class AUTOMATASIMULATOR_API TransitionNotFoundException : public AutomatonException {
@@ -102,5 +111,5 @@ class AUTOMATASIMULATOR_API SimulationDepthExceededException : public AutomatonE
   public:
 	SimulationDepthExceededException(const int &depth)
 	    : AutomatonException("Simulation depth of " + std::to_string(depth) +
-	                              "has been exceeded for the provided input") {}
+	                              " has been exceeded for the provided input") {}
 };

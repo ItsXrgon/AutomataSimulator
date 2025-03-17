@@ -81,17 +81,19 @@ class AUTOMATASIMULATOR_API NonDeterministicFiniteAutomaton : public FiniteAutom
 	/**
 	 * @brief Removes a state from the automaton.
 	 * @param key The key of the state to remove.
+	 * @param strict If true, will throw an exception if the alphabet symbols are used in transitions.
 	 * @throws StateNotFoundException If the state is not found.
 	 */
-	void removeState(const std::string &key);
+	void removeState(const std::string &key, const bool &strict = true);
 
 	/**
 	 * @brief Removes states from the automaton.
 	 * @brief If a state is not found, it will be ignored.
 	 * @param key The keys of the states to remove.
+	 * @param strict If true, will throw an exception if the alphabet symbols are used in transitions.
 	 * @throws StateNotFoundException If one of the states are not found.
 	 */
-	void removeStates(const std::vector<std::string> &keys);
+	void removeStates(const std::vector<std::string> &keys, const bool &strict = true);
 
 	/**
 	 * @brief Clears the states of the automaton.

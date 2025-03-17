@@ -1,16 +1,95 @@
 #define AUTOMATASIMULATOR_EXPORTS
 #include "PushdownAutomaton.h"
-#include "PushdownAutomatonException.h"
 #include <unordered_map>
 
-const int DEFAULT_SIMULATION_DEPTH = 50;
 const std::string INITIAL_STACK_SYMBOL = "Z";
 
-PushdownAutomaton::PushdownAutomaton() : startState("") {
+PushdownAutomaton::PushdownAutomaton()
+    : startState(""), inputAlphabetCacheInvalidated(false), stackAlphabetCacheInvalidated(false),
+      statesCacheInvalidated(false) {
 	stack.push(INITIAL_STACK_SYMBOL);
 }
 
 PushdownAutomaton::~PushdownAutomaton() {}
+
+std::vector<std::string> PushdownAutomaton::parsePushSymbols(const std::string &pushSymbols) {
+	std::vector<std::string> symbols;
+	char delimiter = ',';
+
+	if (pushSymbols.find(delimiter) == std::string::npos) {
+		if (!pushSymbols.empty()) {
+			symbols.push_back(pushSymbols);
+		}
+		return symbols;
+	}
+
+	std::stringstream ss(pushSymbols);
+	std::string symbol;
+
+	// Extract symbols separated by the delimiter
+	while (std::getline(ss, symbol, delimiter)) {
+		if (!symbol.empty()) {
+			symbols.push_back(symbol);
+		}
+	}
+	return symbols;
+}
+
+void PushdownAutomaton::validateTransition(const std::string &fromStateKey, const std::string &toStateKey,
+                                           const std::string &input, const std::string &stackSymbol,
+                                           const std::string &pushSymbol) {
+	if (!stateExists(fromStateKey)) {
+		throw StateNotFoundException(fromStateKey);
+	}
+	if (!stateExists(toStateKey)) {
+		throw StateNotFoundException(toStateKey);
+	}
+	if (!input.empty() && !inputAlphabetSymbolExists(input)) {
+		throw InvalidTransitionException("Input not in input alphabet: " + input);
+	}
+	if (!stackSymbol.empty() && !stackAlphabetSymbolExists(stackSymbol)) {
+		throw InvalidTransitionException("Stack symbol not in stack alphabet: " + stackSymbol);
+	}
+	std::vector<std::string> pushSymbolsVec = parsePushSymbols(pushSymbol);
+	std::string invalidPushSymbols;
+	for (const auto &symbol : pushSymbolsVec) {
+		if (!symbol.empty() && !stackAlphabetSymbolExists(symbol)) {
+			invalidPushSymbols += symbol + ", ";
+		}
+	}
+	if (!invalidPushSymbols.empty()) {
+		invalidPushSymbols.erase(invalidPushSymbols.size() - 2, 2);
+		throw InvalidTransitionException("Push symbol not in stack alphabet: " + invalidPushSymbols);
+	}
+
+	PDAState *fromState = getStateInternal(fromStateKey);
+	std::string transitionKey =
+	    PDATransition::generateTransitionKey(fromStateKey, toStateKey, input, stackSymbol, pushSymbol);
+
+	// Check if the new transition would be a duplicate
+	if (fromState->transitionExists(transitionKey)) {
+		throw InvalidTransitionException("Transition already exists: " + fromStateKey + " -> " + toStateKey +
+		                                 "| input: " + input + " | stack symbol: " + stackSymbol +
+		                                 " | push symbol: " + pushSymbol);
+	}
+}
+
+PDAState *PushdownAutomaton::getStateInternal(const std::string &key) {
+	auto it = states.find(key);
+	// Check if state exists
+	if (it == states.end()) {
+		throw StateNotFoundException(key);
+	}
+	return &(it->second);
+}
+
+std::stack<std::string> PushdownAutomaton::getStack() {
+	return stack;
+}
+
+void PushdownAutomaton::setStack(std::stack<std::string> stack) {
+	this->stack = stack;
+}
 
 bool PushdownAutomaton::stateExists(const std::string &key) const {
 	return states.find(key) != states.end();
@@ -24,22 +103,13 @@ bool PushdownAutomaton::stackAlphabetSymbolExists(const std::string &symbol) con
 	return stackAlphabet.find(symbol) != stackAlphabet.end();
 }
 
-void PushdownAutomaton::validateTransition(const std::string &fromStateKey, const std::string &toStateKey) {
-	if (!stateExists(fromStateKey)) {
-		throw StateNotFoundException(fromStateKey);
-	}
-	if (!stateExists(toStateKey)) {
-		throw StateNotFoundException(toStateKey);
-	}
-}
-
-void PushdownAutomaton::addState(const std::string &label) {
+void PushdownAutomaton::addState(const std::string &label, const bool &isAccept) {
 	// Check if state label already exists
 	if (stateExists(label)) {
 		throw InvalidAutomatonDefinitionException("State with label " + label + " already exists");
 	}
 
-	PDAState state(label, false);
+	PDAState state(label, isAccept);
 
 	// Update the vector and invalidate conversion cache
 	states[state.getKey()] = state;
@@ -52,19 +122,18 @@ void PushdownAutomaton::updateStateLabel(const std::string &key, const std::stri
 		throw InvalidAutomatonDefinitionException("State with label " + label + " already exists");
 	}
 
-	PDAState *state = getState(key);
+	PDAState *state = getStateInternal(key);
 
-	state->setLabel(label);
-	statesCacheInvalidated = true;
-}
-
-void PushdownAutomaton::setCurrentState(const std::string &key) {
-	// Check if state exists
-	if (!stateExists(key)) {
-		throw StateNotFoundException(key);
+	if (key == startState) {
+		startState = label;
 	}
 
-	currentState = key;
+	state->setLabel(label);
+
+	states[state->getKey()] = *state;
+	states.erase(key);
+
+	statesCacheInvalidated = true;
 }
 
 std::string PushdownAutomaton::getCurrentState() const {
@@ -81,6 +150,24 @@ std::string PushdownAutomaton::getCurrentState() const {
 	return currentState;
 }
 
+void PushdownAutomaton::setCurrentState(const std::string &key) {
+	// Check if state exists
+	if (!stateExists(key)) {
+		throw StateNotFoundException(key);
+	}
+
+	currentState = key;
+}
+
+PDAState PushdownAutomaton::getState(const std::string &key) const {
+	auto it = states.find(key);
+	// Check if state exists
+	if (it == states.end()) {
+		throw StateNotFoundException(key);
+	}
+	return it->second;
+}
+
 std::vector<PDAState> PushdownAutomaton::getStates() {
 	// if the conversion cache from unordered_map to vector is not valid then recompute
 	if (statesCacheInvalidated) {
@@ -93,76 +180,168 @@ std::vector<PDAState> PushdownAutomaton::getStates() {
 	return cachedStates;
 }
 
-PDAState *PushdownAutomaton::getState(const std::string &key) {
-	auto it = states.find(key);
-	// Check if state exists
-	if (it == states.end()) {
-		throw StateNotFoundException(key);
-	}
-	return &(it->second);
-}
-
-PDAState PushdownAutomaton::getState(const std::string &key) const {
-	auto it = states.find(key);
-	// Check if state exists
-	if (it == states.end()) {
-		throw StateNotFoundException(key);
-	}
-	return it->second;
-}
-
-void PushdownAutomaton::removeState(const std::string &key) {
+void PushdownAutomaton::removeState(const std::string &key, const bool &strict) {
 	// Check if state exists
 	if (!stateExists(key)) {
 		throw StateNotFoundException(key);
 	}
+
+	std::vector<std::string> conflictingTransitions;
+
+	// Check for conflicting transitions
+	for (auto &pair : states) {
+		std::vector<PDATransition> transitions = pair.second.getTransitions();
+		for (const auto &transition : transitions) {
+			if (transition.getToStateKey() == key) {
+				if (strict) {
+					conflictingTransitions.push_back(transition.getKey());
+				} else {
+					pair.second.removeTransition(transition.getKey());
+				}
+			}
+		}
+	}
+
+	// If strict mode is enabled and conflicts exist, throw an error
+	if (strict && !conflictingTransitions.empty()) {
+		std::string conflictMessage = "Cannot remove state " + key + " because it is used in transitions: [";
+		for (const auto &t : conflictingTransitions) {
+			conflictMessage += t + ", ";
+		}
+		conflictMessage.erase(conflictMessage.size() - 2, 2); // Remove trailing ", "
+		conflictMessage += "]\nIf you wish to delete these transitions, call the function again with strict=false.";
+
+		throw InvalidAutomatonDefinitionException(conflictMessage);
+	}
+
 	states.erase(key);
-	statesCacheInvalidated = false;
+	if (key == startState) {
+		startState = "";
+	}
+	if (key == currentState) {
+		currentState = "";
+	}
+	statesCacheInvalidated = true;
 }
 
-void PushdownAutomaton::removeStates(const std::vector<std::string> &keys) {
-	// Storing the missing states if any for error handling
+void PushdownAutomaton::removeStates(const std::vector<std::string> &keys, const bool &strict) {
 	std::vector<std::string> missingStates;
+	std::unordered_map<std::string, std::vector<std::string>> conflictingTransitions;
 
-	// Check which states dont exist and add to missingStates vector
+	// Check for missing states
 	for (const auto &key : keys) {
 		if (!stateExists(key)) {
 			missingStates.push_back(key);
 		}
 	}
 
-	// If missing states are found then throw error after formatting
+	// If missing states are found, throw an exception
 	if (!missingStates.empty()) {
-		std::string missingStatesString = "[";
-		for (const auto &missingState : missingStates) {
-			missingStatesString += missingState + ", ";
+		std::string missingStatesString = "[" + missingStates[0];
+		for (size_t i = 1; i < missingStates.size(); i++) {
+			missingStatesString += ", " + missingStates[i];
 		}
-		missingStatesString.erase(missingStatesString.size() - 2, 2);
-		throw StateNotFoundException(missingStatesString);
+		missingStatesString += "]";
+		throw StateNotFoundException("States not found: " + missingStatesString);
 	}
 
-	// If no missing states found then we remove
+	// Check for conflicting transitions
+	for (const auto &key : keys) {
+		for (auto &pair : states) {
+			std::vector<PDATransition> transitions = pair.second.getTransitions();
+			for (const auto &transition : transitions) {
+				if (transition.getToStateKey() == key) {
+					if (strict) {
+						conflictingTransitions[key].push_back(transition.getKey());
+					} else {
+						pair.second.removeTransition(transition.getKey());
+					}
+				}
+			}
+		}
+	}
+
+	// If strict mode is enabled and conflicts exist, throw an error
+	if (strict && !conflictingTransitions.empty()) {
+		std::string conflictMessage = "Cannot remove states because they are used in transitions:\n";
+		for (const auto &[state, transitions] : conflictingTransitions) {
+			conflictMessage += "State " + state + " is part of transitions: [";
+			for (const auto &t : transitions) {
+				conflictMessage += t + ", ";
+			}
+			conflictMessage.erase(conflictMessage.size() - 2, 2); // Remove trailing ", "
+			conflictMessage += "]\n";
+		}
+		throw InvalidAutomatonDefinitionException(
+		    conflictMessage + " If you wish to delete these transitions, call the function again with strict=false.");
+	}
+
+	// Remove states
 	for (const auto &key : keys) {
 		states.erase(key);
+		if (key == startState) {
+			startState = "";
+		}
+		if (key == currentState) {
+			currentState = "";
+		}
 	}
-	statesCacheInvalidated = false;
+
+	statesCacheInvalidated = true;
 }
 
 void PushdownAutomaton::clearStates() {
 	states.clear();
-	statesCacheInvalidated = false;
+	currentState = "";
+	startState = "";
+	statesCacheInvalidated = true;
 }
 
-void PushdownAutomaton::setInputAlphabet(const std::vector<std::string> &inputAlphabet) {
-	this->inputAlphabet = std::unordered_set<std::string>(inputAlphabet.begin(), inputAlphabet.end());
-	inputAlphabetCacheInvalidated = false;
+void PushdownAutomaton::setInputAlphabet(const std::vector<std::string> &inputAlphabet, const bool &strict) {
+	std::unordered_map<std::string, std::vector<std::string>> conflictingTransitions;
+	std::unordered_set<std::string> newAlphabet =
+	    std::unordered_set<std::string>(inputAlphabet.begin(), inputAlphabet.end());
+
+	for (auto &pair : states) {
+		std::vector<PDATransition> transitions = pair.second.getTransitions();
+		for (const auto &transition : transitions) {
+			std::string symbol = transition.getInput();
+			bool found = newAlphabet.find(symbol) != newAlphabet.end();
+			if (!found) {
+				if (strict) {
+					conflictingTransitions[symbol].push_back(transition.getKey());
+				} else {
+					pair.second.removeTransition(transition.getKey());
+				}
+			}
+		}
+	}
+
+	// If strict mode is enabled and conflicts exist, throw an error
+	if (strict && !conflictingTransitions.empty()) {
+		std::string conflictMessage =
+		    "Setting the alphabet will remove symbols that cannot be removed because they are used in transitions:\n";
+		for (const auto &[symbol, transitions] : conflictingTransitions) {
+			conflictMessage += "Symbol " + symbol + " is part of transitions: [";
+			for (const auto &t : transitions) {
+				conflictMessage += t + ", ";
+			}
+			conflictMessage.erase(conflictMessage.size() - 2, 2); // Remove trailing ", "
+			conflictMessage += "]\n";
+		}
+		throw InvalidAutomatonDefinitionException(
+		    conflictMessage + " If you wish to delete these transitions, call the function again with strict=false.");
+	}
+
+	this->inputAlphabet = newAlphabet;
+	inputAlphabetCacheInvalidated = true;
 }
 
 void PushdownAutomaton::addInputAlphabet(const std::vector<std::string> &inputAlphabet) {
 	for (const auto &symbol : inputAlphabet) {
 		this->inputAlphabet.insert(symbol);
 	}
-	inputAlphabetCacheInvalidated = false;
+	inputAlphabetCacheInvalidated = true;
 }
 
 std::vector<std::string> PushdownAutomaton::getInputAlphabet() {
@@ -177,19 +356,47 @@ std::vector<std::string> PushdownAutomaton::getInputAlphabet() {
 	return cachedInputAlphabet;
 }
 
-void PushdownAutomaton::removeInputAlphabetSymbol(const std::string &symbol) {
+void PushdownAutomaton::removeInputAlphabetSymbol(const std::string &symbol, const bool &strict) {
 	// Check if symbol exists
 	if (!inputAlphabetSymbolExists(symbol)) {
 		throw InputAlphabetSymbolNotFoundException(symbol);
 	}
+	std::vector<std::string> conflictingTransitions;
+
+	// Check for conflicting transitions
+	for (auto &pair : states) {
+		std::vector<PDATransition> transitions = pair.second.getTransitions();
+		for (const auto &transition : transitions) {
+			if (transition.getInput() == symbol) {
+				if (strict) {
+					conflictingTransitions.push_back(transition.getKey());
+				} else {
+					pair.second.removeTransition(transition.getKey());
+				}
+			}
+		}
+	}
+
+	// If strict mode is enabled and conflicts exist, throw an error
+	if (strict && !conflictingTransitions.empty()) {
+		std::string conflictMessage = "Cannot remove symbol " + symbol + " because it is used in transitions: [";
+		for (const auto &t : conflictingTransitions) {
+			conflictMessage += t + ", ";
+		}
+		conflictMessage.erase(conflictMessage.size() - 2, 2); // Remove trailing ", "
+		conflictMessage += "]\nIf you wish to delete these transitions, call the function again with strict=false.";
+
+		throw InvalidAutomatonDefinitionException(conflictMessage);
+	}
 
 	inputAlphabet.erase(symbol);
-	inputAlphabetCacheInvalidated = false;
+	inputAlphabetCacheInvalidated = true;
 }
 
-void PushdownAutomaton::removeInputAlphabetSymbols(const std::vector<std::string> &symbols) {
+void PushdownAutomaton::removeInputAlphabetSymbols(const std::vector<std::string> &symbols, const bool &strict) {
 	// Storing the missing symbols if any for error handling
 	std::vector<std::string> missingSymbols;
+	std::unordered_map<std::string, std::vector<std::string>> conflictingTransitions;
 
 	// Check which symbols dont exist and add to missingSymbols vector
 	for (const auto &symbol : symbols) {
@@ -208,27 +415,73 @@ void PushdownAutomaton::removeInputAlphabetSymbols(const std::vector<std::string
 		throw InputAlphabetSymbolNotFoundException(missingSymbolsString);
 	}
 
+	// Check for conflicting transitions
+	for (const auto &symbol : symbols) {
+		for (auto &pair : states) {
+			std::vector<PDATransition> transitions = pair.second.getTransitions();
+			for (const auto &transition : transitions) {
+				if (transition.getInput() == symbol) {
+					if (strict) {
+						conflictingTransitions[symbol].push_back(transition.getKey());
+					} else {
+						pair.second.removeTransition(transition.getKey());
+					}
+				}
+			}
+		}
+	}
+
+	// If strict mode is enabled and conflicts exist, throw an error
+	if (strict && !conflictingTransitions.empty()) {
+		std::string conflictMessage = "Cannot remove symbols because they are used in transitions:\n";
+		for (const auto &[symbol, transitions] : conflictingTransitions) {
+			conflictMessage += "Symbol " + symbol + " is part of transitions: [";
+			for (const auto &t : transitions) {
+				conflictMessage += t + ", ";
+			}
+			conflictMessage.erase(conflictMessage.size() - 2, 2); // Remove trailing ", "
+			conflictMessage += "]\n";
+		}
+		throw InvalidAutomatonDefinitionException(
+		    conflictMessage + " If you wish to delete these transitions, call the function again with strict=false.");
+	}
+
 	// If no missing symbols found then we remove
 	for (const auto &symbol : symbols) {
 		inputAlphabet.erase(symbol);
 	}
-	inputAlphabetCacheInvalidated = false;
+	inputAlphabetCacheInvalidated = true;
 }
 
-void PushdownAutomaton::clearInputAlphabet() {
+void PushdownAutomaton::clearInputAlphabet(const bool &strict) {
+	for (auto &pair : states) {
+		std::vector<PDATransition> transitions = pair.second.getTransitions();
+		for (const auto &transition : transitions) {
+			if (!transition.getInput().empty()) {
+				if (strict) {
+					throw InvalidAutomatonDefinitionException(
+					    "Cannot clear input alphabet because non-epsilon transitions exist");
+				} else {
+					pair.second.removeTransition(transition.getKey());
+				}
+			}
+		}
+	}
+
 	inputAlphabet.clear();
-	inputAlphabetCacheInvalidated = false;
+	inputAlphabetCacheInvalidated = true;
 }
 
-void PushdownAutomaton::setStackAlphabet(const std::vector<std::string> &stackAlphabet) {
+void PushdownAutomaton::setStackAlphabet(const std::vector<std::string> &stackAlphabet, const bool &strict) {
 	this->stackAlphabet = std::unordered_set<std::string>(stackAlphabet.begin(), stackAlphabet.end());
+	stackAlphabetCacheInvalidated = true;
 }
 
 void PushdownAutomaton::addStackAlphabet(const std::vector<std::string> &stackAlphabet) {
 	for (const auto &symbol : stackAlphabet) {
 		this->stackAlphabet.insert(symbol);
 	}
-	stackAlphabetCacheInvalidated = false;
+	stackAlphabetCacheInvalidated = true;
 }
 
 std::vector<std::string> PushdownAutomaton::getStackAlphabet() {
@@ -243,17 +496,17 @@ std::vector<std::string> PushdownAutomaton::getStackAlphabet() {
 	return cachedStackAlphabet;
 }
 
-void PushdownAutomaton::removeStackAlphabetSymbol(const std::string &symbol) {
+void PushdownAutomaton::removeStackAlphabetSymbol(const std::string &symbol, const bool &strict) {
 	// Check if symbol exists
 	if (!stackAlphabetSymbolExists(symbol)) {
-		throw InputAlphabetSymbolNotFoundException(symbol);
+		throw StackAlphabetSymbolNotFoundException(symbol);
 	}
 
 	stackAlphabet.erase(symbol);
 	stackAlphabetCacheInvalidated = true;
 }
 
-void PushdownAutomaton::removeStackAlphabetSymbols(const std::vector<std::string> &symbols) {
+void PushdownAutomaton::removeStackAlphabetSymbols(const std::vector<std::string> &symbols, const bool &strict) {
 	// Storing the missing symbols if any for error handling
 	std::vector<std::string> missingSymbols;
 
@@ -271,7 +524,7 @@ void PushdownAutomaton::removeStackAlphabetSymbols(const std::vector<std::string
 			missingSymbolsString += missingSymbol + ", ";
 		}
 		missingSymbolsString.erase(missingSymbolsString.size() - 2, 2);
-		throw InputAlphabetSymbolNotFoundException(missingSymbolsString);
+		throw StackAlphabetSymbolNotFoundException(missingSymbolsString);
 	}
 
 	// If no missing symbols found then we remove
@@ -281,9 +534,16 @@ void PushdownAutomaton::removeStackAlphabetSymbols(const std::vector<std::string
 	stackAlphabetCacheInvalidated = true;
 }
 
-void PushdownAutomaton::clearStackAlphabet() {
+void PushdownAutomaton::clearStackAlphabet(const bool &strict) {
 	stackAlphabet.clear();
 	stackAlphabetCacheInvalidated = true;
+}
+
+std::string PushdownAutomaton::getStartState() const {
+	if (startState.empty()) {
+		throw InvalidStartStateException("Start state is not set");
+	}
+	return startState;
 }
 
 void PushdownAutomaton::setStartState(const std::string &key) {
@@ -299,27 +559,16 @@ void PushdownAutomaton::setStartState(const std::string &key) {
 	}
 }
 
-void PushdownAutomaton::addTransition(const std::string &fromStateKey, const std::string &input,
-                                      const std::string &toStateKey, const std::string &stackSymbol,
+void PushdownAutomaton::addTransition(const std::string &fromStateKey, const std::string &toStateKey,
+                                      const std::string &input, const std::string &stackSymbol,
                                       const std::string &pushSymbol) {
-	validateTransition(fromStateKey, toStateKey);
-
-	// Check if the input is in the alphabet if not epsilon
-	if (input != "" && inputAlphabet.find(input) == inputAlphabet.end()) {
-		throw InvalidTransitionException("Input not in alphabet: " + input);
-	}
-
-	PDAState *state = getState(fromStateKey);
-	state->addTransitionTo(input, toStateKey, stackSymbol, pushSymbol);
+	validateTransition(fromStateKey, toStateKey, input, stackSymbol, pushSymbol);
+	PDAState *state = getStateInternal(fromStateKey);
+	state->addTransition(toStateKey, input, stackSymbol, pushSymbol);
 	statesCacheInvalidated = true;
 }
 
 void PushdownAutomaton::updateTransitionInput(const std::string &transitionKey, const std::string &input) {
-	// Check if the input is in the alphabet if not epsilon
-	if (input != "" && inputAlphabet.find(input) == inputAlphabet.end()) {
-		throw InvalidTransitionException("Input not in alphabet: " + input);
-	}
-	
 	std::string fromStateKey = PDATransition::getFromStateFromKey(transitionKey);
 	std::string toStateKey = PDATransition::getToStateFromKey(transitionKey);
 	std::string stackSymbol = PDATransition::getStackSymbolFromKey(transitionKey);
@@ -334,22 +583,13 @@ void PushdownAutomaton::updateTransitionInput(const std::string &transitionKey, 
 		return;
 	}
 
-	// Check if the transition key is valid or not by checking if states exist
-	if (!stateExists(fromStateKey) || !stateExists(toStateKey)) {
-		throw TransitionNotFoundException(transitionKey);
-	}
+	// Validate state existence and transition not being a duplicate
+	validateTransition(fromStateKey, toStateKey, input, stackSymbol, pushSymbol);
 
-	PDAState *fromState = getState(fromStateKey);
-
+	PDAState *fromState = getStateInternal(fromStateKey);
 	// Check if the old transition exists
 	if (!fromState->transitionExists(transitionKey)) {
 		throw TransitionNotFoundException(transitionKey);
-	}
-
-	// Check if the new transition would be a duplicate
-	if (fromState->transitionExists(newTransitionKey)) {
-		throw InvalidTransitionException("Transition already exists: " + fromStateKey + " -> " + input + " -> " +
-		                                 toStateKey);
 	}
 
 	fromState->setTransitionInput(transitionKey, input);
@@ -372,20 +612,21 @@ void PushdownAutomaton::updateTransitionFromState(const std::string &transitionK
 		return;
 	}
 
-	PDAState *newFromState = getState(fromStateKey);
+	// Validate transition definition and transition not being a duplicate
+	validateTransition(fromStateKey, toStateKey, input, stackSymbol, pushSymbol);
 
-	// Check if the new transition would be a duplicate
-	if (newFromState->transitionExists(newTransitionKey)) {
-		throw InvalidTransitionException("Transition already exists: " + fromStateKey + " -> " + input + " -> " +
-		                                 toStateKey);
+	PDAState *oldFromState = getStateInternal(oldFromStateKey);
+	// Check if the old transition exists
+	if (!oldFromState->transitionExists(transitionKey)) {
+		throw TransitionNotFoundException(transitionKey);
 	}
 
-	PDAState *oldFromState = getState(oldFromStateKey);
+	PDAState *newFromState = getStateInternal(fromStateKey);
 
 	// Remove the transition from the old from state
 	oldFromState->removeTransition(transitionKey);
 	// Add the transition to the new from state
-	newFromState->addTransitionTo(input, toStateKey, stackSymbol, pushSymbol);
+	newFromState->addTransition(toStateKey, input, stackSymbol, pushSymbol);
 	statesCacheInvalidated = true;
 }
 
@@ -395,6 +636,7 @@ void PushdownAutomaton::updateTransitionToState(const std::string &transitionKey
 	std::string stackSymbol = PDATransition::getStackSymbolFromKey(transitionKey);
 	std::string pushSymbol = PDATransition::getPushSymbolFromKey(transitionKey);
 
+	// Generate the key of the transition after the update
 	std::string newTransitionKey =
 	    PDATransition::generateTransitionKey(fromStateKey, toStateKey, input, stackSymbol, pushSymbol);
 
@@ -403,12 +645,14 @@ void PushdownAutomaton::updateTransitionToState(const std::string &transitionKey
 		return;
 	}
 
-	// Check if new to state exists
-	if (!stateExists(toStateKey)) {
-		throw StateNotFoundException(toStateKey);
-	}
+	// Validate transition definition and transition not being a duplicate
+	validateTransition(fromStateKey, toStateKey, input, stackSymbol, pushSymbol);
 
-	PDAState *fromState = getState(toStateKey);
+	PDAState *fromState = getStateInternal(fromStateKey);
+	// Check if the old transition exists
+	if (!fromState->transitionExists(transitionKey)) {
+		throw TransitionNotFoundException(transitionKey);
+	}
 
 	fromState->setTransitionToState(transitionKey, toStateKey);
 	statesCacheInvalidated = true;
@@ -420,6 +664,7 @@ void PushdownAutomaton::updateTransitionStackSymbol(const std::string &transitio
 	std::string toStateKey = PDATransition::getToStateFromKey(transitionKey);
 	std::string pushSymbol = PDATransition::getPushSymbolFromKey(transitionKey);
 
+	// Generate the key of the transition after the update
 	std::string newTransitionKey =
 	    PDATransition::generateTransitionKey(fromStateKey, toStateKey, input, stackSymbol, pushSymbol);
 
@@ -428,14 +673,16 @@ void PushdownAutomaton::updateTransitionStackSymbol(const std::string &transitio
 		return;
 	}
 
-	// Check if new to state exists
-	if (!stateExists(toStateKey)) {
-		throw StateNotFoundException(toStateKey);
+	// Validate transition definition and transition not being a duplicate
+	validateTransition(fromStateKey, toStateKey, input, stackSymbol, pushSymbol);
+
+	PDAState *fromState = getStateInternal(fromStateKey);
+	// Check if the old transition exists
+	if (!fromState->transitionExists(transitionKey)) {
+		throw TransitionNotFoundException(transitionKey);
 	}
 
-	PDAState *fromState = getState(toStateKey);
-
-	fromState->setTransitionToState(transitionKey, toStateKey);
+	fromState->setTransitionStackSymbol(transitionKey, stackSymbol);
 	statesCacheInvalidated = true;
 }
 
@@ -445,6 +692,7 @@ void PushdownAutomaton::updateTransitionPushSymbol(const std::string &transition
 	std::string toStateKey = PDATransition::getToStateFromKey(transitionKey);
 	std::string stackSymbol = PDATransition::getStackSymbolFromKey(transitionKey);
 
+	// Generate the key of the transition after the update
 	std::string newTransitionKey =
 	    PDATransition::generateTransitionKey(fromStateKey, toStateKey, input, stackSymbol, pushSymbol);
 
@@ -453,32 +701,35 @@ void PushdownAutomaton::updateTransitionPushSymbol(const std::string &transition
 		return;
 	}
 
-	// Check if new to state exists
-	if (!stateExists(toStateKey)) {
-		throw StateNotFoundException(toStateKey);
+	// Vali	date transition definition and transition not being a duplicate
+	validateTransition(fromStateKey, toStateKey, input, stackSymbol, pushSymbol);
+
+	PDAState *fromState = getStateInternal(fromStateKey);
+	// Check if the old transition exists
+	if (!fromState->transitionExists(transitionKey)) {
+		throw TransitionNotFoundException(transitionKey);
 	}
 
-	PDAState *fromState = getState(toStateKey);
-	fromState->setTransitionToState(transitionKey, toStateKey);
+	fromState->setTransitionPushSymbol(transitionKey, pushSymbol);
 	statesCacheInvalidated = true;
 }
 
 void PushdownAutomaton::removeTransition(const std::string &transitionKey) {
 	std::string fromStateKey = PDATransition::getFromStateFromKey(transitionKey);
 
-	PDAState *fromState = getState(fromStateKey);
+	PDAState *fromState = getStateInternal(fromStateKey);
 	fromState->removeTransition(transitionKey);
 	statesCacheInvalidated = true;
 }
 
 void PushdownAutomaton::clearTransitionsBetween(const std::string &fromStateKey, const std::string &toStateKey) {
-	PDAState *fromState = getState(fromStateKey);
+	PDAState *fromState = getStateInternal(fromStateKey);
 	fromState->clearTransitionsTo(toStateKey);
 	statesCacheInvalidated = true;
 }
 
 void PushdownAutomaton::clearStateTransitions(const std::string &key) {
-	PDAState *state = getState(key);
+	PDAState *state = getStateInternal(key);
 	state->clearTransitions();
 	statesCacheInvalidated = true;
 }
@@ -490,24 +741,71 @@ void PushdownAutomaton::clearTransitions() {
 	statesCacheInvalidated = true;
 }
 
-std::string PushdownAutomaton::getStartState() const {
-	if (startState.empty()) {
-		throw InvalidStartStateException("Start state is not set");
-	}
-	return startState;
-}
-
 void PushdownAutomaton::addAcceptState(const std::string &stateKey) {
-	PDAState *state = getState(stateKey);
+	PDAState *state = getStateInternal(stateKey);
 
 	state->setIsAccept(true);
 	statesCacheInvalidated = true;
 }
 
+void PushdownAutomaton::addAcceptStates(const std::vector<std::string> &keys) {
+	// Storing the missing symbols if any for error handling
+	std::vector<std::string> missingStates;
+
+	for (const auto &key : keys) {
+		if (!stateExists(key)) {
+			missingStates.push_back(key);
+		}
+	}
+
+	if (!missingStates.empty()) {
+		std::string missingStatesString = "[";
+		for (const auto &missingState : missingStates) {
+			missingStatesString += missingState + ", ";
+		}
+		missingStatesString.erase(missingStatesString.size() - 2, 2);
+		throw StateNotFoundException(missingStatesString);
+	}
+
+	for (const auto &key : keys) {
+		PDAState *state = getStateInternal(key);
+		state->setIsAccept(true);
+	}
+
+	statesCacheInvalidated = true;
+}
+
 void PushdownAutomaton::removeAcceptState(const std::string &stateKey) {
-	PDAState *state = getState(stateKey);
+	PDAState *state = getStateInternal(stateKey);
 
 	state->setIsAccept(false);
+	statesCacheInvalidated = true;
+}
+
+void PushdownAutomaton::removeAcceptStates(const std::vector<std::string> &keys) {
+	// Storing the missing symbols if any for error handling
+	std::vector<std::string> missingStates;
+
+	for (const auto &key : keys) {
+		if (!stateExists(key)) {
+			missingStates.push_back(key);
+		}
+	}
+
+	if (!missingStates.empty()) {
+		std::string missingStatesString = "[";
+		for (const auto &missingState : missingStates) {
+			missingStatesString += missingState + ", ";
+		}
+		missingStatesString.erase(missingStatesString.size() - 2, 2);
+		throw StateNotFoundException(missingStatesString);
+	}
+
+	for (const auto &key : keys) {
+		PDAState *state = getStateInternal(key);
+		state->setIsAccept(false);
+	}
+
 	statesCacheInvalidated = true;
 }
 

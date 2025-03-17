@@ -41,13 +41,13 @@ bool FiniteAutomaton::inputAlphabetSymbolExists(const std::string &symbol) const
 	return inputAlphabet.find(symbol) != inputAlphabet.end();
 }
 
-void FiniteAutomaton::addState(const std::string &label) {
+void FiniteAutomaton::addState(const std::string &label, const bool &isAccept) {
 	// Check if state label already exists
 	if (stateExists(label)) {
 		throw InvalidAutomatonDefinitionException("State with label " + label + " already exists");
 	}
 
-	FAState state(label, false);
+	FAState state(label, isAccept);
 
 	// Update the vector and invalidate conversion cache
 	states[state.getKey()] = state;
@@ -118,43 +118,103 @@ std::vector<FAState> FiniteAutomaton::getStates() {
 	return cachedStates;
 }
 
-void FiniteAutomaton::removeState(const std::string &key) {
+void FiniteAutomaton::removeState(const std::string &key, const bool &strict) {
 	// Check if state exists
 	if (!stateExists(key)) {
 		throw StateNotFoundException(key);
 	}
+
+	std::vector<std::string> conflictingTransitions;
+
+	// Check for conflicting transitions
+	for (auto &pair : states) {
+		std::vector<FATransition> transitions = pair.second.getTransitions();
+		for (const auto &transition : transitions) {
+			if (transition.getToStateKey() == key) {
+				if (strict) {
+					conflictingTransitions.push_back(transition.getKey());
+				} else {
+					pair.second.removeTransition(transition.getKey());
+				}
+			}
+		}
+	}
+
+	// If strict mode is enabled and conflicts exist, throw an error
+	if (strict && !conflictingTransitions.empty()) {
+		std::string conflictMessage = "Cannot remove state " + key + " because it is used in transitions: [";
+		for (const auto &t : conflictingTransitions) {
+			conflictMessage += t + ", ";
+		}
+		conflictMessage.erase(conflictMessage.size() - 2, 2); // Remove trailing ", "
+		conflictMessage += "]\nIf you wish to delete these transitions, call the function again with strict=false.";
+
+		throw InvalidAutomatonDefinitionException(conflictMessage);
+	}
+
+	states.erase(key);
 	if (key == startState) {
 		startState = "";
 	}
 	if (key == currentState) {
 		currentState = "";
 	}
-	states.erase(key);
 	statesCacheInvalidated = true;
 }
 
-void FiniteAutomaton::removeStates(const std::vector<std::string> &keys) {
-	// Storing the missing states if any for error handling
+void FiniteAutomaton::removeStates(const std::vector<std::string> &keys, const bool &strict) {
 	std::vector<std::string> missingStates;
+	std::unordered_map<std::string, std::vector<std::string>> conflictingTransitions;
 
-	// Check which states dont exist and add to missingStates vector
+	// Check for missing states
 	for (const auto &key : keys) {
 		if (!stateExists(key)) {
 			missingStates.push_back(key);
 		}
 	}
 
-	// If missing states are found then throw error after formatting
+	// If missing states are found, throw an exception
 	if (!missingStates.empty()) {
-		std::string missingStatesString = "[";
-		for (const auto &missingState : missingStates) {
-			missingStatesString += missingState + ", ";
+		std::string missingStatesString = "[" + missingStates[0];
+		for (size_t i = 1; i < missingStates.size(); i++) {
+			missingStatesString += ", " + missingStates[i];
 		}
-		missingStatesString.erase(missingStatesString.size() - 2, 2);
-		throw StateNotFoundException(missingStatesString);
+		missingStatesString += "]";
+		throw StateNotFoundException("States not found: " + missingStatesString);
 	}
 
-	// If no missing states found then we remove
+	// Check for conflicting transitions
+	for (const auto &key : keys) {
+		for (auto &pair : states) {
+			std::vector<FATransition> transitions = pair.second.getTransitions();
+			for (const auto &transition : transitions) {
+				if (transition.getToStateKey() == key) {
+					if (strict) {
+						conflictingTransitions[key].push_back(transition.getKey());
+					} else {
+						pair.second.removeTransition(transition.getKey());
+					}
+				}
+			}
+		}
+	}
+
+	// If strict mode is enabled and conflicts exist, throw an error
+	if (strict && !conflictingTransitions.empty()) {
+		std::string conflictMessage = "Cannot remove states because they are used in transitions:\n";
+		for (const auto &[state, transitions] : conflictingTransitions) {
+			conflictMessage += "State " + state + " is part of transitions: [";
+			for (const auto &t : transitions) {
+				conflictMessage += t + ", ";
+			}
+			conflictMessage.erase(conflictMessage.size() - 2, 2); // Remove trailing ", "
+			conflictMessage += "]\n";
+		}
+		throw InvalidAutomatonDefinitionException(
+		    conflictMessage + " If you wish to delete these transitions, call the function again with strict=false.");
+	}
+
+	// Remove states
 	for (const auto &key : keys) {
 		states.erase(key);
 		if (key == startState) {
@@ -164,6 +224,7 @@ void FiniteAutomaton::removeStates(const std::vector<std::string> &keys) {
 			currentState = "";
 		}
 	}
+
 	statesCacheInvalidated = true;
 }
 
@@ -174,8 +235,44 @@ void FiniteAutomaton::clearStates() {
 	statesCacheInvalidated = true;
 }
 
-void FiniteAutomaton::setInputAlphabet(const std::vector<std::string> &inputAlphabet) {
-	this->inputAlphabet = std::unordered_set<std::string>(inputAlphabet.begin(), inputAlphabet.end());
+void FiniteAutomaton::setInputAlphabet(const std::vector<std::string> &inputAlphabet, const bool &strict) {
+
+	std::unordered_map<std::string, std::vector<std::string>> conflictingTransitions;
+	std::unordered_set<std::string> newAlphabet =
+	    std::unordered_set<std::string>(inputAlphabet.begin(), inputAlphabet.end());
+
+	for (auto &pair : states) {
+		std::vector<FATransition> transitions = pair.second.getTransitions();
+		for (const auto &transition : transitions) {
+			std::string symbol = transition.getInput();
+			bool found = newAlphabet.find(symbol) != newAlphabet.end();
+			if (!found) {
+				if (strict) {
+					conflictingTransitions[symbol].push_back(transition.getKey());
+				} else {
+					pair.second.removeTransition(transition.getKey());
+				}
+			}
+		}
+	}
+
+	// If strict mode is enabled and conflicts exist, throw an error
+	if (strict && !conflictingTransitions.empty()) {
+		std::string conflictMessage =
+		    "Setting the alphabet will remove symbols that cannot be removed because they are used in transitions:\n";
+		for (const auto &[symbol, transitions] : conflictingTransitions) {
+			conflictMessage += "Symbol " + symbol + " is part of transitions: [";
+			for (const auto &t : transitions) {
+				conflictMessage += t + ", ";
+			}
+			conflictMessage.erase(conflictMessage.size() - 2, 2); // Remove trailing ", "
+			conflictMessage += "]\n";
+		}
+		throw InvalidAutomatonDefinitionException(
+		    conflictMessage + " If you wish to delete these transitions, call the function again with strict=false.");
+	}
+
+	this->inputAlphabet = newAlphabet;
 	inputAlphabetCacheInvalidated = true;
 }
 
@@ -198,19 +295,48 @@ std::vector<std::string> FiniteAutomaton::getInputAlphabet() {
 	return cachedInputAlphabet;
 }
 
-void FiniteAutomaton::removeInputAlphabetSymbol(const std::string &symbol) {
+void FiniteAutomaton::removeInputAlphabetSymbol(const std::string &symbol, const bool &strict) {
 	// Check if symbol exists
 	if (!inputAlphabetSymbolExists(symbol)) {
 		throw InputAlphabetSymbolNotFoundException(symbol);
+	}
+
+	std::vector<std::string> conflictingTransitions;
+
+	// Check for conflicting transitions
+	for (auto &pair : states) {
+		std::vector<FATransition> transitions = pair.second.getTransitions();
+		for (const auto &transition : transitions) {
+			if (transition.getInput() == symbol) {
+				if (strict) {
+					conflictingTransitions.push_back(transition.getKey());
+				} else {
+					pair.second.removeTransition(transition.getKey());
+				}
+			}
+		}
+	}
+
+	// If strict mode is enabled and conflicts exist, throw an error
+	if (strict && !conflictingTransitions.empty()) {
+		std::string conflictMessage = "Cannot remove symbol " + symbol + " because it is used in transitions: [";
+		for (const auto &t : conflictingTransitions) {
+			conflictMessage += t + ", ";
+		}
+		conflictMessage.erase(conflictMessage.size() - 2, 2); // Remove trailing ", "
+		conflictMessage += "]\nIf you wish to delete these transitions, call the function again with strict=false.";
+
+		throw InvalidAutomatonDefinitionException(conflictMessage);
 	}
 
 	inputAlphabet.erase(symbol);
 	inputAlphabetCacheInvalidated = true;
 }
 
-void FiniteAutomaton::removeInputAlphabetSymbols(const std::vector<std::string> &symbols) {
+void FiniteAutomaton::removeInputAlphabetSymbols(const std::vector<std::string> &symbols, const bool &strict) {
 	// Storing the missing symbols if any for error handling
 	std::vector<std::string> missingSymbols;
+	std::unordered_map<std::string, std::vector<std::string>> conflictingTransitions;
 
 	// Check which symbols dont exist and add to missingSymbols vector
 	for (const auto &symbol : symbols) {
@@ -229,6 +355,37 @@ void FiniteAutomaton::removeInputAlphabetSymbols(const std::vector<std::string> 
 		throw InputAlphabetSymbolNotFoundException(missingSymbolsString);
 	}
 
+	// Check for conflicting transitions
+	for (const auto &symbol : symbols) {
+		for (auto &pair : states) {
+			std::vector<FATransition> transitions = pair.second.getTransitions();
+			for (const auto &transition : transitions) {
+				if (transition.getInput() == symbol) {
+					if (strict) {
+						conflictingTransitions[symbol].push_back(transition.getKey());
+					} else {
+						pair.second.removeTransition(transition.getKey());
+					}
+				}
+			}
+		}
+	}
+
+	// If strict mode is enabled and conflicts exist, throw an error
+	if (strict && !conflictingTransitions.empty()) {
+		std::string conflictMessage = "Cannot remove symbols because they are used in transitions:\n";
+		for (const auto &[symbol, transitions] : conflictingTransitions) {
+			conflictMessage += "Symbol " + symbol + " is part of transitions: [";
+			for (const auto &t : transitions) {
+				conflictMessage += t + ", ";
+			}
+			conflictMessage.erase(conflictMessage.size() - 2, 2); // Remove trailing ", "
+			conflictMessage += "]\n";
+		}
+		throw InvalidAutomatonDefinitionException(
+		    conflictMessage + " If you wish to delete these transitions, call the function again with strict=false.");
+	}
+
 	// If no missing symbols found then we remove
 	for (const auto &symbol : symbols) {
 		inputAlphabet.erase(symbol);
@@ -236,7 +393,21 @@ void FiniteAutomaton::removeInputAlphabetSymbols(const std::vector<std::string> 
 	inputAlphabetCacheInvalidated = true;
 }
 
-void FiniteAutomaton::clearInputAlphabet() {
+void FiniteAutomaton::clearInputAlphabet(const bool &strict) {
+	for (auto &pair : states) {
+		std::vector<FATransition> transitions = pair.second.getTransitions();
+		for (const auto &transition : transitions) {
+			if (!transition.getInput().empty()) {
+				if (strict) {
+					throw InvalidAutomatonDefinitionException(
+					    "Cannot clear input alphabet because non-epsilon transitions exist");
+				} else {
+					pair.second.removeTransition(transition.getKey());
+				}
+			}
+		}
+	}
+
 	inputAlphabet.clear();
 	inputAlphabetCacheInvalidated = true;
 }
@@ -383,10 +554,64 @@ void FiniteAutomaton::addAcceptState(const std::string &stateKey) {
 	statesCacheInvalidated = true;
 }
 
+void FiniteAutomaton::addAcceptStates(const std::vector<std::string> &keys) {
+	// Storing the missing symbols if any for error handling
+	std::vector<std::string> missingStates;
+
+	for (const auto &key : keys) {
+		if (!stateExists(key)) {
+			missingStates.push_back(key);
+		}
+	}
+
+	if (!missingStates.empty()) {
+		std::string missingStatesString = "[";
+		for (const auto &missingState : missingStates) {
+			missingStatesString += missingState + ", ";
+		}
+		missingStatesString.erase(missingStatesString.size() - 2, 2);
+		throw StateNotFoundException(missingStatesString);
+	}
+
+	for (const auto &key : keys) {
+		FAState *state = getStateInternal(key);
+		state->setIsAccept(true);
+	}
+
+	statesCacheInvalidated = true;
+}
+
 void FiniteAutomaton::removeAcceptState(const std::string &stateKey) {
 	FAState *state = getStateInternal(stateKey);
 
 	state->setIsAccept(false);
+	statesCacheInvalidated = true;
+}
+
+void FiniteAutomaton::removeAcceptStates(const std::vector<std::string> &keys) {
+	// Storing the missing symbols if any for error handling
+	std::vector<std::string> missingStates;
+
+	for (const auto &key : keys) {
+		if (!stateExists(key)) {
+			missingStates.push_back(key);
+		}
+	}
+
+	if (!missingStates.empty()) {
+		std::string missingStatesString = "[";
+		for (const auto &missingState : missingStates) {
+			missingStatesString += missingState + ", ";
+		}
+		missingStatesString.erase(missingStatesString.size() - 2, 2);
+		throw StateNotFoundException(missingStatesString);
+	}
+
+	for (const auto &key : keys) {
+		FAState *state = getStateInternal(key);
+		state->setIsAccept(false);
+	}
+
 	statesCacheInvalidated = true;
 }
 

@@ -54,9 +54,9 @@ std::string FATransition::getFromStateFromKey(const std::string &key) {
 
 std::string FATransition::getToStateFromKey(const std::string &key) {
 	validateTransitionKeyFormat(key);
-	size_t firstDelimiter = key.find('-');
-	size_t lastDelimiter = key.find_last_of('-');
-	return key.substr(firstDelimiter + 1, lastDelimiter - firstDelimiter - 1);
+	size_t first = key.find('-');
+	size_t last = key.find_last_of('-');
+	return key.substr(first + 1, last - first - 1);
 }
 
 std::string FATransition::getInputFromKey(const std::string &key) {

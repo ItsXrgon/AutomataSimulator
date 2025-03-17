@@ -3,6 +3,7 @@
 #include "PDATransition/PDATransition.h"
 #include <queue>
 #include <set>
+#include <sstream>
 #include <stack>
 #include <unordered_map>
 #include <unordered_set>
@@ -13,11 +14,6 @@
 #else
 #define AUTOMATASIMULATOR_API __declspec(dllimport)
 #endif
-
-/**
- * @brief Default simulation depth.
- */
-extern const int DEFAULT_SIMULATION_DEPTH;
 
 /**
  * @brief Initial stack symbol.
@@ -89,12 +85,20 @@ class AUTOMATASIMULATOR_API PushdownAutomaton {
 	 */
 	bool stackAlphabetCacheInvalidated;
 
+	
+	/**
+	 * @brief Splits the push symbols string
+	 * @param pushSymbols Push symbols string
+	 * @return Separated symbols
+	*/
+	std::vector<std::string> parsePushSymbols(const std::string &pushSymbols);
+
 	/**
 	 * @brief Gets the state with the key provided.
 	 * @param key The key of the state to get.
 	 * @return The state with the specified key.
 	 */
-	PDAState *getState(const std::string &key);
+	PDAState *getStateInternal(const std::string &key);
 
 	/**
 	 * @brief Checks if the transition is valid and throws an exception if it is not.
@@ -103,7 +107,8 @@ class AUTOMATASIMULATOR_API PushdownAutomaton {
 	 * @throws StateNotFoundException If the to or form states are not found.
 	 * @throws InvalidTransitionException If the transition violates automaton constraints.
 	 */
-	void validateTransition(const std::string &fromStateKey, const std::string &toStateKey);
+	void validateTransition(const std::string &fromStateKey, const std::string &toStateKey, const std::string &input,
+	                        const std::string &stackSymol, const std::string &pushSymbol);
 
   public:
 	/**
@@ -137,12 +142,24 @@ class AUTOMATASIMULATOR_API PushdownAutomaton {
 	 */
 	bool stackAlphabetSymbolExists(const std::string &symbol) const;
 
+	/**
+	 * @brief Gets the stack.
+	 * @return The stack
+	 */
+	std::stack<std::string> getStack();
+
+	/**
+	 * @brief Set the stack.
+	 * @param stack The stack
+	 */
+	void setStack(std::stack<std::string> stack);
 
 	/**
 	 * @brief Adds a state to the automaton.
 	 * @param label The label for the state.
+	 * @param isAccept Whether the state is an accept state or not.
 	 */
-	void addState(const std::string &label);
+	void addState(const std::string &label, const bool &isAccept = false);
 
 	/**
 	 * @brief Updates the label of a state.
@@ -155,23 +172,17 @@ class AUTOMATASIMULATOR_API PushdownAutomaton {
 	void updateStateLabel(const std::string &key, const std::string &label);
 
 	/**
-	 * @brief Sets the current state of the automaton.
-	 * @param state The key of the state to set.
-	 * @throws StateNotFoundException If the state is not found.
-	 */
-	void setCurrentState(const std::string &state);
-
-	/**
 	 * @brief Gets the current state of the automaton.
 	 * @return The current state of the automaton.
 	 */
 	std::string getCurrentState() const;
 
 	/**
-	 * @brief Gets the states of the automaton.
-	 * @return The states of the automaton.
+	 * @brief Sets the current state of the automaton.
+	 * @param state The key of the state to set.
+	 * @throws StateNotFoundException If the state is not found.
 	 */
-	std::vector<PDAState> getStates();
+	void setCurrentState(const std::string &state);
 
 	/**
 	 * @brief Gets the state with the key provided.
@@ -182,19 +193,27 @@ class AUTOMATASIMULATOR_API PushdownAutomaton {
 	PDAState getState(const std::string &key) const;
 
 	/**
+	 * @brief Gets the states of the automaton.
+	 * @return The states of the automaton.
+	 */
+	std::vector<PDAState> getStates();
+
+	/**
 	 * @brief Removes a state from the automaton.
 	 * @param key The key of the state to remove.
+	 * @param strict If true, will throw an exception if the state is used in transitions.
 	 * @throws StateNotFoundException If the state is not found.
 	 */
-	void removeState(const std::string &key);
+	void removeState(const std::string &key, const bool &strict = true);
 
 	/**
 	 * @brief Removes states from the automaton.
 	 * @brief If a state is not found, it will be ignored.
 	 * @param key The keys of the states to remove.
+	 * @param strict If true, will throw an exception if the states are used in transitions.
 	 * @throws StateNotFoundException If one of the states are not found.
 	 */
-	void removeStates(const std::vector<std::string> &keys);
+	void removeStates(const std::vector<std::string> &keys, const bool &strict = true);
 
 	/**
 	 * @brief Clears the states of the automaton.
@@ -204,8 +223,9 @@ class AUTOMATASIMULATOR_API PushdownAutomaton {
 	/**
 	 * @brief Sets the input alphabet.
 	 * @param inputAlphabet The value to load into the tape.
+	 * @param strict If true, will throw an exception if the old symbols are used in transitions.
 	 */
-	void setInputAlphabet(const std::vector<std::string> &inputAlphabet);
+	void setInputAlphabet(const std::vector<std::string> &inputAlphabet, const bool &strict = true);
 
 	/**
 	 * @brief Adds to the input alphabet.
@@ -222,27 +242,31 @@ class AUTOMATASIMULATOR_API PushdownAutomaton {
 	/**
 	 * @brief Remove a symbol from the alphabet
 	 * @param symbol The symbol to remove
+	 * @param strict If true, will throw an exception if the symbol is used in transitions.
 	 * @throws InputAlphabetSymbolNotFoundException If the alphabet symbol is not found.
 	 */
-	void removeInputAlphabetSymbol(const std::string &symbol);
+	void removeInputAlphabetSymbol(const std::string &symbol, const bool &strict = true);
 
 	/**
 	 * @brief Remove symbols from the alphabet
 	 * @param symbols The symbols to remove
+	 * @param strict If true, will throw an exception if the symbols are used in transitions.
 	 * @throws InputAlphabetSymbolNotFoundException If any of the alphabet symbols are not found.
 	 */
-	void removeInputAlphabetSymbols(const std::vector<std::string> &symbols);
+	void removeInputAlphabetSymbols(const std::vector<std::string> &symbols, const bool &strict = true);
 
 	/**
 	 * @brief Clears the input alphabet of the automaton.
+	 * @param strict If true, will throw an exception if the symbols are used in transitions.
 	 */
-	void clearInputAlphabet();
+	void clearInputAlphabet(const bool &strict = true);
 
 	/**
 	 * @brief Sets the stack alphabet.
 	 * @param stackAlphabet The value to load into the tape.
+	 * @param strict If true, will throw an exception if the old symbols are used in transitions.
 	 */
-	void setStackAlphabet(const std::vector<std::string> &stackAlphabet);
+	void setStackAlphabet(const std::vector<std::string> &stackAlphabet, const bool &strict = true);
 
 	/**
 	 * @brief Adds to the stack alphabet.
@@ -259,21 +283,24 @@ class AUTOMATASIMULATOR_API PushdownAutomaton {
 	/**
 	 * @brief Remove a symbol from the stack alphabet
 	 * @param symbol The symbol to remove
+	 * @param strict If true, will throw an exception if the symbol is used in transitions.
 	 * @throws InputAlphabetSymbolNotFoundException If the alphabet symbol is not found.
 	 */
-	void removeStackAlphabetSymbol(const std::string &symbol);
+	void removeStackAlphabetSymbol(const std::string &symbol, const bool &strict = true);
 
 	/**
 	 * @brief Remove symbols from the stack alphabet
 	 * @param symbols The symbols to remove
+	 * @param strict If true, will throw an exception if the symbols are used in transitions.
 	 * @throws InputAlphabetSymbolNotFoundException If any of the alphabet symbols are not found.
 	 */
-	void removeStackAlphabetSymbols(const std::vector<std::string> &symbols);
+	void removeStackAlphabetSymbols(const std::vector<std::string> &symbols, const bool &strict = true);
 
 	/**
 	 * @brief Clears the stack alphabet of the automaton.
+	 * @param strict If true, will throw an exception if the symbols are used in transitions.
 	 */
-	void clearStackAlphabet();
+	void clearStackAlphabet(const bool &strict = true);
 
 	/**
 	 * @brief Sets the start state key of the automaton.
@@ -291,16 +318,17 @@ class AUTOMATASIMULATOR_API PushdownAutomaton {
 
 	/**
 	 * @brief Add a transition between 2 states to the automaton.
-	 * @param fromKey The key of the state to transition from.
+	 * @param fromStateKey The key of the state to transition from.
+	 * @param toStateKey The key of the state to transition to.
 	 * @param input The input of the transition.
-	 * @param toKey The key of the state to transition to.
 	 * @param stackSymbol The top of the stack symbol.
 	 * @param pushSymbol The symbol to be pushed onto the stack.
 	 * @throws StateNotFoundException If the from or to states are not found.
 	 * @throws InvalidTransitionException If the transition violates automaton constraints.
+	 * @throws InvalidAutomatonDefinitionException If the transition is non deterministic
 	 */
-	virtual void addTransition(const std::string &fromStateKey, const std::string &input, const std::string &toStateKey,
-	                   const std::string &stackSymbol, const std::string &pushSymbol);
+	virtual void addTransition(const std::string &fromStateKey, const std::string &toStateKey, const std::string &input,
+	                           const std::string &stackSymbol, const std::string &pushSymbol);
 
 	/**
 	 * @brief Updates the input of a transition.
@@ -387,10 +415,24 @@ class AUTOMATASIMULATOR_API PushdownAutomaton {
 	void addAcceptState(const std::string &stateKey);
 
 	/**
+	 * @brief Marks states as accept states in the automaton.
+	 * @param keys The keys of the states to mark as an accept state.
+	 * @throws StateNotFoundException If the state is not found.
+	 */
+	void addAcceptStates(const std::vector<std::string> &keys);
+
+	/**
 	 * @brief Removes a state from the accept states of the automaton.
 	 * @param key The key of the state to remove from the accept states.
 	 */
 	void removeAcceptState(const std::string &stateKey);
+
+	/**
+	 * @brief Removes states from the accept states of the automaton.
+	 * @param keys The keys of the states to mark as an accept state.
+	 * @throws StateNotFoundException If the state is not found.
+	 */
+	void removeAcceptStates(const std::vector<std::string> &keys);
 
 	/**
 	 * @brief Clears the accept states of the automaton.
@@ -425,6 +467,5 @@ class AUTOMATASIMULATOR_API PushdownAutomaton {
 	 * @throws InvalidStartStateException If the start state is not set.
 	 * @throws SimulationDepthExceededException If the simulation depth is exceeded.
 	 */
-	virtual bool simulate(const std::vector<std::string> &input,
-	                      const int &simulationDepth = DEFAULT_SIMULATION_DEPTH) = 0;
+	virtual bool simulate(const std::vector<std::string> &input, const int &simulationDepth = 50) = 0;
 };

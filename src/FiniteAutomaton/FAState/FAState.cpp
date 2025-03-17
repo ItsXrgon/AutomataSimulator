@@ -2,10 +2,11 @@
 #include "FAState.h"
 
 FAState::FAState(const std::string &label, const bool &isAccept)
-    : key(label), label(label), transitionsCacheInvalidated(true), isAccept(isAccept) {}
+    : key(label), label(label), isAccept(isAccept), transitionsCacheInvalidated(false) {}
 
 FAState::FAState(const FAState &other)
-    : key(other.key), label(other.label), isAccept(other.isAccept), transitions(other.transitions) {}
+    : key(other.key), label(other.label), isAccept(other.isAccept), transitions(other.transitions),
+      transitionsCacheInvalidated(other.transitionsCacheInvalidated) {}
 
 FAState &FAState::operator=(const FAState &other) {
 	if (this != &other) {
@@ -35,7 +36,7 @@ FAState &FAState::operator=(FAState &&other) noexcept {
 
 FAState::~FAState() {}
 
-FATransition *FAState::getTransition(const std::string &key) {
+FATransition *FAState::getTransitionInternal(const std::string &key) {
 	auto it = transitions.find(key);
 	if (it == transitions.end()) {
 		throw TransitionNotFoundException(key);
@@ -92,6 +93,15 @@ void FAState::addTransition(const std::string &toStateKey, const std::string &in
 	transitionsCacheInvalidated = true;
 }
 
+FATransition FAState::getTransition(const std::string& key) {
+	auto it = transitions.find(key);
+	// Check if state exists
+	if (it == transitions.end()) {
+		throw TransitionNotFoundException(key);
+	}
+	return it->second;
+}
+
 void FAState::setTransitionInput(const std::string &transitionKey, const std::string &input) {
 	if (!transitionExists(transitionKey)) {
 		throw TransitionNotFoundException(transitionKey);
@@ -105,7 +115,7 @@ void FAState::setTransitionInput(const std::string &transitionKey, const std::st
 		                                 getTransitionToState(transitionKey));
 	}
 
-	FATransition *transition = getTransition(transitionKey);
+	FATransition *transition = getTransitionInternal(transitionKey);
 	transition->setInput(input);
 
 	transitions[newTransitionKey] = *transition;
@@ -115,7 +125,7 @@ void FAState::setTransitionInput(const std::string &transitionKey, const std::st
 }
 
 std::string FAState::getTransitionInput(const std::string &transitionKey) {
-	FATransition *transition = getTransition(transitionKey);
+	FATransition *transition = getTransitionInternal(transitionKey);
 	return transition->getInput();
 }
 
@@ -132,7 +142,7 @@ void FAState::setTransitionToState(const std::string &transitionKey, const std::
 		                                 getTransitionInput(transitionKey) + " -> " + toState);
 	}
 
-	FATransition *transition = getTransition(transitionKey);
+	FATransition *transition = getTransitionInternal(transitionKey);
 	transition->setToStateKey(toState);
 
 	transitions[newTransitionKey] = *transition;
@@ -142,7 +152,7 @@ void FAState::setTransitionToState(const std::string &transitionKey, const std::
 }
 
 std::string FAState::getTransitionToState(const std::string &transitionKey) {
-	FATransition *transition = getTransition(transitionKey);
+	FATransition *transition = getTransitionInternal(transitionKey);
 	return transition->getToStateKey();
 }
 
@@ -166,9 +176,12 @@ void FAState::removeTransition(const std::string &transitionKey) {
 }
 
 void FAState::clearTransitionsTo(const std::string &toStateKey) {
-	for (const auto &pair : transitions) {
-		if (pair.second.getToStateKey() == toStateKey) {
-			transitions.erase(pair.first);
+	auto it = transitions.begin();
+	while (it != transitions.end()) {
+		if (it->second.getToStateKey() == toStateKey) {
+			it = transitions.erase(it);
+		} else {
+			++it;
 		}
 	}
 	transitionsCacheInvalidated = true;

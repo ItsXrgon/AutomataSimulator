@@ -40,9 +40,10 @@ class AUTOMATASIMULATOR_API DeterministicFiniteAutomaton : public FiniteAutomato
 	/**
 	 * @brief Sets the input alphabet.
 	 * @param inputAlphabet The value to load into the tape.
+	 * @param strict If true, will throw an exception if the alphabet symbols are used in transitions.
 	 * @throws InvalidAlphabetException If the alphabet is invalid.
 	 */
-	void setInputAlphabet(const std::vector<std::string> &inputAlphabet);
+	void setInputAlphabet(const std::vector<std::string> &inputAlphabet, const bool &strict = true);
 
 	/**
 	 * @brief Adds to the input alphabet.

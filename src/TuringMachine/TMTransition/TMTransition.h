@@ -1,6 +1,8 @@
 #pragma once
-#include "../Direction.h"
+#include "../../AutomatonException/AutomatonException.h"
+#include "../TMDirection.h"
 #include <string>
+
 #ifdef AUTOMATASIMULATOR_EXPORTS
 #define AUTOMATASIMULATOR_API __declspec(dllexport)
 #else
@@ -36,7 +38,7 @@ class AUTOMATASIMULATOR_API TMTransition {
 	/**
 	 * @brief Direction of the transition
 	 */
-	Direction direction;
+	TMDirection direction;
 
 	/**
 	 * @brief The top of the stack symbol,
@@ -48,7 +50,14 @@ class AUTOMATASIMULATOR_API TMTransition {
 	 */
 	std::string writeSymbol;
 
+	/**
+	 * @brief Validates the format of a transition key
+	 */
+	static void validateTransitionKeyFormat(const std::string &key);
+
   public:
+	TMTransition() = default;
+
 	/**
 	 * @brief Constructs a new Transition object.
 	 * @param fromState The state key from which the transition starts.
@@ -57,8 +66,8 @@ class AUTOMATASIMULATOR_API TMTransition {
 	 * @param readSymbol The top of the stack symbol.
 	 * @param writeSymbol The symbol to be pushed onto the stack.
 	 */
-	TMTransition(const std::string &fromStateKey, const std::string &toStateKey, const std::string &readSymbol,
-	             const std::string &writeSymbol, Direction direction);
+	TMTransition(const std::string &fromStateKey, const std::string &toStateKey, const std::string &input,
+	             const std::string &readSymbol, const std::string &writeSymbol, TMDirection direction);
 
 	/**
 	 * @brief Copy constructor for the Transition object.
@@ -90,6 +99,61 @@ class AUTOMATASIMULATOR_API TMTransition {
 	 * @brief Destructor for the Transition object.
 	 */
 	~TMTransition();
+
+	/**
+	 * @brief Generate a unique transition key.
+	 * @param fromStateKey The starting state key.
+	 * @param toStateKey The destination state key.
+	 * @param input The input symbol.
+	 * @param readSymbol The top of the stack symbol.
+	 * @param writeSymbol The symbol to be pushed onto the stack.
+	 * @return A unique transition key string.
+	 */
+	static std::string generateTransitionKey(const std::string &fromStateKey, const std::string &toStateKey,
+	                                         const std::string &input, const std::string &readSymbol,
+	                                         const std::string &writeSymbol, TMDirection direction);
+
+	/**
+	 * @brief Gets the to state key of a transition from its key.
+	 * @param key The transition key.
+	 * @return to state key.
+	 */
+	static std::string getFromStateFromKey(const std::string &key);
+
+	/**
+	 * @brief Gets the from state key of a transition from its key.
+	 * @param key The transition key.
+	 * @return from state key.
+	 */
+	static std::string getToStateFromKey(const std::string &key);
+
+	/**
+	 * @brief Gets the input value of a transition from its key.
+	 * @param key The transition key.
+	 * @return The input value.
+	 */
+	static std::string getInputFromKey(const std::string &key);
+
+	/**
+	 * @brief Gets the direction from the transition key.
+	 * @param key The transition key.
+	 * @return The direction enum.
+	 */
+	static TMDirection getDirectionFromKey(const std::string &key);
+
+	/**
+	 * @brief Gets the read symbol from the transition key.
+	 * @param key The transition key.
+	 * @return The read symbol.
+	 */
+	static std::string getReadSymbolFromKey(const std::string &key);
+
+	/**
+	 * @brief Gets the write symbol from the transition key.
+	 * @param key The transition key.
+	 * @return The write symbol.
+	 */
+	static std::string getWriteSymbolFromKey(const std::string &key);
 
 	/**
 	 * @brief Gets the unique key for this transition.
@@ -137,14 +201,13 @@ class AUTOMATASIMULATOR_API TMTransition {
 	 * @brief Sets the direction value for this transition.
 	 * @param input The new input value.
 	 */
-	void setDirection(Direction direction);
+	void setDirection(TMDirection direction);
 
 	/**
 	 * @brief Gets the direction value for this transition.
 	 * @return The direction value as an enum.
 	 */
-	Direction getDirection() const;
-
+	TMDirection getDirection() const;
 
 	/**
 	 * @brief Sets the top of the stack symbol for this transition.

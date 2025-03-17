@@ -48,29 +48,45 @@ std::string PDATransition::generateTransitionKey(const std::string &fromStateKey
 	return fromStateKey + "-" + toStateKey + "-" + input + "-" + stackSymbol + "-" + pushSymbol;
 }
 
+void PDATransition::validateTransitionKeyFormat(const std::string &key) {
+	int delimiterCount = std::count(key.begin(), key.end(), '-');
+	if (delimiterCount != 4) {
+		throw TransitionNotFoundException("Invalid PDA transition key format: " + key);
+	}
+}
+
 std::string PDATransition::getFromStateFromKey(const std::string &key) {
-	std::string delimiter = "-";
-	return key.substr(0, key.find(delimiter));
+	validateTransitionKeyFormat(key);
+	size_t first = key.find('-');
+	return key.substr(0, first);
 }
 
 std::string PDATransition::getToStateFromKey(const std::string &key) {
-	std::string delimiter = "-";
-	return key.substr(key.find(delimiter) + 1, key.find_last_of(delimiter) - key.find(delimiter) - 1);
+	validateTransitionKeyFormat(key);
+	size_t first = key.find('-');
+	size_t second = key.find('-', first + 1);
+	return key.substr(first + 1, second - first - 1);
 }
 
 std::string PDATransition::getInputFromKey(const std::string &key) {
-	std::string delimiter = "-";
-	return key.substr(key.find_last_of(delimiter) + 1, key.find_last_of(delimiter) - key.find(delimiter) - 1);
+	validateTransitionKeyFormat(key);
+	size_t first = key.find('-');
+	size_t second = key.find('-', first + 1);
+	size_t third = key.find('-', second + 1);
+	return key.substr(second + 1, third - second - 1);
 }
 
 std::string PDATransition::getStackSymbolFromKey(const std::string &key) {
-	std::string delimiter = "-";
-	return key.substr(key.find_last_of(delimiter) + 1, key.find_last_of(delimiter) - key.find(delimiter) - 1);
+	validateTransitionKeyFormat(key);
+	size_t third = key.find('-', key.find('-', key.find('-') + 1) + 1);
+	size_t fourth = key.find('-', third + 1);
+	return key.substr(third + 1, fourth - third - 1);
 }
 
 std::string PDATransition::getPushSymbolFromKey(const std::string &key) {
-	std::string delimiter = "-";
-	return key.substr(key.find_last_of(delimiter) + 1);
+	validateTransitionKeyFormat(key);
+	size_t lastDelimiter = key.find_last_of('-');
+	return key.substr(lastDelimiter + 1);
 }
 
 std::string PDATransition::getKey() const {

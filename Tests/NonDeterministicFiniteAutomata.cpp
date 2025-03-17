@@ -60,6 +60,11 @@ TEST_F(NFA_Test, AddState_AddsMultipleStates) {
 	EXPECT_TRUE(automaton->stateExists("q3"));
 }
 
+TEST_F(NFA_Test, AddState_AddsStateAsAccept) {
+	automaton->addState("q2", true);
+	EXPECT_TRUE(automaton->getState("q2").getIsAccept());
+}
+
 TEST_F(NFA_Test, UpdateStateLabel_UpdatesStateLabel) {
 	automaton->updateStateLabel("q0", "q3");
 	EXPECT_TRUE(automaton->stateExists("q3"));
@@ -185,6 +190,19 @@ TEST_F(NFA_Test, RemoveState_ThrowsIfStateNotFound) {
 	EXPECT_THROW(automaton->removeState("q3"), StateNotFoundException);
 }
 
+TEST_F(NFA_Test, RemoveState_RemovesTransitionsWithStateAsToIfNotStrict) {
+	automaton->setCurrentState("q0");
+	automaton->addTransition("q1", "q0", "0");
+	automaton->removeState("q0", false);
+	EXPECT_FALSE(automaton->getState("q1").transitionExists(FATransition::generateTransitionKey("q1", "q0", "0")));
+}
+
+TEST_F(NFA_Test, RemoveState_ThrowsIfStateIsUsedInTransitionsIfStrict) {
+	automaton->setCurrentState("q0");
+	automaton->addTransition("q1", "q0", "0");
+	EXPECT_THROW(automaton->removeState("q0", true), InvalidAutomatonDefinitionException);
+}
+
 TEST_F(NFA_Test, RemoveStates_RemovesMultipleStates) {
 	automaton->addState("q2");
 	automaton->addState("q3");
@@ -217,6 +235,18 @@ TEST_F(NFA_Test, RemoveStates_RemovesFromCurrentPossibleStates) {
 
 TEST_F(NFA_Test, RemoveStates_ThrowsIfStateNotFound) {
 	EXPECT_THROW(automaton->removeStates({"q1", "q2"}), StateNotFoundException);
+}
+
+TEST_F(NFA_Test, RemoveStates_RemovesTransitionsWithStateAsToIfNotStrict) {
+	automaton->addTransition("q1", "q0", "0");
+	automaton->removeStates({"q0"}, false);
+	EXPECT_FALSE(automaton->getState("q1").transitionExists(FATransition::generateTransitionKey("q1", "q0", "0")));
+}
+
+TEST_F(NFA_Test, RemoveStates_ThrowsIfStateIsUsedInTransitionsIfStrict) {
+	automaton->setCurrentState("q0");
+	automaton->addTransition("q1", "q0", "0");
+	EXPECT_THROW(automaton->removeStates({"q0"}, true), InvalidAutomatonDefinitionException);
 }
 
 TEST_F(NFA_Test, ClearStates_RemovesAllStates) {
@@ -262,6 +292,17 @@ TEST_F(NFA_Test, SetInputAlphabet_NoThrowForEpsilon) {
 	EXPECT_NO_THROW(automaton->setInputAlphabet({"a", "", "c"}));
 }
 
+TEST_F(NFA_Test, SetInputAlphabet_ThrowsForUsedSymbolIfStrict) {
+	automaton->addTransition("q1", "q0", "0");
+	EXPECT_THROW(automaton->setInputAlphabet({"a", "b"}, true), InvalidAutomatonDefinitionException);
+}
+
+TEST_F(NFA_Test, SetInputAlphabet_RemovesTransitionsWithOldSymbolIfNotStrict) {
+	automaton->addTransition("q1", "q0", "0");
+	automaton->setInputAlphabet({"a", "b"}, false);
+	EXPECT_FALSE(automaton->getState("q1").transitionExists(FATransition::generateTransitionKey("q1", "q0", "0")));
+}
+
 TEST_F(NFA_Test, AddInputAlphabet_AddsNewSymbols) {
 	automaton->addInputAlphabet({"2", "3"});
 	std::vector<std::string> alphabet = automaton->getInputAlphabet();
@@ -297,6 +338,17 @@ TEST_F(NFA_Test, RemoveInputAlphabetSymbol_ThrowsIfNotFound) {
 	EXPECT_THROW(automaton->removeInputAlphabetSymbol("x"), InputAlphabetSymbolNotFoundException);
 }
 
+TEST_F(NFA_Test, RemoveInputAlphabetSymbol_ThrowsForUsedSymbolIfStrict) {
+	automaton->addTransition("q1", "q0", "0");
+	EXPECT_THROW(automaton->removeInputAlphabetSymbol("0", true), InvalidAutomatonDefinitionException);
+}
+
+TEST_F(NFA_Test, RemoveInputAlphabetSymbol_RemovesTransitionsWithOldSymbolIfNotStrict) {
+	automaton->addTransition("q1", "q0", "0");
+	automaton->removeInputAlphabetSymbol("0", false);
+	EXPECT_FALSE(automaton->getState("q1").transitionExists(FATransition::generateTransitionKey("q1", "q0", "0")));
+}
+
 TEST_F(NFA_Test, RemoveInputAlphabetSymbols_RemovesMultipleSymbols) {
 	automaton->addInputAlphabet({"2", "3"});
 	automaton->removeInputAlphabetSymbols({"0", "3"});
@@ -314,9 +366,33 @@ TEST_F(NFA_Test, RemoveInputAlphabetSymbols_ThrowsIfAnySymbolNotFound) {
 	EXPECT_THROW(automaton->removeInputAlphabetSymbols({"1", "x"}), InputAlphabetSymbolNotFoundException);
 }
 
+TEST_F(NFA_Test, RemoveInputAlphabetSymbols_ThrowsForUsedSymbolIfStrict) {
+	automaton->addTransition("q1", "q0", "0");
+	EXPECT_THROW(automaton->removeInputAlphabetSymbols({"0"}, true), InvalidAutomatonDefinitionException);
+}
+
+TEST_F(NFA_Test, RemoveInputAlphabetSymbols_RemovesTransitionsWithOldSymbolIfNotStrict) {
+	automaton->addTransition("q1", "q0", "0");
+	automaton->removeInputAlphabetSymbols({"0"}, false);
+	EXPECT_FALSE(automaton->getState("q1").transitionExists(FATransition::generateTransitionKey("q1", "q0", "0")));
+}
+
 TEST_F(NFA_Test, ClearInputAlphabet_RemovesAllSymbols) {
 	automaton->clearInputAlphabet();
 	EXPECT_TRUE(automaton->getInputAlphabet().empty());
+}
+
+TEST_F(NFA_Test, ClearInputAlphabet_ThrowsForUsedSymbolIfStrict) {
+	automaton->addTransition("q1", "q0", "0");
+	EXPECT_THROW(automaton->clearInputAlphabet(true), InvalidAutomatonDefinitionException);
+}
+
+TEST_F(NFA_Test, ClearInputAlphabet_RemovesNonEpsilonTransitionsWithOldSymbolIfNotStrict) {
+	automaton->addTransition("q1", "q0", "0");
+	automaton->addTransition("q1", "q0", "");
+	automaton->clearInputAlphabet(false);
+	EXPECT_FALSE(automaton->getState("q1").transitionExists(FATransition::generateTransitionKey("q1", "q0", "0")));
+	EXPECT_TRUE(automaton->getState("q1").transitionExists(FATransition::generateTransitionKey("q1", "q0", "")));
 }
 
 TEST_F(NFA_Test, GetStartState_ReturnsCorrectState) {
@@ -651,6 +727,20 @@ TEST_F(NFA_Test, AddAcceptState_ThrowsIfStateNotFound) {
 	EXPECT_THROW(automaton->addAcceptState("qX"), StateNotFoundException);
 }
 
+TEST_F(NFA_Test, AddAcceptStates_AddsMultipleAcceptStates) {
+	automaton->addState("q2");
+	automaton->addAcceptStates({"q1", "q2"});
+
+	auto acceptStates = automaton->getAcceptStates();
+	ASSERT_EQ(acceptStates.size(), 2);
+	EXPECT_EQ(acceptStates[0].getKey(), "q1");
+	EXPECT_EQ(acceptStates[0].getKey(), "q2");
+}
+
+TEST_F(NFA_Test, AddAcceptStates_ThrowsForMissingStates) {
+	EXPECT_THROW(automaton->addAcceptStates({"q1", "q2"}), StateNotFoundException);
+}
+
 TEST_F(NFA_Test, RemoveAcceptState_ValidState) {
 	automaton->addAcceptState("q1");
 	automaton->removeAcceptState("q1");
@@ -670,6 +760,27 @@ TEST_F(NFA_Test, RemoveAcceptState_NonAcceptState) {
 
 TEST_F(NFA_Test, RemoveAcceptState_ThrowsIfStateNotFound) {
 	EXPECT_THROW(automaton->removeAcceptState("qX"), StateNotFoundException);
+}
+
+TEST_F(NFA_Test, RemoveAcceptStates_RemovesMultipleAcceptStates) {
+	automaton->addState("q2");
+	automaton->addAcceptStates({"q1", "q2"});
+
+	auto acceptStates = automaton->getAcceptStates();
+	ASSERT_EQ(acceptStates.size(), 2);
+
+	automaton->removeAcceptStates({"q1", "q2"});
+	acceptStates = automaton->getAcceptStates();
+	ASSERT_EQ(acceptStates.size(), 0);
+}
+
+TEST_F(NFA_Test, RemoveAcceptStates_ThrowsForMissingStates) {
+	automaton->addState("q2");
+	automaton->removeAcceptStates({"q1", "q2"});
+
+	auto acceptStates = automaton->getAcceptStates();
+
+	EXPECT_THROW(automaton->removeAcceptStates({"q2", "q3"}), StateNotFoundException);
 }
 
 TEST_F(NFA_Test, ClearAcceptStates_RemovesAllAcceptStates) {
@@ -797,6 +908,7 @@ TEST_F(NFA_Test, Simulate_EmptyInputString) {
 	automaton->addAcceptState("q0");
 	EXPECT_TRUE(automaton->simulate({}));
 
+	automaton->removeAcceptState("q0");
 	EXPECT_FALSE(automaton->simulate({}));
 }
 
@@ -876,7 +988,6 @@ TEST_F(NFA_Test, ProcessInput_EpsilonTransition) {
 	automaton->addTransition("q0", "q1", ""); // Epsilon transition
 	automaton->addAcceptState("q1");
 
-	automaton->reset();
 	EXPECT_TRUE(automaton->processInput("")); // Should follow epsilon transition
 }
 

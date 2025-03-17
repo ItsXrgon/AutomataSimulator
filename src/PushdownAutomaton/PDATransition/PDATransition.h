@@ -1,4 +1,5 @@
 #pragma once
+#include "../../AutomatonException/AutomatonException.h"
 #include <string>
 
 #ifdef AUTOMATASIMULATOR_EXPORTS
@@ -37,13 +38,20 @@ class AUTOMATASIMULATOR_API PDATransition {
 	 * @brief The top of the stack symbol,
 	 */
 	std::string stackSymbol;
-	
+
 	/**
 	 * @brief The Symbol to be pushed onto the stack.
 	 */
 	std::string pushSymbol;
 
+	/**
+	 * @brief Validates the format of a transition key
+	 */
+	static void validateTransitionKeyFormat(const std::string &key);
+
   public:
+	PDATransition() = default;
+
 	/**
 	 * @brief Constructs a new Transition object.
 	 * @param fromState The state key from which the transition starts.
@@ -53,7 +61,7 @@ class AUTOMATASIMULATOR_API PDATransition {
 	 * @param pushSymbol The symbol to be pushed onto the stack.
 	 */
 	PDATransition(const std::string &fromStateKey, const std::string &toStateKey, const std::string &input,
-	           const std::string &stackSymbol, const std::string &pushSymbol);
+	              const std::string &stackSymbol, const std::string &pushSymbol);
 
 	/**
 	 * @brief Copy constructor for the Transition object.
