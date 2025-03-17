@@ -50,3 +50,5 @@ Thumbs.db
 /Debug
 /Tests/Debug
 /AutomataSimulator.sln
+/Tests/Tests.vcxproj
+/Tests/Tests.vcxproj.user
