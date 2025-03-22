@@ -16,10 +16,15 @@
 /**
  * @brief Default blank symbol.
  */
-extern const std::string DEFAULT_BLANK_SYMBOL;
+extern const std::string &DEFAULT_BLANK_SYMBOL;
 
 class AUTOMATASIMULATOR_API TuringMachine {
   protected:
+	/**
+	 * @brief The input of the automaton.
+	 */
+	std::vector<std::string> input;
+
 	/**
 	 * @brief The current state of the automaton.
 	 */
@@ -89,16 +94,15 @@ class AUTOMATASIMULATOR_API TuringMachine {
 
 	/**
 	 * @brief Checks if the transition is valid and throws an exception if it is not.
-	 * @param fromKey The key of the state to transition from.
-	 * @param input The input of the transition.
-	 * @param toKey The key of the state to transition to.
+	 * @param fromStateKey The key of the state to transition from.
+	 * @param toStateKey The key of the state to transition to.
 	 * @param readSymbol The symbol to read from the tape.
 	 * @param writeSymbol The symbol to write onto the tape.
 	 * @param direction The direction of the transition
 	 * @throws StateNotFoundException If the to or form states are not found.
 	 * @throws InvalidTransitionException If the transition violates automaton constraints.
 	 */
-	void validateTransition(const std::string &fromStateKey, const std::string &toStateKey, const std::string &input,
+	void validateTransition(const std::string &fromStateKey, const std::string &toStateKey,
 	                        const std::string &readSymbol, const std::string &writeSymbol, TMDirection direction);
 
   public:
@@ -132,6 +136,24 @@ class AUTOMATASIMULATOR_API TuringMachine {
 	 * @return Bool indicating whether the symbol exists or not.
 	 */
 	bool tapeAlphabetSymbolExists(const std::string &symbol) const;
+
+	/**
+	 * @brief Gets the input of the automaton.
+	 * @return The input of the automaton.
+	 */
+	std::vector<std::string> getInput() const;
+
+	/**
+	 * @brief Sets the input of the automaton.
+	 * @param input The value to load into the tape.
+	 */
+	void setInput(const std::vector<std::string> &input);
+
+	/**
+	 * @brief Adds to the input of the automaton.
+	 * @param input The value to load into the tape.
+	 */
+	void addInput(const std::vector<std::string> &input);
 
 	/**
 	 * @brief Sets the tape.
@@ -307,25 +329,14 @@ class AUTOMATASIMULATOR_API TuringMachine {
 	 * @brief Add a transition between 2 states to the automaton.
 	 * @param fromStateKey The key of the state to transition from.
 	 * @param toStateKey The key of the state to transition to.
-	 * @param input The input of the transition.
 	 * @param readSymbol The symbol to read from the tape.
 	 * @param writeSymbol The symbol to write onto the tape.
 	 * @param direction The direction of the transition
 	 * @throws StateNotFoundException If the from or to states are not found.
 	 * @throws InvalidTransitionException If the transition violates automaton constraints.
 	 */
-	virtual void addTransition(const std::string &fromStateKey, const std::string &toStateKey, const std::string &input,
+	virtual void addTransition(const std::string &fromStateKey, const std::string &toStateKey,
 	                           const std::string &readSymbol, const std::string &writeSymbol, TMDirection direction);
-
-	/**
-	 * @brief Updates the input of a transition.
-	 * @param transitionKey The key of the transition.
-	 * @param input The input of the transition.
-	 * @throws StateNotFoundException If the from or to states from the transition key are not found.
-	 * @throws TransitionNotFoundException If the transition with the input from the key is not found.
-	 * @throws InvalidTransitionException If the transition violates automaton constraints.
-	 */
-	virtual void updateTransitionInput(const std::string &transitionKey, const std::string &input);
 
 	/**
 	 * @brief Updates the input of a transition.
@@ -442,18 +453,24 @@ class AUTOMATASIMULATOR_API TuringMachine {
 	std::vector<TMState> getAcceptStates() const;
 
 	/**
-	 * @brief Resets the automaton to its start state.
+	 * @brief Resets the automaton state, tape and head.
 	 */
-	void reset();
+	virtual void reset();
 
 	/**
-	 * @brief Moves the automaton to the next state based on the input.
-	 * @param input The input string to process.
+	 * @brief Returns whether the automata is currenty in an accept state or not.
+	 * @return True if the automaton is in an accept state.
+	 */
+	bool isAccepting() const;
+
+	/**
+	 * @brief Moves the automaton to the next state based on the current input head.
 	 * @return True if the current state is accept.
 	 * @throws InvalidStartStateException If the start state is not set.
 	 * @throws InvalidAlphabetException If the alphabet is not set.
+	 * @throws InputConsumedException If the input head exceeds the length of the input.
 	 */
-	virtual bool processInput(const std::string &input) = 0;
+	virtual bool processInput() = 0;
 
 	/**
 	 * @brief Simulates the automaton on a given input string and depth.

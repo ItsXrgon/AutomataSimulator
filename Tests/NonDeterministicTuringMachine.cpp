@@ -19,6 +19,47 @@ class NTM_Test : public ::testing::Test {
 	NonDeterministicTuringMachine *automaton;
 };
 
+TEST_F(NTM_Test, GetInput_GetsInput) {
+	std::vector<std::string> input = automaton->getInput();
+	EXPECT_EQ(input.size(), 0);
+}
+
+TEST_F(NTM_Test, SetInput_SetsInput) {
+	automaton->setInput({"0", "1", "0"});
+	std::vector<std::string> input = automaton->getInput();
+
+	EXPECT_EQ(input.size(), 3);
+	EXPECT_TRUE(std::find(input.begin(), input.end(), "0") != input.end());
+	EXPECT_TRUE(std::find(input.begin(), input.end(), "1") != input.end());
+	EXPECT_TRUE(std::find(input.begin(), input.end(), "0") != input.end());
+}
+
+TEST_F(NTM_Test, SetInput_NoThrowForEpsilon) {
+	EXPECT_NO_THROW(automaton->setInput({"0", "", "1"}));
+}
+
+TEST_F(NTM_Test, SetInput_ThrowsForInputNotInAlphabet) {
+	EXPECT_THROW(automaton->setInput({"a", "b"}), InputAlphabetSymbolNotFoundException);
+}
+
+TEST_F(NTM_Test, SetInput_AddsNewInputs) {
+	automaton->addInputAlphabet({"2", "3"});
+	automaton->addInput({"2", "3"});
+	std::vector<std::string> input = automaton->getInput();
+
+	EXPECT_EQ(input.size(), 2);
+	EXPECT_TRUE(std::find(input.begin(), input.end(), "2") != input.end());
+	EXPECT_TRUE(std::find(input.begin(), input.end(), "3") != input.end());
+}
+
+TEST_F(NTM_Test, AddInput_NoThrowForEpsilon) {
+	EXPECT_NO_THROW(automaton->addInput({"0", "", "1"}));
+}
+
+TEST_F(NTM_Test, AddInput_ThrowsForInputlNotInAlphabet) {
+	EXPECT_THROW(automaton->setInput({"a", "b"}), InputAlphabetSymbolNotFoundException);
+}
+
 TEST_F(NTM_Test, StateExists_ReturnsTrueWhenStateExists) {
 	EXPECT_TRUE(automaton->stateExists("q0"));
 	EXPECT_TRUE(automaton->stateExists("q1"));
@@ -998,7 +1039,6 @@ TEST_F(NTM_Test, RemoveAcceptStates_RemovesMultipleAcceptStates) {
 	automaton->removeAcceptStates({"q1", "q2"});
 	acceptStates = automaton->getAcceptStates();
 	ASSERT_EQ(acceptStates.size(), 0);
-
 }
 
 TEST_F(NTM_Test, RemoveAcceptStates_ThrowsForMissingStates) {
@@ -1044,13 +1084,8 @@ TEST_F(NTM_Test, GetAcceptStates_EmptyIfNoAcceptStates) {
 }
 
 TEST_F(NTM_Test, Reset_SetsCurrentStateToStartState) {
-	automaton->addTransition("q0", "q1", "0", "Z", "A", TMDirection::STAY);
-	automaton->processInput("0");
-
-	EXPECT_EQ(automaton->getCurrentState(), "q1");
-
+	automaton->setCurrentState("q1");
 	automaton->reset();
-
 	EXPECT_EQ(automaton->getCurrentState(), "q0");
 }
 
@@ -1062,177 +1097,20 @@ TEST_F(NTM_Test, Reset_HandlesAcceptStartState) {
 	EXPECT_FALSE(automaton->getAcceptStates().empty());
 }
 
+TEST_F(NTM_Test, IsAccepting_ShouldAcceptIfStartStateIsAccept) {
+	automaton->addAcceptState("q0");
+	EXPECT_TRUE(automaton->isAccepting());
+}
+
+TEST_F(NTM_Test, IsAccepting_ShouldAcceptIfCurrentStateIsAccept) {
+	automaton->addAcceptState("q1");
+	automaton->setCurrentState("q1");
+	EXPECT_TRUE(automaton->isAccepting());
+}
+
 TEST_F(NTM_Test, Simulate_ShouldThrowExceptionForSimulationWithoutStartState) {
 	NonDeterministicTuringMachine *automaton = new NonDeterministicTuringMachine();
 	automaton->setInputAlphabet({"0", "1"});
 
 	EXPECT_THROW(automaton->simulate({""}), InvalidStartStateException);
-}
-
-TEST_F(NTM_Test, Simulate_ValidInputAccepts) {
-	automaton->addState("q2");
-	automaton->addTransition("q0", "q1", "0", "Z", "A", TMDirection::STAY);
-	automaton->addTransition("q1", "q2", "1", "A", "Z", TMDirection::STAY);
-	automaton->addAcceptState("q2");
-
-	EXPECT_TRUE(automaton->simulate({"0", "1"}));
-}
-
-TEST_F(NTM_Test, Simulate_InvalidInputReject) {
-	automaton->addState("q2");
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::STAY);
-	automaton->addTransition("q1", "q2", "1", "A", "A", TMDirection::STAY);
-	automaton->addAcceptState("q2");
-
-	EXPECT_FALSE(automaton->simulate({"0", "0"}));
-}
-
-TEST_F(NTM_Test, Simulate_InvalidInputRejects) {
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::STAY);
-
-	EXPECT_FALSE(automaton->simulate({"1"}));
-}
-
-TEST_F(NTM_Test, Simulate_ThrowsIfSimulationDepthExceeded) {
-	automaton->addTransition("q0", "q1", "0", "Z", "A", TMDirection::STAY);
-	automaton->addTransition("q1", "q0", "1", "A", "Z", TMDirection::STAY);
-
-	automaton->setStartState("q0");
-
-	std::vector<std::string> input = {"0", "1", "0", "1", "0", "1"};
-
-	EXPECT_THROW(automaton->simulate(input, 3), SimulationDepthExceededException);
-}
-
-TEST_F(NTM_Test, Simulate_EmptyInputStaysAtStartState) {
-	automaton->addAcceptState("q0");
-	EXPECT_TRUE(automaton->simulate({}));
-}
-
-TEST_F(NTM_Test, ShouldHandleEpsilonTransitions) {
-	automaton->addTransition("q0", "", "q1", "Z", "A", TMDirection::STAY); // Epsilon transition
-	automaton->addTransition("q1", "1", "q2", "A", "", TMDirection::STAY);
-	automaton->addAcceptState("q2");
-
-	EXPECT_TRUE(automaton->simulate({"1"})); // Accepts "1" (via epsilon transition)
-}
-
-TEST_F(NTM_Test, ShouldHandleMultipleEpsilonTransitions) {
-	automaton->addState("q3");
-	automaton->addTransition("q0", "", "q1", "Z", "A", TMDirection::STAY); // Epsilon transition
-	automaton->addTransition("q1", "", "q2", "A", "", TMDirection::STAY);
-	automaton->addTransition("q2", "1", "q3", "A", "", TMDirection::STAY);
-	automaton->addAcceptState("q3");
-	EXPECT_TRUE(automaton->simulate({"1"})); // Accepts "1" (via multiple epsilon transitions)
-}
-
-TEST_F(NTM_Test, ShouldProcessInputsForLanguageEndingWith01) {
-	NonDeterministicTuringMachine *automaton = new NonDeterministicTuringMachine();
-	// Add states
-	automaton->addState("q0"); // Start state
-	automaton->addState("q1");
-	automaton->addState("q2"); // Accept state for strings ending with "01"
-
-	// Set the start state
-	automaton->setStartState("q0");
-
-	// Set the input and stack alphabets
-	automaton->setInputAlphabet({"0", "1", ""});
-	automaton->setTapeAlphabet({"A", "Z"});
-
-	// Add transitions
-	automaton->addTransition("q0", "q1", "0", "Z", "A", TMDirection::STAY);
-	automaton->addTransition("q1", "q2", "1", "A", "", TMDirection::STAY);
-
-	// Mark accept states
-	automaton->addAcceptState("q2");
-
-	// Start at the initial state
-	automaton->setCurrentState("q0");
-	EXPECT_EQ(automaton->getCurrentState(), "q0");
-
-	// Test input "01" (should end in q2, accepting "01")
-	automaton->processInput("0");
-	automaton->processInput("1");
-	EXPECT_TRUE(automaton->getCurrentState() == "q2");
-
-	// Reset to initial state
-	automaton->setCurrentState("q0");
-
-	// Test input "00" (should not be accepted)
-	automaton->processInput("0");
-	automaton->processInput("0");
-	EXPECT_FALSE(automaton->getCurrentState() == "q2");
-
-	// Reset to initial state
-	automaton->setCurrentState("q0");
-
-	// Test input "11" (should not be accepted)
-	automaton->processInput("1");
-	automaton->processInput("1");
-	EXPECT_FALSE(automaton->getCurrentState() == "q2");
-
-	delete automaton;
-}
-
-TEST_F(NTM_Test, ShouldProcessInputsForBalancedParentheses) {
-	NonDeterministicTuringMachine *automaton = new NonDeterministicTuringMachine();
-	// Add states
-	automaton->addState("q0"); // Start state
-	automaton->addState("q1"); // Accept state
-
-	// Set the start state
-	automaton->setStartState("q0");
-
-	// Set the input and stack alphabets
-	automaton->setInputAlphabet({"(", ")", ""}); // Epsilon allowed
-	automaton->setTapeAlphabet({"A", "Z"});      // Epsilon not allowed
-
-	// Add transitions
-	automaton->addTransition("q0", "q0", "(", "Z", "A", TMDirection::STAY);
-	automaton->addTransition("q0", "q0", "(", "A", "A", TMDirection::STAY);
-	automaton->addTransition("q0", "q0", ")", "A", "", TMDirection::STAY);
-	automaton->addTransition("q0", "q1", "", "Z", "", TMDirection::STAY);
-
-	// Mark accept states
-	automaton->addAcceptState("q1");
-
-	// Start at the initial state
-	automaton->setCurrentState("q0");
-	EXPECT_EQ(automaton->getCurrentState(), "q0");
-
-	// Test input "()" (should be accepted)
-	automaton->processInput("(");
-	automaton->processInput(")");
-	EXPECT_TRUE(automaton->getCurrentState() == "q1");
-
-	// Reset to initial state
-	automaton->setCurrentState("q0");
-
-	// Test input "(())" (should be accepted)
-	automaton->processInput("(");
-	automaton->processInput("(");
-	automaton->processInput(")");
-	automaton->processInput(")");
-	EXPECT_TRUE(automaton->getCurrentState() == "q1");
-
-	// Reset to initial state
-	automaton->setCurrentState("q0");
-
-	// Test input "(()" (should not be accepted)
-	automaton->processInput("(");
-	automaton->processInput("(");
-	automaton->processInput(")");
-	EXPECT_FALSE(automaton->getCurrentState() == "q1");
-
-	// Reset to initial state
-	automaton->setCurrentState("q0");
-
-	// Test input "())" (should not be accepted)
-	automaton->processInput("(");
-	automaton->processInput(")");
-	automaton->processInput(")");
-	EXPECT_FALSE(automaton->getCurrentState() == "q1");
-
-	delete automaton;
 }

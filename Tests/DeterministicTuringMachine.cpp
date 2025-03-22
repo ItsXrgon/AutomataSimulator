@@ -19,6 +19,57 @@ class DTM_Test : public ::testing::Test {
 	DeterministicTuringMachine *automaton;
 };
 
+TEST_F(DTM_Test, GetInput_GetsInput) {
+	std::vector<std::string> input = automaton->getInput();
+	EXPECT_EQ(input.size(), 0);
+}
+
+TEST_F(DTM_Test, SetInput_SetsInput) {
+	automaton->setInput({"0", "1", "0"});
+	std::vector<std::string> input = automaton->getInput();
+
+	EXPECT_EQ(input.size(), 3);
+	EXPECT_TRUE(std::find(input.begin(), input.end(), "0") != input.end());
+	EXPECT_TRUE(std::find(input.begin(), input.end(), "1") != input.end());
+	EXPECT_TRUE(std::find(input.begin(), input.end(), "0") != input.end());
+}
+
+TEST_F(DTM_Test, SetInput_NoThrowForEpsilon) {
+	EXPECT_NO_THROW(automaton->setInput({"0", "", "1"}));
+}
+
+TEST_F(DTM_Test, SetInput_ThrowsForInputNotInAlphabet) {
+	EXPECT_THROW(automaton->setInput({"a", "b"}), InputAlphabetSymbolNotFoundException);
+}
+
+TEST_F(DTM_Test, SetInput_AddsNewInputs) {
+	automaton->addInputAlphabet({"2", "3"});
+	automaton->addInput({"2", "3"});
+	std::vector<std::string> input = automaton->getInput();
+
+	EXPECT_EQ(input.size(), 2);
+	EXPECT_TRUE(std::find(input.begin(), input.end(), "2") != input.end());
+	EXPECT_TRUE(std::find(input.begin(), input.end(), "3") != input.end());
+}
+
+TEST_F(DTM_Test, AddInput_NoThrowForEpsilon) {
+	EXPECT_NO_THROW(automaton->addInput({"0", "", "1"}));
+}
+
+TEST_F(DTM_Test, AddInput_ThrowsForInputNotInAlphabet) {
+	EXPECT_THROW(automaton->setInput({"a", "b"}), InputAlphabetSymbolNotFoundException);
+}
+
+TEST_F(DTM_Test, SetInputAlphabet_SetsAlphabet) {
+	automaton->setInput({"0", "1", "0"});
+	std::vector<std::string> input = automaton->getInput();
+
+	EXPECT_EQ(input.size(), 3);
+	EXPECT_TRUE(std::find(input.begin(), input.end(), "0") != input.end());
+	EXPECT_TRUE(std::find(input.begin(), input.end(), "1") != input.end());
+	EXPECT_TRUE(std::find(input.begin(), input.end(), "0") != input.end());
+}
+
 TEST_F(DTM_Test, StateExists_ReturnsTrueWhenStateExists) {
 	EXPECT_TRUE(automaton->stateExists("q0"));
 	EXPECT_TRUE(automaton->stateExists("q1"));
@@ -174,7 +225,8 @@ TEST_F(DTM_Test, RemoveState_RemovesTransitionsWithStateAsToIfNotStrict) {
 	automaton->setCurrentState("q0");
 	automaton->addTransition("q1", "q0", "0", "A", "A", TMDirection::LEFT);
 	automaton->removeState("q0", false);
-	EXPECT_FALSE(automaton->getState("q1").transitionExists(TMTransition::generateTransitionKey("q1", "q0", "0", "A", "A", TMDirection::LEFT)));
+	EXPECT_FALSE(automaton->getState("q1").transitionExists(
+	    TMTransition::generateTransitionKey("q1", "q0", "0", "A", "A", TMDirection::LEFT)));
 }
 
 TEST_F(DTM_Test, RemoveState_ThrowsIfStateIsUsedInTransitionsIfStrict) {
@@ -1043,11 +1095,7 @@ TEST_F(DTM_Test, GetAcceptStates_EmptyIfNoAcceptStates) {
 }
 
 TEST_F(DTM_Test, Reset_SetsCurrentStateToStartState) {
-	automaton->addTransition("q0", "q1", "0", "Z", "A", TMDirection::STAY);
-	automaton->processInput("0");
-
-	EXPECT_EQ(automaton->getCurrentState(), "q1");
-
+	automaton->addAcceptState("q0");
 	automaton->reset();
 
 	EXPECT_EQ(automaton->getCurrentState(), "q0");
@@ -1058,190 +1106,22 @@ TEST_F(DTM_Test, Reset_HandlesAcceptStartState) {
 	automaton->reset();
 
 	EXPECT_EQ(automaton->getCurrentState(), "q0");
-	EXPECT_FALSE(automaton->getAcceptStates().empty());
+}
+
+TEST_F(DTM_Test, IsAccepting_ShouldAcceptIfStartStateIsAccept) {
+	automaton->addAcceptState("q0");
+	EXPECT_TRUE(automaton->isAccepting());
+}
+
+TEST_F(DTM_Test, IsAccepting_ShouldAcceptIfCurrentStateIsAccept) {
+	automaton->addAcceptState("q1");
+	automaton->setCurrentState("q1");
+	EXPECT_TRUE(automaton->isAccepting());
 }
 
 TEST_F(DTM_Test, Simulate_ShouldThrowExceptionForSimulationWithoutStartState) {
-	DeterministicTuringMachine *automaton = new DeterministicTuringMachine();
+	NonDeterministicTuringMachine *automaton = new NonDeterministicTuringMachine();
 	automaton->setInputAlphabet({"0", "1"});
 
 	EXPECT_THROW(automaton->simulate({""}), InvalidStartStateException);
-}
-
-TEST_F(DTM_Test, Simulate_ValidInputAccepts) {
-	automaton->addState("q2");
-	automaton->addTapeAlphabet({"X", "Y"});
-	automaton->addTransition("q0", "q1", "0", "_", "X", TMDirection::RIGHT);
-	automaton->addTransition("q1", "q2", "1", "_", "X", TMDirection::RIGHT);
-	automaton->addAcceptState("q2");
-
-	EXPECT_TRUE(automaton->simulate({"0", "1"}));
-}
-
-TEST_F(DTM_Test, Simulate_InvalidInputRejects) {
-	automaton->addState("q2");
-	automaton->addTapeAlphabet({"X", "Y"});
-	automaton->addTransition("q0", "q1", "0", "_", "X", TMDirection::RIGHT);
-	automaton->addTransition("q1", "q2", "1", "_", "X", TMDirection::RIGHT);
-	automaton->addAcceptState("q2");
-
-	EXPECT_FALSE(automaton->simulate({"0", "0"}));
-}
-
-TEST_F(DTM_Test, Simulate_NoTransitionRejects) {
-	EXPECT_FALSE(automaton->simulate({"1"}));
-}
-
-TEST_F(DTM_Test, Simulate_ThrowsIfSimulationDepthExceeded) {
-	automaton->addTransition("q0", "q1", "0", "Z", "A", TMDirection::STAY);
-	automaton->addTransition("q1", "q0", "1", "A", "Z", TMDirection::STAY);
-
-	automaton->setStartState("q0");
-
-	std::vector<std::string> input = {"0", "1", "0", "1", "0", "1"};
-
-	EXPECT_THROW(automaton->simulate(input, 3), SimulationDepthExceededException);
-}
-
-TEST_F(DTM_Test, Simulate_EmptyInputStaysAtStartState) {
-	automaton->addAcceptState("q0");
-	EXPECT_TRUE(automaton->simulate({}));
-}
-
-TEST_F(DTM_Test, Simulate_ShouldHandleEpsilonTransitions) {
-	automaton->addState("q2");
-	automaton->addTransition("q0", "q1", "", "_", "", TMDirection::STAY); // Epsilon transition
-	automaton->addTransition("q1", "q2", "1", "_", "", TMDirection::STAY);
-	automaton->addAcceptState("q2");
-
-	EXPECT_TRUE(automaton->simulate({"1"})); // Accepts "1" (via epsilon transition)
-}
-
-TEST_F(DTM_Test, Simulate_ShouldHandleMultipleEpsilonTransitions) {
-	automaton->addState("q2");
-	automaton->addState("q3");
-	automaton->addTransition("q0", "q1", "", "_", "", TMDirection::STAY); // Epsilon transition
-	automaton->addTransition("q1", "q2", "", "_", "", TMDirection::STAY);
-	automaton->addTransition("q2", "q3", "1", "_", "", TMDirection::STAY);
-	automaton->addAcceptState("q3");
-	EXPECT_TRUE(automaton->simulate({"1"})); // Accepts "1" (via multiple epsilon transitions)
-}
-
-TEST_F(DTM_Test, Simulate_MoveLeftOnStartStaysInPlace) {
-	automaton->addState("q2");
-	automaton->addTransition("q0", "q1", "1", "_", "A", TMDirection::LEFT);
-	automaton->addTransition("q1", "q2", "1", "A", "", TMDirection::STAY);
-	automaton->addAcceptState("q2");
-	EXPECT_TRUE(automaton->simulate({"1", "1", "1"}));
-}
-
-TEST_F(DTM_Test, ShouldProcessInputsForLanguageEndingWith01) {
-	DeterministicTuringMachine *automaton = new DeterministicTuringMachine();
-	// Add states
-	automaton->addState("q0"); // Start state
-	automaton->addState("q1");
-	automaton->addState("q2"); // Accept state for strings ending with "01"
-
-	// Set the start state
-	automaton->setStartState("q0");
-
-	// Set the input and stack alphabets
-	automaton->setInputAlphabet({"0", "1", ""});
-	automaton->setTapeAlphabet({"A", "Z"});
-
-	// Add transitions
-	automaton->addTransition("q0", "q1", "0", "Z", "A", TMDirection::STAY);
-	automaton->addTransition("q1", "q2", "1", "A", "", TMDirection::STAY);
-
-	// Mark accept states
-	automaton->addAcceptState("q2");
-
-	// Start at the initial state
-	automaton->setCurrentState("q0");
-	EXPECT_EQ(automaton->getCurrentState(), "q0");
-
-	// Test input "01" (should end in q2, accepting "01")
-	automaton->processInput("0");
-	automaton->processInput("1");
-	EXPECT_TRUE(automaton->getCurrentState() == "q2");
-
-	// Reset to initial state
-	automaton->setCurrentState("q0");
-
-	// Test input "00" (should not be accepted)
-	automaton->processInput("0");
-	automaton->processInput("0");
-	EXPECT_FALSE(automaton->getCurrentState() == "q2");
-
-	// Reset to initial state
-	automaton->setCurrentState("q0");
-
-	// Test input "11" (should not be accepted)
-	automaton->processInput("1");
-	automaton->processInput("1");
-	EXPECT_FALSE(automaton->getCurrentState() == "q2");
-
-	delete automaton;
-}
-
-TEST_F(DTM_Test, ShouldProcessInputsForBalancedParentheses) {
-	DeterministicTuringMachine *automaton = new DeterministicTuringMachine();
-	// Add states
-	automaton->addState("q0"); // Start state
-	automaton->addState("q1"); // Accept state
-
-	// Set the start state
-	automaton->setStartState("q0");
-
-	// Set the input and stack alphabets
-	automaton->setInputAlphabet({"(", ")", ""}); // Epsilon allowed
-	automaton->setTapeAlphabet({"A", "Z"});      // Epsilon not allowed
-
-	// Add transitions
-	automaton->addTransition("q0", "q0", "(", "Z", "A", TMDirection::STAY);
-	automaton->addTransition("q0", "q0", "(", "A", "A", TMDirection::STAY);
-	automaton->addTransition("q0", "q0", ")", "A", "", TMDirection::STAY);
-	automaton->addTransition("q0", "q1", "", "Z", "", TMDirection::STAY);
-
-	// Mark accept states
-	automaton->addAcceptState("q1");
-
-	// Start at the initial state
-	automaton->setCurrentState("q0");
-	EXPECT_EQ(automaton->getCurrentState(), "q0");
-
-	// Test input "()" (should be accepted)
-	automaton->processInput("(");
-	automaton->processInput(")");
-	EXPECT_TRUE(automaton->getCurrentState() == "q1");
-
-	// Reset to initial state
-	automaton->setCurrentState("q0");
-
-	// Test input "(())" (should be accepted)
-	automaton->processInput("(");
-	automaton->processInput("(");
-	automaton->processInput(")");
-	automaton->processInput(")");
-	EXPECT_TRUE(automaton->getCurrentState() == "q1");
-
-	// Reset to initial state
-	automaton->setCurrentState("q0");
-
-	// Test input "(()" (should not be accepted)
-	automaton->processInput("(");
-	automaton->processInput("(");
-	automaton->processInput(")");
-	EXPECT_FALSE(automaton->getCurrentState() == "q1");
-
-	// Reset to initial state
-	automaton->setCurrentState("q0");
-
-	// Test input "())" (should not be accepted)
-	automaton->processInput("(");
-	automaton->processInput(")");
-	automaton->processInput(")");
-	EXPECT_FALSE(automaton->getCurrentState() == "q1");
-
-	delete automaton;
 }

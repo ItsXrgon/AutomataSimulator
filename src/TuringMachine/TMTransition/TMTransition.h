@@ -31,19 +31,14 @@ class AUTOMATASIMULATOR_API TMTransition {
 	std::string toStateKey;
 
 	/**
-	 * @brief The input value that triggers the transition.
+	 * @brief The top of the stack symbol,
 	 */
-	std::string input;
+	std::string readSymbol;
 
 	/**
 	 * @brief Direction of the transition
 	 */
 	TMDirection direction;
-
-	/**
-	 * @brief The top of the stack symbol,
-	 */
-	std::string readSymbol;
 
 	/**
 	 * @brief The Symbol to be pushed onto the stack.
@@ -62,12 +57,11 @@ class AUTOMATASIMULATOR_API TMTransition {
 	 * @brief Constructs a new Transition object.
 	 * @param fromState The state key from which the transition starts.
 	 * @param toState The state key to which the transition leads.
-	 * @param input The input value that triggers the transition.
 	 * @param readSymbol The top of the stack symbol.
 	 * @param writeSymbol The symbol to be pushed onto the stack.
 	 */
-	TMTransition(const std::string &fromStateKey, const std::string &toStateKey, const std::string &input,
-	             const std::string &readSymbol, const std::string &writeSymbol, TMDirection direction);
+	TMTransition(const std::string &fromStateKey, const std::string &toStateKey, const std::string &readSymbol,
+	             const std::string &writeSymbol, TMDirection direction);
 
 	/**
 	 * @brief Copy constructor for the Transition object.
@@ -95,6 +89,8 @@ class AUTOMATASIMULATOR_API TMTransition {
 	 */
 	TMTransition &operator=(TMTransition &&other) noexcept;
 
+	bool operator==(const TMTransition &other) const;
+
 	/**
 	 * @brief Destructor for the Transition object.
 	 */
@@ -104,14 +100,13 @@ class AUTOMATASIMULATOR_API TMTransition {
 	 * @brief Generate a unique transition key.
 	 * @param fromStateKey The starting state key.
 	 * @param toStateKey The destination state key.
-	 * @param input The input symbol.
 	 * @param readSymbol The top of the stack symbol.
 	 * @param writeSymbol The symbol to be pushed onto the stack.
 	 * @return A unique transition key string.
 	 */
 	static std::string generateTransitionKey(const std::string &fromStateKey, const std::string &toStateKey,
-	                                         const std::string &input, const std::string &readSymbol,
-	                                         const std::string &writeSymbol, TMDirection direction);
+	                                         const std::string &readSymbol, const std::string &writeSymbol,
+	                                         TMDirection direction);
 
 	/**
 	 * @brief Gets the to state key of a transition from its key.
@@ -126,13 +121,6 @@ class AUTOMATASIMULATOR_API TMTransition {
 	 * @return from state key.
 	 */
 	static std::string getToStateFromKey(const std::string &key);
-
-	/**
-	 * @brief Gets the input value of a transition from its key.
-	 * @param key The transition key.
-	 * @return The input value.
-	 */
-	static std::string getInputFromKey(const std::string &key);
 
 	/**
 	 * @brief Gets the direction from the transition key.
@@ -186,30 +174,6 @@ class AUTOMATASIMULATOR_API TMTransition {
 	std::string getToStateKey() const;
 
 	/**
-	 * @brief Sets the input value for this transition.
-	 * @param input The new input value.
-	 */
-	void setInput(const std::string &input);
-
-	/**
-	 * @brief Gets the input value for this transition.
-	 * @return The input value as a string.
-	 */
-	std::string getInput() const;
-
-	/**
-	 * @brief Sets the direction value for this transition.
-	 * @param input The new input value.
-	 */
-	void setDirection(TMDirection direction);
-
-	/**
-	 * @brief Gets the direction value for this transition.
-	 * @return The direction value as an enum.
-	 */
-	TMDirection getDirection() const;
-
-	/**
 	 * @brief Sets the top of the stack symbol for this transition.
 	 * @param readSymbol The new stack symbol.
 	 */
@@ -228,6 +192,18 @@ class AUTOMATASIMULATOR_API TMTransition {
 	void setWriteSymbol(const std::string &writeSymbol);
 
 	/**
+	 * @brief Sets the direction value for this transition.
+	 * @param input The new input value.
+	 */
+	void setDirection(TMDirection direction);
+
+	/**
+	 * @brief Gets the direction value for this transition.
+	 * @return The direction value as an enum.
+	 */
+	TMDirection getDirection() const;
+
+	/**
 	 * @brief Gets the symbol to be pushed onto the stack for this transition.
 	 * @return The push symbol as a string.
 	 */
@@ -239,3 +215,15 @@ class AUTOMATASIMULATOR_API TMTransition {
 	 */
 	std::string toString() const;
 };
+
+namespace std {
+template <> struct hash<TMTransition> {
+	size_t operator()(const TMTransition &t) const {
+		size_t hashValue = hash<std::string>()(t.getFromStateKey()) ^ (hash<std::string>()(t.getToStateKey()) << 1) ^
+		                   (hash<std::string>()(t.getReadSymbol()) << 2) ^
+		                   (hash<std::string>()(t.getWriteSymbol()) << 3) ^
+		                   (hash<int>()(static_cast<int>(t.getDirection())) << 4);
+		return hashValue;
+	}
+};
+} // namespace std

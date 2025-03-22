@@ -34,6 +34,10 @@ TMState &TMState::operator=(TMState &&other) noexcept {
 	return *this;
 }
 
+bool TMState::operator==(const TMState &other) const {
+	return key == other.key && label == other.label && isAccept == other.isAccept && transitions == other.transitions;
+}
+
 TMState::~TMState() {}
 
 TMTransition *TMState::getTransitionInternal(const std::string &key) {
@@ -80,19 +84,19 @@ bool TMState::getIsAccept() const {
 	return isAccept;
 }
 
-void TMState::addTransition(const std::string &toStateKey, const std::string &input, const std::string &readSymbol,
+void TMState::addTransition(const std::string &toStateKey, const std::string &readSymbol,
                             const std::string &writeSymbol, const TMDirection &direction) {
 	std::string transitionKey =
-	    TMTransition::generateTransitionKey(key, toStateKey, input, readSymbol, writeSymbol, direction);
+	    TMTransition::generateTransitionKey(key, toStateKey, readSymbol, writeSymbol, direction);
 
 	// Check if transition already exists
 	if (transitionExists(transitionKey)) {
-		throw InvalidTransitionException("Transition already exists: " + key + " -> " + toStateKey + "| input: " +
-		                                 input + " | read symbol: " + readSymbol + " | write symbol: " + writeSymbol +
+		throw InvalidTransitionException("Transition already exists: " + key + " -> " + toStateKey +
+		                                 " | read symbol: " + readSymbol + " | write symbol: " + writeSymbol +
 		                                 " | direction: " + TMDirectionHelper::toString(direction));
 	}
 
-	TMTransition transition = TMTransition(key, toStateKey, input, readSymbol, writeSymbol, direction);
+	TMTransition transition = TMTransition(key, toStateKey, readSymbol, writeSymbol, direction);
 	transitions[transition.getKey()] = transition;
 	transitionsCacheInvalidated = true;
 }
@@ -106,59 +110,23 @@ TMTransition TMState::getTransition(const std::string &key) {
 	return it->second;
 }
 
-void TMState::setTransitionInput(const std::string &transitionKey, const std::string &input) {
-	if (!transitionExists(transitionKey)) {
-		throw TransitionNotFoundException(transitionKey);
-	}
-
-	std::string newTransitionKey = TMTransition::generateTransitionKey(
-	    key, getTransitionToState(transitionKey), input, getTransitionReadSymbol(transitionKey),
-	    getTransitionWriteSymbol(transitionKey), getTransitionDirection(transitionKey));
-
-	// Check if transition already exists
-	if (transitionExists(newTransitionKey)) {
-		std::string readSymbol = TMTransition::getReadSymbolFromKey(transitionKey);
-		std::string writeSymbol = TMTransition::getWriteSymbolFromKey(transitionKey);
-		TMDirection direction = TMTransition::getDirectionFromKey(transitionKey);
-		std::string toStateKey = TMTransition::getToStateFromKey(transitionKey);
-
-		throw InvalidTransitionException("Transition already exists: " + key + " -> " + toStateKey + "| input: " +
-		                                 input + " | read symbol: " + readSymbol + " | write symbol: " + writeSymbol +
-		                                 " | direction: " + TMDirectionHelper::toString(direction));
-	}
-
-	TMTransition *transition = getTransitionInternal(transitionKey);
-	transition->setInput(input);
-
-	transitions[newTransitionKey] = *transition;
-	transitions.erase(transitionKey);
-
-	transitionsCacheInvalidated = true;
-}
-
-std::string TMState::getTransitionInput(const std::string &transitionKey) {
-	TMTransition *transition = getTransitionInternal(transitionKey);
-	return transition->getInput();
-}
-
 void TMState::setTransitionToState(const std::string &transitionKey, const std::string &toStateKey) {
 	if (!transitionExists(transitionKey)) {
 		throw TransitionNotFoundException(transitionKey);
 	}
 
 	std::string newTransitionKey = TMTransition::generateTransitionKey(
-	    key, toStateKey, getTransitionInput(transitionKey), getTransitionReadSymbol(transitionKey),
-	    getTransitionWriteSymbol(transitionKey), getTransitionDirection(transitionKey));
+	    key, toStateKey, getTransitionReadSymbol(transitionKey), getTransitionWriteSymbol(transitionKey),
+	    getTransitionDirection(transitionKey));
 
 	// Check if transition already exists
 	if (transitionExists(newTransitionKey)) {
 		std::string readSymbol = TMTransition::getReadSymbolFromKey(transitionKey);
 		std::string writeSymbol = TMTransition::getWriteSymbolFromKey(transitionKey);
 		TMDirection direction = TMTransition::getDirectionFromKey(transitionKey);
-		std::string input = TMTransition::getInputFromKey(transitionKey);
 
-		throw InvalidTransitionException("Transition already exists: " + key + " -> " + toStateKey + "| input: " +
-		                                 input + " | read symbol: " + readSymbol + " | write symbol: " + writeSymbol +
+		throw InvalidTransitionException("Transition already exists: " + key + " -> " + toStateKey +
+		                                 " | read symbol: " + readSymbol + " | write symbol: " + writeSymbol +
 		                                 " | direction: " + TMDirectionHelper::toString(direction));
 	}
 
@@ -187,14 +155,14 @@ void TMState::setTransitionReadSymbol(const std::string &transitionKey, const st
 	}
 
 	std::string newTransitionKey = TMTransition::generateTransitionKey(
-	    key, getTransitionToState(transitionKey), getTransitionInput(transitionKey), stackSymbol,
-	    getTransitionWriteSymbol(transitionKey), getTransitionDirection(transitionKey));
+	    key, getTransitionToState(transitionKey), stackSymbol, getTransitionWriteSymbol(transitionKey),
+	    getTransitionDirection(transitionKey));
 
 	// Check if transition already exists
 	if (transitionExists(newTransitionKey)) {
-		throw InvalidTransitionException(
-		    "Transition already exists: " + key + " -> " + getTransitionInput(transitionKey) + " -> " +
-		    getTransitionToState(transitionKey) + TMDirectionHelper::toString(getTransitionDirection(transitionKey)));
+		throw InvalidTransitionException("Transition already exists: " + key + " -> " +
+		                                 getTransitionToState(transitionKey) + ", " +
+		                                 TMDirectionHelper::toString(getTransitionDirection(transitionKey)));
 		;
 	}
 	TMTransition *transition = getTransitionInternal(transitionKey);
@@ -217,8 +185,8 @@ void TMState::setTransitionWriteSymbol(const std::string &transitionKey, const s
 	}
 
 	std::string newTransitionKey = TMTransition::generateTransitionKey(
-	    key, getTransitionToState(transitionKey), getTransitionInput(transitionKey),
-	    getTransitionReadSymbol(transitionKey), pushSymbol, getTransitionDirection(transitionKey));
+	    key, getTransitionToState(transitionKey), getTransitionReadSymbol(transitionKey), pushSymbol,
+	    getTransitionDirection(transitionKey));
 
 	// Check if transition already exists
 	if (transitionExists(newTransitionKey)) {
@@ -226,10 +194,9 @@ void TMState::setTransitionWriteSymbol(const std::string &transitionKey, const s
 		std::string readSymbol = TMTransition::getReadSymbolFromKey(transitionKey);
 		std::string writeSymbol = TMTransition::getWriteSymbolFromKey(transitionKey);
 		TMDirection direction = TMTransition::getDirectionFromKey(transitionKey);
-		std::string input = TMTransition::getInputFromKey(transitionKey);
 
-		throw InvalidTransitionException("Transition already exists: " + key + " -> " + toStateKey + "| input: " +
-		                                 input + " | read symbol: " + readSymbol + " | write symbol: " + writeSymbol +
+		throw InvalidTransitionException("Transition already exists: " + key + " -> " + toStateKey +
+		                                 " | read symbol: " + readSymbol + " | write symbol: " + writeSymbol +
 		                                 " | direction: " + TMDirectionHelper::toString(direction));
 	}
 	TMTransition *transition = getTransitionInternal(transitionKey);
@@ -251,18 +218,17 @@ void TMState::setTransitionDirection(const std::string &transitionKey, const TMD
 		throw TransitionNotFoundException(transitionKey);
 	}
 	std::string newTransitionKey = TMTransition::generateTransitionKey(
-	    key, getTransitionToState(transitionKey), getTransitionInput(transitionKey),
-	    getTransitionReadSymbol(transitionKey), getTransitionWriteSymbol(transitionKey), direction);
+	    key, getTransitionToState(transitionKey), getTransitionReadSymbol(transitionKey),
+	    getTransitionWriteSymbol(transitionKey), direction);
 
 	// Check if transition already exists
 	if (transitionExists(newTransitionKey)) {
 		std::string toStateKey = TMTransition::getToStateFromKey(transitionKey);
 		std::string readSymbol = TMTransition::getReadSymbolFromKey(transitionKey);
 		std::string writeSymbol = TMTransition::getWriteSymbolFromKey(transitionKey);
-		std::string input = TMTransition::getInputFromKey(transitionKey);
 
-		throw InvalidTransitionException("Transition already exists: " + key + " -> " + toStateKey + "| input: " +
-		                                 input + " | read symbol: " + readSymbol + " | write symbol: " + writeSymbol +
+		throw InvalidTransitionException("Transition already exists: " + key + " -> " + toStateKey +
+		                                 " | read symbol: " + readSymbol + " | write symbol: " + writeSymbol +
 		                                 " | direction: " + TMDirectionHelper::toString(direction));
 	}
 	TMTransition *transition = getTransitionInternal(transitionKey);

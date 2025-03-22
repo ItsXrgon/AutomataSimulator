@@ -1,6 +1,6 @@
 #include "TuringMachine.h"
 
-const std::string DEFAULT_BLANK_SYMBOL = "_";
+const std::string &DEFAULT_BLANK_SYMBOL = "_";
 
 TuringMachine::TuringMachine(std::string blankSymbol)
     : startState(""), inputAlphabetCacheInvalidated(false), tapeAlphabetCacheInvalidated(false),
@@ -11,16 +11,13 @@ TuringMachine::TuringMachine(std::string blankSymbol)
 TuringMachine::~TuringMachine() {}
 
 void TuringMachine::validateTransition(const std::string &fromStateKey, const std::string &toStateKey,
-                                       const std::string &input, const std::string &readSymbol,
-                                       const std::string &writeSymbol, TMDirection direction) {
+                                       const std::string &readSymbol, const std::string &writeSymbol,
+                                       TMDirection direction) {
 	if (!stateExists(fromStateKey)) {
 		throw StateNotFoundException(fromStateKey);
 	}
 	if (!stateExists(toStateKey)) {
 		throw StateNotFoundException(toStateKey);
-	}
-	if (!input.empty() && !inputAlphabetSymbolExists(input)) {
-		throw InvalidTransitionException("Input not in input alphabet: " + input);
 	}
 	if (!readSymbol.empty() && readSymbol != tape.getBlankSymbol() && !tapeAlphabetSymbolExists(readSymbol)) {
 		throw InvalidTransitionException("Read symbol not in tape alphabet: " + readSymbol);
@@ -31,13 +28,13 @@ void TuringMachine::validateTransition(const std::string &fromStateKey, const st
 
 	TMState *fromState = getStateInternal(fromStateKey);
 	std::string transitionKey =
-	    TMTransition::generateTransitionKey(fromStateKey, toStateKey, input, readSymbol, writeSymbol, direction);
+	    TMTransition::generateTransitionKey(fromStateKey, toStateKey, readSymbol, writeSymbol, direction);
 
 	// Check if the new transition would be a duplicate
 	if (fromState->transitionExists(transitionKey)) {
 		throw InvalidTransitionException("Transition already exists: " + fromStateKey + " -> " + toStateKey +
-		                                 "| input: " + input + " | read symbol: " + readSymbol + " | write symbol: " +
-		                                 writeSymbol + " | direction: " + TMDirectionHelper::toString(direction));
+		                                 " | read symbol: " + readSymbol + " | write symbol: " + writeSymbol +
+		                                 " | direction: " + TMDirectionHelper::toString(direction));
 	}
 }
 
@@ -48,6 +45,54 @@ TMState *TuringMachine::getStateInternal(const std::string &key) {
 		throw StateNotFoundException(key);
 	}
 	return &(it->second);
+}
+
+std::vector<std::string> TuringMachine::getInput() const {
+	return input;
+}
+
+void TuringMachine::setInput(const std::vector<std::string> &input) {
+	std::unordered_set<std::string> missingSymbols;
+
+	for (const auto &symbol : input) {
+		if (!symbol.empty() && !inputAlphabetSymbolExists(symbol)) {
+			missingSymbols.insert(symbol);
+		}
+	}
+
+	if (!missingSymbols.empty()) {
+		std::string missingSymbolsString = "[" + *missingSymbols.begin();
+		for (const auto &symbol : missingSymbols) {
+			missingSymbolsString += ", " + symbol;
+		}
+		missingSymbolsString += "]";
+		throw InputAlphabetSymbolNotFoundException(missingSymbolsString);
+	}
+
+	this->input = input;
+	this->tape.loadInput(this->input);
+}
+
+void TuringMachine::addInput(const std::vector<std::string> &input) {
+	std::unordered_set<std::string> missingSymbols;
+
+	for (const auto &symbol : input) {
+		if (!symbol.empty() && !inputAlphabetSymbolExists(symbol)) {
+			missingSymbols.insert(symbol);
+		}
+	}
+
+	if (!missingSymbols.empty()) {
+		std::string missingSymbolsString = "[" + *missingSymbols.begin();
+		for (const auto &symbol : missingSymbols) {
+			missingSymbolsString += ", " + symbol;
+		}
+		missingSymbolsString += "]";
+		throw InputAlphabetSymbolNotFoundException(missingSymbolsString);
+	}
+
+	this->input.insert(this->input.end(), input.begin(), input.end());
+	this->tape.loadInput(this->input);
 }
 
 std::map<int, std::string> TuringMachine::getTape() const {
@@ -272,7 +317,7 @@ void TuringMachine::setInputAlphabet(const std::vector<std::string> &inputAlphab
 	for (auto &pair : states) {
 		std::vector<TMTransition> transitions = pair.second.getTransitions();
 		for (const auto &transition : transitions) {
-			std::string symbol = transition.getInput();
+			std::string symbol = transition.getReadSymbol();
 			bool found = newAlphabet.find(symbol) != newAlphabet.end();
 			if (!found) {
 				if (strict) {
@@ -334,7 +379,7 @@ void TuringMachine::removeInputAlphabetSymbol(const std::string &symbol, const b
 	for (auto &pair : states) {
 		std::vector<TMTransition> transitions = pair.second.getTransitions();
 		for (const auto &transition : transitions) {
-			if (transition.getInput() == symbol) {
+			if (transition.getReadSymbol() == symbol) {
 				if (strict) {
 					conflictingTransitions.push_back(transition.getKey());
 				} else {
@@ -387,7 +432,7 @@ void TuringMachine::removeInputAlphabetSymbols(const std::vector<std::string> &s
 		for (auto &pair : states) {
 			std::vector<TMTransition> transitions = pair.second.getTransitions();
 			for (const auto &transition : transitions) {
-				if (transition.getInput() == symbol) {
+				if (transition.getReadSymbol() == symbol) {
 					if (strict) {
 						conflictingTransitions[symbol].push_back(transition.getKey());
 					} else {
@@ -424,7 +469,7 @@ void TuringMachine::clearInputAlphabet(const bool &strict) {
 	for (auto &pair : states) {
 		std::vector<TMTransition> transitions = pair.second.getTransitions();
 		for (const auto &transition : transitions) {
-			if (!transition.getInput().empty()) {
+			if (!transition.getReadSymbol().empty()) {
 				if (strict) {
 					throw InvalidAutomatonDefinitionException(
 					    "Cannot clear input alphabet because non-epsilon transitions exist");
@@ -520,45 +565,15 @@ void TuringMachine::setStartState(const std::string &key) {
 }
 
 void TuringMachine::addTransition(const std::string &fromStateKey, const std::string &toStateKey,
-                                  const std::string &input, const std::string &readSymbol,
-                                  const std::string &writeSymbol, TMDirection direction) {
-	validateTransition(fromStateKey, toStateKey, input, readSymbol, writeSymbol, direction);
+                                  const std::string &readSymbol, const std::string &writeSymbol,
+                                  TMDirection direction) {
+	validateTransition(fromStateKey, toStateKey, readSymbol, writeSymbol, direction);
 	TMState *state = getStateInternal(fromStateKey);
-	state->addTransition(toStateKey, input, readSymbol, writeSymbol, direction);
-	statesCacheInvalidated = true;
-}
-
-void TuringMachine::updateTransitionInput(const std::string &transitionKey, const std::string &input) {
-	std::string fromStateKey = TMTransition::getFromStateFromKey(transitionKey);
-	std::string toStateKey = TMTransition::getToStateFromKey(transitionKey);
-	std::string readSymbol = TMTransition::getReadSymbolFromKey(transitionKey);
-	std::string writeSymbol = TMTransition::getWriteSymbolFromKey(transitionKey);
-	TMDirection direction = TMTransition::getDirectionFromKey(transitionKey);
-
-	// Generate the key of the transition after the update
-	std::string newTransitionKey =
-	    TMTransition::generateTransitionKey(fromStateKey, toStateKey, input, readSymbol, writeSymbol, direction);
-
-	// Do we even need to update?
-	if (transitionKey == newTransitionKey) {
-		return;
-	}
-
-	// Validate state existence and transition not being a duplicate
-	validateTransition(fromStateKey, toStateKey, input, readSymbol, writeSymbol, direction);
-
-	TMState *fromState = getStateInternal(fromStateKey);
-	// Check if the old transition exists
-	if (!fromState->transitionExists(transitionKey)) {
-		throw TransitionNotFoundException(transitionKey);
-	}
-
-	fromState->setTransitionInput(transitionKey, input);
+	state->addTransition(toStateKey, readSymbol, writeSymbol, direction);
 	statesCacheInvalidated = true;
 }
 
 void TuringMachine::updateTransitionFromState(const std::string &transitionKey, const std::string &fromStateKey) {
-	std::string input = TMTransition::getInputFromKey(transitionKey);
 	std::string oldFromStateKey = TMTransition::getFromStateFromKey(transitionKey);
 	std::string toStateKey = TMTransition::getToStateFromKey(transitionKey);
 	std::string readSymbol = TMTransition::getReadSymbolFromKey(transitionKey);
@@ -567,7 +582,7 @@ void TuringMachine::updateTransitionFromState(const std::string &transitionKey, 
 
 	// Generate the key of the transition after the update
 	std::string newTransitionKey =
-	    TMTransition::generateTransitionKey(fromStateKey, toStateKey, input, readSymbol, writeSymbol, direction);
+	    TMTransition::generateTransitionKey(fromStateKey, toStateKey, readSymbol, writeSymbol, direction);
 
 	// Do we even need to update?
 	if (transitionKey == newTransitionKey) {
@@ -575,7 +590,7 @@ void TuringMachine::updateTransitionFromState(const std::string &transitionKey, 
 	}
 
 	// Validate transition definition and transition not being a duplicate
-	validateTransition(fromStateKey, toStateKey, input, readSymbol, writeSymbol, direction);
+	validateTransition(fromStateKey, toStateKey, readSymbol, writeSymbol, direction);
 
 	TMState *oldFromState = getStateInternal(oldFromStateKey);
 	// Check if the old transition exists
@@ -588,12 +603,11 @@ void TuringMachine::updateTransitionFromState(const std::string &transitionKey, 
 	// Remove the transition from the old from state
 	oldFromState->removeTransition(transitionKey);
 	// Add the transition to the new from state
-	newFromState->addTransition(toStateKey, input, readSymbol, writeSymbol, direction);
+	newFromState->addTransition(toStateKey, readSymbol, writeSymbol, direction);
 	statesCacheInvalidated = true;
 }
 
 void TuringMachine::updateTransitionToState(const std::string &transitionKey, const std::string &toStateKey) {
-	std::string input = TMTransition::getInputFromKey(transitionKey);
 	std::string fromStateKey = TMTransition::getFromStateFromKey(transitionKey);
 	std::string readSymbol = TMTransition::getReadSymbolFromKey(transitionKey);
 	std::string writeSymbol = TMTransition::getWriteSymbolFromKey(transitionKey);
@@ -601,7 +615,7 @@ void TuringMachine::updateTransitionToState(const std::string &transitionKey, co
 
 	// Generate the key of the transition after the update
 	std::string newTransitionKey =
-	    TMTransition::generateTransitionKey(fromStateKey, toStateKey, input, readSymbol, writeSymbol, direction);
+	    TMTransition::generateTransitionKey(fromStateKey, toStateKey, readSymbol, writeSymbol, direction);
 
 	// Do we even need to update?
 	if (transitionKey == newTransitionKey) {
@@ -609,7 +623,7 @@ void TuringMachine::updateTransitionToState(const std::string &transitionKey, co
 	}
 
 	// Validate transition definition and transition not being a duplicate
-	validateTransition(fromStateKey, toStateKey, input, readSymbol, writeSymbol, direction);
+	validateTransition(fromStateKey, toStateKey, readSymbol, writeSymbol, direction);
 
 	TMState *fromState = getStateInternal(fromStateKey);
 	// Check if the old transition exists
@@ -622,7 +636,6 @@ void TuringMachine::updateTransitionToState(const std::string &transitionKey, co
 }
 
 void TuringMachine::updateTransitionReadSymbol(const std::string &transitionKey, const std::string &readSymbol) {
-	std::string input = TMTransition::getInputFromKey(transitionKey);
 	std::string fromStateKey = TMTransition::getFromStateFromKey(transitionKey);
 	std::string toStateKey = TMTransition::getToStateFromKey(transitionKey);
 	std::string writeSymbol = TMTransition::getWriteSymbolFromKey(transitionKey);
@@ -630,7 +643,7 @@ void TuringMachine::updateTransitionReadSymbol(const std::string &transitionKey,
 
 	// Generate the key of the transition after the update
 	std::string newTransitionKey =
-	    TMTransition::generateTransitionKey(fromStateKey, toStateKey, input, readSymbol, writeSymbol, direction);
+	    TMTransition::generateTransitionKey(fromStateKey, toStateKey, readSymbol, writeSymbol, direction);
 
 	// Do we even need to update?
 	if (transitionKey == newTransitionKey) {
@@ -638,7 +651,7 @@ void TuringMachine::updateTransitionReadSymbol(const std::string &transitionKey,
 	}
 
 	// Validate transition definition and transition not being a duplicate
-	validateTransition(fromStateKey, toStateKey, input, readSymbol, writeSymbol, direction);
+	validateTransition(fromStateKey, toStateKey, readSymbol, writeSymbol, direction);
 
 	TMState *fromState = getStateInternal(fromStateKey);
 	// Check if the old transition exists
@@ -651,7 +664,6 @@ void TuringMachine::updateTransitionReadSymbol(const std::string &transitionKey,
 }
 
 void TuringMachine::updateTransitionWriteSymbol(const std::string &transitionKey, const std::string &writeSymbol) {
-	std::string input = TMTransition::getInputFromKey(transitionKey);
 	std::string fromStateKey = TMTransition::getFromStateFromKey(transitionKey);
 	std::string toStateKey = TMTransition::getToStateFromKey(transitionKey);
 	std::string readSymbol = TMTransition::getReadSymbolFromKey(transitionKey);
@@ -659,7 +671,7 @@ void TuringMachine::updateTransitionWriteSymbol(const std::string &transitionKey
 
 	// Generate the key of the transition after the update
 	std::string newTransitionKey =
-	    TMTransition::generateTransitionKey(fromStateKey, toStateKey, input, readSymbol, writeSymbol, direction);
+	    TMTransition::generateTransitionKey(fromStateKey, toStateKey, readSymbol, writeSymbol, direction);
 
 	// Do we even need to update?
 	if (transitionKey == newTransitionKey) {
@@ -667,7 +679,7 @@ void TuringMachine::updateTransitionWriteSymbol(const std::string &transitionKey
 	}
 
 	// Validate transition definition and transition not being a duplicate
-	validateTransition(fromStateKey, toStateKey, input, readSymbol, writeSymbol, direction);
+	validateTransition(fromStateKey, toStateKey, readSymbol, writeSymbol, direction);
 
 	TMState *fromState = getStateInternal(fromStateKey);
 	// Check if the old transition exists
@@ -680,7 +692,6 @@ void TuringMachine::updateTransitionWriteSymbol(const std::string &transitionKey
 }
 
 void TuringMachine::updateTransitionDirection(const std::string &transitionKey, const TMDirection &direction) {
-	std::string input = TMTransition::getInputFromKey(transitionKey);
 	std::string fromStateKey = TMTransition::getFromStateFromKey(transitionKey);
 	std::string toStateKey = TMTransition::getToStateFromKey(transitionKey);
 	std::string readSymbol = TMTransition::getReadSymbolFromKey(transitionKey);
@@ -688,7 +699,7 @@ void TuringMachine::updateTransitionDirection(const std::string &transitionKey, 
 
 	// Generate the key of the transition after the update
 	std::string newTransitionKey =
-	    TMTransition::generateTransitionKey(fromStateKey, toStateKey, input, readSymbol, writeSymbol, direction);
+	    TMTransition::generateTransitionKey(fromStateKey, toStateKey, readSymbol, writeSymbol, direction);
 
 	// Do we even need to update?
 	if (transitionKey == newTransitionKey) {
@@ -696,7 +707,7 @@ void TuringMachine::updateTransitionDirection(const std::string &transitionKey, 
 	}
 
 	// Validate transition definition and transition not being a duplicate
-	validateTransition(fromStateKey, toStateKey, input, readSymbol, writeSymbol, direction);
+	validateTransition(fromStateKey, toStateKey, readSymbol, writeSymbol, direction);
 
 	TMState *fromState = getStateInternal(fromStateKey);
 	// Check if the old transition exists
@@ -829,4 +840,9 @@ std::vector<TMState> TuringMachine::getAcceptStates() const {
 
 void TuringMachine::reset() {
 	currentState = startState;
+	tape.reset();
+}
+
+bool TuringMachine::isAccepting() const {
+	return getState(currentState).getIsAccept();
 }

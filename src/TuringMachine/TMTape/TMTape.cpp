@@ -34,6 +34,14 @@ void TMTape::setTape(const std::map<int, std::string> &tape) {
 	this->tape = tape;
 }
 
+void TMTape::loadInput(const std::vector<std::string> &input) {
+	tape.clear();
+	headPosition = 0;
+	for (int i = 0; i < input.size(); i++) {
+		tape[i] = input[i];
+	}
+}
+
 std::map<int, std::string> TMTape::getTape() const {
 	return tape;
 }

@@ -1,4 +1,4 @@
-#pragma once 
+#pragma once
 #include "../../AutomatonException/AutomatonException.h"
 #include "../TMTransition/TMTransition.h"
 #include <string>
@@ -85,6 +85,8 @@ class AUTOMATASIMULATOR_API TMState {
 	 */
 	TMState &operator=(TMState &&other) noexcept;
 
+	bool operator==(const TMState &other) const;
+
 	/**
 	 * @brief Destructor for the State object.
 	 */
@@ -130,13 +132,12 @@ class AUTOMATASIMULATOR_API TMState {
 	/**
 	 * @brief Adds a transition to the state's transitions vector.
 	 * @param toStateKey The to state key of the transition.
-	 * @param input The input of the transition.
 	 * @param readSymbol The top of the stack symbol.
 	 * @param writeSymbol The symbol to be writeed onto the stack.
 	 * @param direction The Direction of the transitions
 	 */
-	void addTransition(const std::string &toStateKey, const std::string &input, const std::string &readSymbol,
-	                   const std::string &writeSymbol, const TMDirection &direction);
+	void addTransition(const std::string &toStateKey, const std::string &readSymbol, const std::string &writeSymbol,
+	                   const TMDirection &direction);
 
 	/**
 	 * @brief Gets the transition with the key provided.
@@ -144,23 +145,7 @@ class AUTOMATASIMULATOR_API TMState {
 	 * @return The transition with the specified key.
 	 * @throw TransitionNotFoundException If transition is not found.
 	 */
-	TMTransition getTransition(const std::string &key); 
-	
-	/**
-	 * @brief Gets a transition input.
-	 * @param transitionKey The key of the transition.
-	 * @return The input of the transition.
-	 */
-	std::string getTransitionInput(const std::string &transitionKey);
-
-	/**
-	 * @brief Sets a transition input.
-	 * @param transitionKey The key of the transition.
-	 * @param input The input to set.
-	 * @throw TransitionNotFoundException If transition is not found.
-	 * @throw InvalidTransitionException If the transition already exists.
-	 */
-	void setTransitionInput(const std::string &transitionKey, const std::string &input);
+	TMTransition getTransition(const std::string &key);
 
 	/**
 	 * @brief Gets a transition to state.

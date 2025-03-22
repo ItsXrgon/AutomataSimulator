@@ -83,6 +83,12 @@ class AUTOMATASIMULATOR_API TMTape {
 	void setTape(const std::map<int, std::string> &tape);
 
 	/**
+	 * @brief Loads the input onto the tape.
+	 * @param input The input to load onto the tape.
+	 */
+	void loadInput(const std::vector<std::string> &input);
+
+	/**
 	 * @brief Sets the blank symbol of the tape.
 	 * @brief This update all blank symbols on the tape to the new symbol.
 	 * @param blankSymbol The blank symbol to set.
