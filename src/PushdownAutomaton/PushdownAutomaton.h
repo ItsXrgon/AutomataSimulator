@@ -26,6 +26,16 @@ extern const std::string INITIAL_STACK_SYMBOL;
 class AUTOMATASIMULATOR_API PushdownAutomaton {
   protected:
 	/**
+	 * @brief The input of the automaton.
+	 */
+	std::vector<std::string> input;
+
+	/**
+	 * @brief The head of the input tape.
+	 */
+	int inputHead;
+
+	/**
 	 * @brief The current state of the automaton.
 	 */
 	std::string currentState;
@@ -85,12 +95,11 @@ class AUTOMATASIMULATOR_API PushdownAutomaton {
 	 */
 	bool stackAlphabetCacheInvalidated;
 
-	
 	/**
 	 * @brief Splits the push symbols string
 	 * @param pushSymbols Push symbols string
 	 * @return Separated symbols
-	*/
+	 */
 	std::vector<std::string> parsePushSymbols(const std::string &pushSymbols);
 
 	/**
@@ -141,6 +150,36 @@ class AUTOMATASIMULATOR_API PushdownAutomaton {
 	 * @return Bool indicating whether the symbol exists or not.
 	 */
 	bool stackAlphabetSymbolExists(const std::string &symbol) const;
+
+	/**
+	 * @brief Gets the input of the automaton.
+	 * @return The input of the automaton.
+	 */
+	std::vector<std::string> getInput() const;
+
+	/**
+	 * @brief Sets the input of the automaton.
+	 * @param input The value to load into the tape.
+	 */
+	void setInput(const std::vector<std::string> &input);
+
+	/**
+	 * @brief Adds to the input of the automaton.
+	 * @param input The value to load into the tape.
+	 */
+	void addInput(const std::vector<std::string> &input);
+
+	/**
+	 * @brief Gets the current input head of the automaton.
+	 * @return The current input head of the automaton.
+	 */
+	int getInputHead() const;
+
+	/**
+	 * @brief Sets the current input head of the automaton.
+	 * @param head The new input head.
+	 */
+	void setInputHead(const int &head);
 
 	/**
 	 * @brief Gets the stack.
@@ -446,18 +485,25 @@ class AUTOMATASIMULATOR_API PushdownAutomaton {
 	std::vector<PDAState> getAcceptStates() const;
 
 	/**
-	 * @brief Resets the automaton to its start state.
+	 * @brief Resets the automaton state, stack and head.
 	 */
-	void reset();
+	virtual void reset();
 
 	/**
-	 * @brief Moves the automaton to the next state based on the input.
-	 * @param input The input string to process.
+	 * @brief Returns whether the automata is currenty in an accept state or not.
+	 * @return True if the automaton is in an accept state.
+	 */
+	bool isAccepting() const;
+
+	/**
+	 * @brief Moves the automaton to the next state based on the current input head.
+	 * @brief If an epsilon transition is taken, the input head is not incremented.
 	 * @return True if the current state is accept.
 	 * @throws InvalidStartStateException If the start state is not set.
 	 * @throws InvalidAlphabetException If the alphabet is not set.
+	 * @throws InputConsumedException If the input head exceeds the length of the input.
 	 */
-	virtual bool processInput(const std::string &input) = 0;
+	virtual bool processInput() = 0;
 
 	/**
 	 * @brief Simulates the automaton on a given input string and depth.

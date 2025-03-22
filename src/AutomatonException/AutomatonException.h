@@ -103,13 +103,3 @@ class AUTOMATASIMULATOR_API InvalidAutomatonDefinitionException : public Automat
 	InvalidAutomatonDefinitionException(const std::string &msg)
 	    : AutomatonException("Invalid automaton definition: " + msg) {}
 };
-
-/**
- * @brief Thrown when simulation depth is exceeded
- */
-class AUTOMATASIMULATOR_API SimulationDepthExceededException : public AutomatonException {
-  public:
-	SimulationDepthExceededException(const int &depth)
-	    : AutomatonException("Simulation depth of " + std::to_string(depth) +
-	                              " has been exceeded for the provided input") {}
-};

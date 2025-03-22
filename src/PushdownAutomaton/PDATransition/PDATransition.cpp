@@ -40,6 +40,11 @@ PDATransition &PDATransition::operator=(PDATransition &&other) noexcept {
 	return *this;
 }
 
+bool PDATransition::operator==(const PDATransition &other) const {
+	return fromStateKey == other.fromStateKey && toStateKey == other.toStateKey && input == other.input &&
+	       stackSymbol == other.stackSymbol && pushSymbol == other.pushSymbol;
+}
+
 PDATransition::~PDATransition() {}
 
 std::string PDATransition::generateTransitionKey(const std::string &fromStateKey, const std::string &toStateKey,

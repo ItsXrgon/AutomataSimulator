@@ -89,6 +89,8 @@ class AUTOMATASIMULATOR_API PDATransition {
 	 */
 	PDATransition &operator=(PDATransition &&other) noexcept;
 
+	bool operator==(const PDATransition &other) const;
+
 	/**
 	 * @brief Destructor for the Transition object.
 	 */
@@ -214,3 +216,14 @@ class AUTOMATASIMULATOR_API PDATransition {
 	 */
 	std::string toString() const;
 };
+
+namespace std {
+template <> struct hash<PDATransition> {
+	size_t operator()(const PDATransition &t) const {
+		size_t hashValue = hash<std::string>()(t.getFromStateKey()) ^ (hash<std::string>()(t.getToStateKey()) << 1) ^
+		                   (hash<std::string>()(t.getInput()) << 2) ^ (hash<std::string>()(t.getStackSymbol()) << 3) ^
+		                   (hash<std::string>()(t.getPushSymbol()) << 4);
+		return hashValue;
+	}
+};
+} // namespace std

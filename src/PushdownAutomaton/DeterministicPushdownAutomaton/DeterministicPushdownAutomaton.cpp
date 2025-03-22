@@ -105,15 +105,24 @@ void DeterministicPushdownAutomaton::updateTransitionStackSymbol(const std::stri
 	PushdownAutomaton::updateTransitionStackSymbol(transitionKey, stackSymbol);
 }
 
-bool DeterministicPushdownAutomaton::processInput(const std::string &input) {
+bool DeterministicPushdownAutomaton::processInput() {
+	if (currentState.empty()) {
+		throw InvalidAutomatonDefinitionException("Current state or start state must be set to run process input");
+	}
+
+	std::string input = "";
+	if (inputHead < this->input.size()) {
+		input = this->input[inputHead];
+	}
+
 	const std::vector<PDATransition> &transitions = getStateInternal(currentState)->getTransitions();
-	std::string stackTop = stack.empty() ? "" : stack.top();
+	const std::string &stackTop = stack.empty() ? "" : stack.top();
 
 	for (const auto &transition : transitions) {
-		if (transition.getStackSymbol() != stackTop) {
+		if (transition.getStackSymbol() != stackTop && !transition.getStackSymbol().empty()) {
 			continue;
 		}
-		if (transition.getInput() == input) {
+		if (transition.getInput() == input || transition.getInput().empty()) {
 			if (!transition.getStackSymbol().empty()) {
 				stack.pop();
 			}
@@ -122,80 +131,66 @@ bool DeterministicPushdownAutomaton::processInput(const std::string &input) {
 				stack.push(symbol);
 			}
 			currentState = transition.getToStateKey();
-			continue;
+			// Only increment the head if the input is a match and the input head is less than the input size
+			const bool &incrementHead = transition.getInput() == input && inputHead < this->input.size();
+			if (incrementHead) {
+				inputHead++;
+			}
+			return getStateInternal(currentState)->getIsAccept();
 		}
 	}
 
-	return getStateInternal(currentState)->getIsAccept();
+	return false;
 }
 
 bool DeterministicPushdownAutomaton::simulate(const std::vector<std::string> &input, const int &simulationDepth) {
-	size_t inputIdx = 0;
-	size_t currentDepth = 0; // Add a depth counter separate from input index
+	if (startState.empty()) {
+		throw InvalidStartStateException("Start state must be set to run simulate");
+	}
+
+	int inputIdx = 0;
+	int currentDepth = 0;
 	std::string simulationCurrentState = getStartState();
 	std::stack<std::string> simulationStack;
 	simulationStack.push(INITIAL_STACK_SYMBOL);
 
 	while (currentDepth <= simulationDepth) {
-		bool transitioned = false;
 		const std::vector<PDATransition> &transitions = getStateInternal(simulationCurrentState)->getTransitions();
+
+		std::string currentInput = "";
+		if (inputIdx < input.size()) {
+			currentInput = input[inputIdx];
+		}
+
 		std::string stackTop = simulationStack.empty() ? "" : simulationStack.top();
 
-		// Process input transitions
-		if (inputIdx < input.size()) {
-			std::string currentInput = input[inputIdx];
-			for (const auto &transition : transitions) {
-				if (transition.getInput() == currentInput && transition.getStackSymbol() == stackTop) {
-					// Process stack updates
-					if (!transition.getStackSymbol().empty()) {
-						simulationStack.pop();
-					}
-					std::vector<std::string> pushSymbolsVec = parsePushSymbols(transition.getPushSymbol());
-					for (const auto &symbol : pushSymbolsVec) {
-						simulationStack.push(symbol);
-					}
-					// Move to the next state
-					simulationCurrentState = transition.getToStateKey();
-					transitioned = true;
-				}
+		bool transitionFound = false;
+		for (const auto &transition : transitions) {
+			if (transition.getStackSymbol() != stackTop && !transition.getStackSymbol().empty()) {
+				continue;
 			}
-		}
-
-		// Process epsilon transitions
-		if (!transitioned) {
-			for (const auto &transition : transitions) {
-				if (transition.getInput().empty() && transition.getStackSymbol() == stackTop) {
-					// Process stack updates
-					if (!transition.getStackSymbol().empty()) {
-						simulationStack.pop();
-					}
-					std::vector<std::string> pushSymbolsVec = parsePushSymbols(transition.getPushSymbol());
-					for (const auto &symbol : pushSymbolsVec) {
-						simulationStack.push(symbol);
-					}
-
-					simulationCurrentState = transition.getToStateKey();
-					transitioned = true;
-					break;
+			if (transition.getInput() == currentInput || transition.getInput().empty()) {
+				if (!transition.getStackSymbol().empty()) {
+					simulationStack.pop();
 				}
-			}
-		}
-		currentDepth++;
-
-		// Exit conditions:
-		// 1) No transition available and all input processed
-		// 2) Simulation depth exceeded
-		if (!transitioned) {
-			if (inputIdx <= input.size()) {
-				inputIdx++;
-			} else {
+				std::vector<std::string> pushSymbolsVec = parsePushSymbols(transition.getPushSymbol());
+				for (const auto &symbol : pushSymbolsVec) {
+					simulationStack.push(symbol);
+				}
+				simulationCurrentState = transition.getToStateKey();
+				// Only increment the head if the input is a match and the input head is less than the input size
+				const bool &incrementHead = transition.getInput() == currentInput && inputIdx < input.size();
+				if (incrementHead) {
+					inputIdx++;
+				}
+				transitionFound = true;
 				break;
 			}
 		}
-
-		if (currentDepth > simulationDepth) {
-			throw SimulationDepthExceededException(simulationDepth);
+		if (!transitionFound && !currentInput.empty()) {
+			return false;
 		}
+		currentDepth++;
 	}
 
 	return getStateInternal(simulationCurrentState)->getIsAccept();

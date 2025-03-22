@@ -10,10 +10,6 @@
 #define AUTOMATASIMULATOR_API __declspec(dllimport)
 #endif
 
-struct NPDAConfiguration {
-	std::string stateKey;
-	std::stack<std::string> stack;
-};
 /**
  * @brief Represents a deterministic pushdown automaton.
  * @brief A deterministic pushdown automaton is defined by a
@@ -28,45 +24,65 @@ struct NPDAConfiguration {
 class AUTOMATASIMULATOR_API NonDeterministicPushdownAutomaton : public PushdownAutomaton {
   private:
 	/**
-	 * @brief Adds all states reachable by epsilon transitions to the set of states.
-	 * @param states The set of states to add epsilon transitions to.
+	 * @brief The possible current states of the automaton.
 	 */
-	void addEpsilonClosure(std::unordered_set<std::string> &states);
+	std::unordered_set<std::string> possibleCurrentStates;
 
 	/**
-	 * @brief Gets all next states for a set of states and an input symbol.
-	 * @param currentStates The set of current states.
-	 * @param input The input symbol.
-	 * @return The set of next states.
+	 * @brief Cached convertion of the  possible current states from unordered map to vector.
 	 */
-	std::unordered_set<std::string> getNextPossibleStates(const std::unordered_set<std::string> &currentStates,
-	                                                      const std::string &input, const std::string &stackSymbol);
+	std::vector<std::string> cachedPossibleCurrentStates;
 
 	/**
-	 * @brief Decides a random state from a set of states.
-	 * @param states The set of states to decide from.
-	 * @return A random state from the set.
+	 * @brief Boolean indicating whether the cached  possible current states is invalidated or not.
 	 */
-	std::string decideRandomState(const std::unordered_set<std::string> &states);
+	bool possibleCurrentStatesCacheInvalidated;
+
+	/**
+	 * @brief Decides a random transition from a set of transitions.
+	 * @param transitions The set of transitions to decide from.
+	 * @return A random transitions from the set.
+	 */
+	PDATransition decideRandomTransition(const std::unordered_set<PDATransition> &transitions);
+
+	/**
+	 * @brief Serializes the stack to a string.
+	 * @param stack The stack to serialize.
+	 * @return The serialized stack.
+	 */
 	std::string serializeStack(const std::stack<std::string> &stack);
 
   public:
 	/**
-	 * @brief Moves the NFA to the next state based on the input.
-	 * @param input The input string to process.
+	 * @brief Gets the possible current states
+	 * @brief Possible current states are the states that the automata could of
+	 * chosen in the last simulation based on the previous current state
+	 * @return The possible current states of the automaton.
+	 */
+	std::vector<std::string> getPossibleCurrentStates();
+
+	/**
+	 * @brief Reset the NPDA to the start state.
+	 */
+	void reset() override; 
+	
+	/**
+	 * @brief Moves the automaton to the next state based on the current input head.
+	 * @brief If an epsilon transition is taken, the input head is not incremented.
 	 * @return True if the current state is accept.
 	 * @throws InvalidStartStateException If the start state is not set.
 	 * @throws InvalidAlphabetException If the alphabet is not set.
+	 * @throws InputConsumedException If the input head exceeds the length of the input.
 	 */
-	bool processInput(const std::string &input) override;
+	bool processInput() override;
 
 	/**
 	 * @brief Simulates the automaton on a given input string and depth.
+	 * @brief Returns false if the simulation depth is exceeded and no accept state is reached.
 	 * @param input The input strings to process.
 	 * @param simulationDepth The maximum number of transitions to simulate. Default is 50.
 	 * @return True if the input is accepted, false otherwise.
 	 * @throws InvalidStartStateException If the start state is not set.
-	 * @throws SimulationDepthExceededException If the simulation depth is exceeded.
 	 */
 	bool simulate(const std::vector<std::string> &input, const int &simulationDepth = 50) override;
 };

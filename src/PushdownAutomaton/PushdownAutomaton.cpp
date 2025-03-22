@@ -5,7 +5,7 @@
 const std::string INITIAL_STACK_SYMBOL = "Z";
 
 PushdownAutomaton::PushdownAutomaton()
-    : startState(""), inputAlphabetCacheInvalidated(false), stackAlphabetCacheInvalidated(false),
+    : inputHead(0), startState(""), inputAlphabetCacheInvalidated(false), stackAlphabetCacheInvalidated(false),
       statesCacheInvalidated(false) {
 	stack.push(INITIAL_STACK_SYMBOL);
 }
@@ -81,6 +81,67 @@ PDAState *PushdownAutomaton::getStateInternal(const std::string &key) {
 		throw StateNotFoundException(key);
 	}
 	return &(it->second);
+}
+
+std::vector<std::string> PushdownAutomaton::getInput() const {
+	return input;
+}
+
+void PushdownAutomaton::setInput(const std::vector<std::string> &input) {
+	std::unordered_set<std::string> missingSymbols;
+
+	for (const auto &symbol : input) {
+		if (!symbol.empty() && !inputAlphabetSymbolExists(symbol)) {
+			missingSymbols.insert(symbol);
+		}
+	}
+
+	if (!missingSymbols.empty()) {
+		std::string missingSymbolsString = "[" + *missingSymbols.begin();
+		for (const auto &symbol : missingSymbols) {
+			missingSymbolsString += ", " + symbol;
+		}
+		missingSymbolsString += "]";
+		throw InputAlphabetSymbolNotFoundException(missingSymbolsString);
+	}
+
+	this->input = input;
+	this->inputHead = 0;
+}
+
+void PushdownAutomaton::addInput(const std::vector<std::string> &input) {
+	std::unordered_set<std::string> missingSymbols;
+
+	for (const auto &symbol : input) {
+		if (!symbol.empty() && !inputAlphabetSymbolExists(symbol)) {
+			missingSymbols.insert(symbol);
+		}
+	}
+
+	if (!missingSymbols.empty()) {
+		std::string missingSymbolsString = "[" + *missingSymbols.begin();
+		for (const auto &symbol : missingSymbols) {
+			missingSymbolsString += ", " + symbol;
+		}
+		missingSymbolsString += "]";
+		throw InputAlphabetSymbolNotFoundException(missingSymbolsString);
+	}
+
+	this->input.insert(this->input.end(), input.begin(), input.end());
+}
+
+int PushdownAutomaton::getInputHead() const {
+	return inputHead;
+}
+
+void PushdownAutomaton::setInputHead(const int &inputHead) {
+	if (inputHead < 0) {
+		this->inputHead = 0;
+	} else if (inputHead >= input.size()) {
+		this->inputHead = input.size() - 1;
+	} else {
+		this->inputHead = inputHead;
+	}
 }
 
 std::stack<std::string> PushdownAutomaton::getStack() {
@@ -830,4 +891,9 @@ void PushdownAutomaton::reset() {
 	currentState = startState;
 	stack = std::stack<std::string>();
 	stack.push(INITIAL_STACK_SYMBOL);
+	inputHead = 0;
+}
+
+bool PushdownAutomaton::isAccepting() const {
+	return getState(currentState).getIsAccept();
 }

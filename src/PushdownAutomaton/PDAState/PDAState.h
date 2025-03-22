@@ -91,6 +91,8 @@ class AUTOMATASIMULATOR_API PDAState {
 	 */
 	PDAState &operator=(PDAState &&other) noexcept;
 
+	bool operator==(const PDAState &other) const;
+
 	/**
 	 * @brief Destructor for the State object.
 	 */

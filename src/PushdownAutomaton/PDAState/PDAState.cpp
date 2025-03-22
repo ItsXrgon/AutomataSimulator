@@ -34,6 +34,10 @@ PDAState &PDAState::operator=(PDAState &&other) noexcept {
 	return *this;
 }
 
+bool PDAState::operator==(const PDAState &other) const {
+	return key == other.key && label == other.label && isAccept == other.isAccept && transitions == other.transitions;
+}
+
 PDAState::~PDAState() {}
 
 PDATransition *PDAState::getTransitionInternal(const std::string &key) {

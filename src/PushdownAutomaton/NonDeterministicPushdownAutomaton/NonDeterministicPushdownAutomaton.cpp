@@ -1,135 +1,14 @@
 #define AUTOMATASIMULATOR_EXPORTS
 #include "NonDeterministicPushdownAutomaton.h"
 
-std::string NonDeterministicPushdownAutomaton::decideRandomState(const std::unordered_set<std::string> &states) {
-	// If empty, return empty string
-	if (states.empty()) {
-		return "";
-	}
-
-	// Randomly choose a state from the set of states
-	int randomIndex = rand() % states.size();
-	auto it = states.begin();
+PDATransition
+NonDeterministicPushdownAutomaton::decideRandomTransition(const std::unordered_set<PDATransition> &transitions) {
+	int randomIndex = rand() % transitions.size();
+	auto it = transitions.begin();
 	std::advance(it, randomIndex);
 	return *it;
 }
 
-bool NonDeterministicPushdownAutomaton::processInput(const std::string &input) {
-	return false;
-}
-
-bool NonDeterministicPushdownAutomaton::simulate(const std::vector<std::string> &input, const int &simulationDepth) {
-	// Create a queue of configurations to explore
-	// Each configuration is: <state, inputIndex, stack, depth>
-	struct Configuration {
-		std::string state;
-		size_t inputIdx;
-		std::stack<std::string> stack;
-		size_t depth;
-	};
-	std::queue<Configuration> configurations;
-
-	// Start with initial configuration
-	std::stack<std::string> initialStack;
-	initialStack.push(INITIAL_STACK_SYMBOL);
-	configurations.push({getStartState(), 0, initialStack, 0});
-
-	// Set to track visited configurations to avoid cycles
-	std::set<std::tuple<std::string, size_t, std::string>> visited;
-
-	while (!configurations.empty()) {
-		// Get the next configuration to explore
-		Configuration current = configurations.front();
-		configurations.pop();
-
-		// Check if we've exceeded simulation depth
-		if (current.depth > simulationDepth) {
-			throw SimulationDepthExceededException(simulationDepth);
-		}
-
-		// Check if we're in an accepting state and have consumed all input
-		if (current.inputIdx >= input.size()) {
-			if (getStateInternal(current.state)->getIsAccept()) {
-				return true;
-			}
-		}
-
-		// Get transitions for current state
-		const std::vector<PDATransition> &transitions = getStateInternal(current.state)->getTransitions();
-		std::string stackTop = current.stack.empty() ? "" : current.stack.top();
-
-		// Try processing with current input if available
-		bool anyTransition = false;
-		if (current.inputIdx < input.size()) {
-			std::string currentInput = input[current.inputIdx];
-
-			for (const auto &transition : transitions) {
-				if (transition.getInput() == currentInput && transition.getStackSymbol() == stackTop) {
-					// Create a new configuration with the transition applied
-					Configuration newConfig = current;
-					newConfig.state = transition.getToStateKey();
-					newConfig.inputIdx++; // Consume input
-					newConfig.depth++;
-
-					// Update stack
-					if (!transition.getStackSymbol().empty()) {
-						newConfig.stack.pop();
-					}
-					std::vector<std::string> pushSymbolsVec = parsePushSymbols(transition.getPushSymbol());
-					for (auto it = pushSymbolsVec.rbegin(); it != pushSymbolsVec.rend(); ++it) {
-						newConfig.stack.push(*it);
-					}
-
-					// Create a serialized representation of the stack for visited check
-					std::string stackStr = serializeStack(newConfig.stack);
-
-					// Only add if we haven't visited this configuration
-					auto configKey = std::make_tuple(newConfig.state, newConfig.inputIdx, stackStr);
-					if (visited.find(configKey) == visited.end()) {
-						visited.insert(configKey);
-						configurations.push(newConfig);
-						anyTransition = true;
-					}
-				}
-			}
-		}
-
-		// Try epsilon transitions
-		for (const auto &transition : transitions) {
-			if (transition.getInput().empty() && transition.getStackSymbol() == stackTop) {
-				// Create a new configuration with the epsilon transition applied
-				Configuration newConfig = current;
-				newConfig.state = transition.getToStateKey();
-				newConfig.depth++;
-
-				// Update stack
-				if (!transition.getStackSymbol().empty()) {
-					newConfig.stack.pop();
-				}
-				std::vector<std::string> pushSymbolsVec = parsePushSymbols(transition.getPushSymbol());
-				for (auto it = pushSymbolsVec.rbegin(); it != pushSymbolsVec.rend(); ++it) {
-					newConfig.stack.push(*it);
-				}
-
-				// Create a serialized representation of the stack for visited check
-				std::string stackStr = serializeStack(newConfig.stack);
-
-				// Only add if we haven't visited this configuration
-				auto configKey = std::make_tuple(newConfig.state, newConfig.inputIdx, stackStr);
-				if (visited.find(configKey) == visited.end()) {
-					visited.insert(configKey);
-					configurations.push(newConfig);
-					anyTransition = true;
-				}
-			}
-		}
-	}
-
-	// No accepting configuration found
-	return false;
-}
-
-// Helper function to serialize a stack for the visited set
 std::string NonDeterministicPushdownAutomaton::serializeStack(const std::stack<std::string> &stack) {
 	std::stack<std::string> tempStack = stack;
 	std::string result;
@@ -140,4 +19,170 @@ std::string NonDeterministicPushdownAutomaton::serializeStack(const std::stack<s
 	}
 
 	return result;
+}
+
+std::vector<std::string> NonDeterministicPushdownAutomaton::getPossibleCurrentStates() {
+	// if the conversion cache from unordered_set to vector is not valid then recompute
+	if (possibleCurrentStatesCacheInvalidated) {
+		cachedPossibleCurrentStates.clear();
+		for (const auto &state : possibleCurrentStates) {
+			cachedPossibleCurrentStates.push_back(state);
+		}
+		possibleCurrentStatesCacheInvalidated = false;
+	}
+	return cachedPossibleCurrentStates;
+}
+
+void NonDeterministicPushdownAutomaton::reset() {
+	PushdownAutomaton::reset();
+	possibleCurrentStates.clear();
+	possibleCurrentStates.insert(startState);
+	currentState = startState;
+	possibleCurrentStatesCacheInvalidated = true;
+}
+
+bool NonDeterministicPushdownAutomaton::processInput() {
+	if (currentState.empty()) {
+		throw InvalidAutomatonDefinitionException("Current state or start state must be set to run process input");
+	}
+
+	std::string input = "";
+	if (inputHead < this->input.size()) {
+		input = this->input[inputHead];
+	}
+
+	std::unordered_set<PDATransition> possibleTransitions;
+	std::unordered_set<std::string> possibleCurrentStates;
+
+	const std::vector<PDATransition> &transitions = getStateInternal(currentState)->getTransitions();
+	std::string stackTop = stack.empty() ? "" : stack.top();
+
+	for (const auto &transition : transitions) {
+		if (transition.getStackSymbol() != stackTop && !transition.getStackSymbol().empty()) {
+			continue;
+		}
+		if (transition.getInput() == input || transition.getInput().empty()) {
+			possibleTransitions.insert(transition);
+			possibleCurrentStates.insert(transition.getToStateKey());
+		}
+	}
+
+	if (possibleTransitions.empty()) {
+		return false;
+	}
+
+	PDATransition transitionChosen = decideRandomTransition(possibleTransitions);
+
+	// Update current state to the chosen transition
+	currentState = transitionChosen.getToStateKey();
+
+	// If the stack symbol is not epsilon then pop from stack
+	if (!transitionChosen.getStackSymbol().empty()) {
+		stack.pop();
+	}
+
+	std::vector<std::string> pushSymbolsVec = parsePushSymbols(transitionChosen.getPushSymbol());
+	for (auto it = pushSymbolsVec.rbegin(); it != pushSymbolsVec.rend(); ++it) {
+		stack.push(*it);
+	}
+	// Only increment the head if the input is a match
+	const bool &incrementHead = transitionChosen.getInput() == input && inputHead < this->input.size();
+	if (incrementHead) {
+		inputHead++;
+	}
+
+	this->possibleCurrentStates = possibleCurrentStates;
+	possibleCurrentStatesCacheInvalidated = true;
+
+	// Return whether the randomly chosen current state is an accept state
+	return getStateInternal(currentState)->getIsAccept();
+}
+
+struct Visited {
+	std::string state;
+	int head;
+	std::string stack;
+
+	bool operator==(const Visited &other) const {
+		return state == other.state && head == other.head && stack == other.stack;
+	}
+};
+
+namespace std {
+template <> struct hash<Visited> {
+	size_t operator()(const Visited &v) const {
+		return hash<std::string>()(v.state) ^ (hash<int>()(v.head) << 1) ^ (hash<std::string>()(v.stack) << 2);
+	}
+};
+} // namespace std
+
+bool NonDeterministicPushdownAutomaton::simulate(const std::vector<std::string> &input, const int &simulationDepth) {
+	if (startState.empty()) {
+		throw InvalidStartStateException("Start state must be set to run simulate");
+	}
+
+	struct Branch {
+		std::string state;
+		std::stack<std::string> stack;
+		int head;
+		int depth;
+	};
+
+	std::queue<Branch> branches;
+	std::unordered_set<Visited> visited;
+
+	std::stack<std::string> initialStack;
+	initialStack.push(INITIAL_STACK_SYMBOL);
+	branches.push({getStartState(), initialStack, 0, 0});
+
+	while (!branches.empty()) {
+		Branch branch = branches.front();
+		branches.pop();
+
+		visited.insert({branch.state, branch.head, serializeStack(branch.stack)});
+
+		if (branch.head == input.size() && getStateInternal(branch.state)->getIsAccept()) {
+			return true;
+		}
+
+		if (branch.depth >= simulationDepth) {
+			continue;
+		}
+
+		const std::vector<PDATransition> &transitions = getStateInternal(branch.state)->getTransitions();
+
+		std::string currentInput = "";
+		if (branch.head < input.size()) {
+			currentInput = input[branch.head];
+		}
+
+		const std::string stackTop = branch.stack.empty() ? "" : branch.stack.top();
+
+		for (const auto &transition : transitions) {
+			if (transition.getStackSymbol() != stackTop && !transition.getStackSymbol().empty()) {
+				continue;
+			}
+
+			if (transition.getInput() == "" || transition.getInput() == input[branch.head]) {
+				const int &newHead = transition.getInput() == "" ? branch.head : branch.head + 1;
+				std::stack<std::string> branchStack = branch.stack;
+				if (!transition.getStackSymbol().empty()) {
+					branchStack.pop();
+				}
+
+				std::vector<std::string> pushSymbolsVec = parsePushSymbols(transition.getPushSymbol());
+				for (auto it = pushSymbolsVec.rbegin(); it != pushSymbolsVec.rend(); ++it) {
+					branchStack.push(*it);
+				}
+
+				std::string serializedStack = serializeStack(branchStack);
+
+				if (visited.find({transition.getToStateKey(), newHead, serializedStack}) != visited.end()) {
+					continue;
+				}
+
+				branches.push({transition.getToStateKey(), branchStack, newHead, branch.depth + 1});
+			}
+		}
+	}
 }
