@@ -39,28 +39,27 @@ class AUTOMATASIMULATOR_API NonDeterministicFiniteAutomaton : public FiniteAutom
 	bool possibleCurrentStatesCacheInvalidated;
 
 	/**
-	 * @brief Adds all states reachable by epsilon transitions to the set of states.
-	 * @param states The set of states to add epsilon transitions to.
+	 * @brief Decides a random transition from a set of transitions.
+	 * @param transitions The set of transitions to decide from.
+	 * @return A random transitions from the set.
 	 */
-	void addEpsilonClosure(std::unordered_set<std::string> &states);
-
-	/**
-	 * @brief Gets all next states for a set of states and an input symbol.
-	 * @param currentStates The set of current states.
-	 * @param input The input symbol.
-	 * @return The set of next states.
-	 */
-	std::unordered_set<std::string> getNextPossibleStates(const std::unordered_set<std::string> &currentStates,
-	                                                      const std::string &input);
-
-	/**
-	 * @brief Decides a random state from a set of states.
-	 * @param states The set of states to decide from.
-	 * @return A random state from the set.
-	 */
-	std::string decideRandomState(const std::unordered_set<std::string> &states);
+	FATransition decideRandomTransition(const std::unordered_set<FATransition> &transitions);
 
   public:
+	/**
+	 * @brief Sets the input of the automaton.
+	 * @param input The value to load into the tape.
+	 * @throws InvalidAlphabetException If the input contains non-epsilon symbols not in the alphabet.
+	 */
+	void setInput(const std::vector<std::string> &input) override;
+
+	/**
+	 * @brief Adds to the input of the automaton.
+	 * @param input The value to load into the tape.
+	 * @throws InvalidAlphabetException If the input contains non-epsilon symbols not in the alphabet.
+	 */
+	void addInput(const std::vector<std::string> &input) override;
+
 	/**
 	 * @brief Updates the label of a state.
 	 * @brief This also updates its key to be the new label and updates it's transitions' keys.
@@ -140,12 +139,15 @@ class AUTOMATASIMULATOR_API NonDeterministicFiniteAutomaton : public FiniteAutom
 	void reset() override;
 
 	/**
-	 * @brief Moves the NFA to the next state based on the input.
-	 * @param input The input string to process.
+	 * @brief Moves the automaton to the next state based on the current input head.
+	 * @brief If an epsilon transition is taken, the input head is not incremented.
+	 * @brief Returns false if the simulation depth is exceeded and no accept state is reached.
 	 * @return True if the current state is accept.
 	 * @throws InvalidStartStateException If the start state is not set.
+	 * @throws InvalidAlphabetException If the alphabet is not set.
+	 * @throws InputConsumedException If the input head exceeds the length of the input.
 	 */
-	bool processInput(const std::string &input) override;
+	bool processInput() override;
 
 	/**
 	 * @brief Simulates the NFA on a given input string.

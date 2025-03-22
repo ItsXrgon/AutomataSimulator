@@ -32,6 +32,11 @@ FATransition &FATransition::operator=(FATransition &&other) noexcept {
 	return *this;
 }
 
+bool FATransition::operator==(const FATransition &other) const {
+	return fromStateKey == other.fromStateKey && toStateKey == other.toStateKey && input == other.input;
+}
+
+
 FATransition::~FATransition() {}
 
 std::string FATransition::generateTransitionKey(const std::string &fromStateKey, const std::string &toStateKey,

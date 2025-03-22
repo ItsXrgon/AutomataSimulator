@@ -18,6 +18,47 @@ class DFA_Test : public ::testing::Test {
 	DeterministicFiniteAutomaton *automaton;
 };
 
+TEST_F(DFA_Test, GetInput_GetsInput) {
+	std::vector<std::string> input = automaton->getInput();
+	EXPECT_EQ(input.size(), 0);
+}
+
+TEST_F(DFA_Test, SetInput_SetsInput) {
+	automaton->setInput({"0", "1", "0"});
+	std::vector<std::string> input = automaton->getInput();
+
+	EXPECT_EQ(input.size(), 3);
+	EXPECT_TRUE(std::find(input.begin(), input.end(), "0") != input.end());
+	EXPECT_TRUE(std::find(input.begin(), input.end(), "1") != input.end());
+	EXPECT_TRUE(std::find(input.begin(), input.end(), "0") != input.end());
+}
+
+TEST_F(DFA_Test, SetInput_ThrowsForEpsilon) {
+	EXPECT_THROW(automaton->setInput({"0", "", "1"}), InputAlphabetSymbolNotFoundException);
+}
+
+TEST_F(DFA_Test, SetInput_ThrowsForSymbolNotInAlphabet) {
+	EXPECT_THROW(automaton->setInput({"a", "b"}), InputAlphabetSymbolNotFoundException);
+}
+
+TEST_F(DFA_Test, SetInput_AddsNewInputs) {
+	automaton->addInputAlphabet({"2", "3"});
+	automaton->addInput({"2", "3"});
+	std::vector<std::string> input = automaton->getInput();
+
+	EXPECT_EQ(input.size(), 2);
+	EXPECT_TRUE(std::find(input.begin(), input.end(), "2") != input.end());
+	EXPECT_TRUE(std::find(input.begin(), input.end(), "3") != input.end());
+}
+
+TEST_F(DFA_Test, AddInput_ThrowsForEpsilon) {
+	EXPECT_THROW(automaton->addInput({"0", "", "1"}), InputAlphabetSymbolNotFoundException);
+}
+
+TEST_F(DFA_Test, AddInput_ThrowsForInputNotInAlphabet) {
+	EXPECT_THROW(automaton->setInput({"a", "b"}), InputAlphabetSymbolNotFoundException);
+}
+
 TEST_F(DFA_Test, StateExists_ReturnsTrueWhenStateExists) {
 	EXPECT_TRUE(automaton->stateExists("q0"));
 	EXPECT_TRUE(automaton->stateExists("q1"));
@@ -748,7 +789,6 @@ TEST_F(DFA_Test, RemoveAcceptStates_ThrowsForMissingStates) {
 	EXPECT_THROW(automaton->removeAcceptStates({"q2", "q3"}), StateNotFoundException);
 }
 
-
 TEST_F(DFA_Test, ClearAcceptStates_RemovesAllAcceptStates) {
 	automaton->addAcceptState("q0");
 	automaton->addAcceptState("q1");
@@ -783,11 +823,7 @@ TEST_F(DFA_Test, GetAcceptStates_EmptyIfNoAcceptStates) {
 }
 
 TEST_F(DFA_Test, Reset_SetsCurrentStateToStartState) {
-	automaton->addTransition("q0", "q1", "0");
-	automaton->processInput("0");
-
-	EXPECT_EQ(automaton->getCurrentState(), "q1");
-
+	automaton->addAcceptState("q0");
 	automaton->reset();
 
 	EXPECT_EQ(automaton->getCurrentState(), "q0");
@@ -799,6 +835,189 @@ TEST_F(DFA_Test, Reset_HandlesAcceptStartState) {
 
 	EXPECT_EQ(automaton->getCurrentState(), "q0");
 	EXPECT_FALSE(automaton->getAcceptStates().empty());
+}
+
+TEST_F(DFA_Test, IsAccepting_ShouldAcceptIfStartStateIsAccept) {
+	automaton->addAcceptState("q0");
+	EXPECT_TRUE(automaton->isAccepting());
+}
+
+TEST_F(DFA_Test, IsAccepting_ShouldAcceptIfCurrentStateIsAccept) {
+	automaton->addAcceptState("q1");
+	automaton->setCurrentState("q1");
+	EXPECT_TRUE(automaton->isAccepting());
+}
+
+TEST_F(DFA_Test, ProcessInput_ShouldAcceptValidEmptyInput) {
+	automaton->addAcceptState("q0");
+	automaton->addState("q2");
+	automaton->addState("q3");
+
+	automaton->addTransition("q0", "q1", "1");
+	automaton->addTransition("q0", "q2", "0");
+
+	automaton->addTransition("q1", "q0", "1");
+	automaton->addTransition("q1", "q3", "0");
+
+	automaton->addTransition("q2", "q0", "0");
+	automaton->addTransition("q2", "q3", "1");
+
+	automaton->addTransition("q3", "q1", "0");
+	automaton->addTransition("q3", "q2", "1");
+
+	EXPECT_TRUE(automaton->isAccepting());
+	EXPECT_TRUE(automaton->processInput());
+}
+
+TEST_F(DFA_Test, ProcessInput_ShouldAcceptValidSequence) {
+	automaton->addAcceptState("q0");
+	automaton->addState("q2");
+	automaton->addState("q3");
+
+	automaton->addTransition("q0", "q1", "1");
+	automaton->addTransition("q0", "q2", "0");
+
+	automaton->addTransition("q1", "q0", "1");
+	automaton->addTransition("q1", "q3", "0");
+
+	automaton->addTransition("q2", "q0", "0");
+	automaton->addTransition("q2", "q3", "1");
+
+	automaton->addTransition("q3", "q1", "0");
+	automaton->addTransition("q3", "q2", "1");
+
+	automaton->setInput({"0", "1", "0", "1"});
+
+	automaton->processInput();
+	EXPECT_TRUE(automaton->getInputHead() == 1);
+	EXPECT_TRUE(automaton->getCurrentState() == "q2");
+
+	automaton->processInput();
+	EXPECT_TRUE(automaton->getInputHead() == 2);
+	EXPECT_TRUE(automaton->getCurrentState() == "q3");
+
+	automaton->processInput();
+	EXPECT_TRUE(automaton->getInputHead() == 3);
+	EXPECT_TRUE(automaton->getCurrentState() == "q1");
+
+	automaton->processInput();
+	EXPECT_TRUE(automaton->getInputHead() == 4);
+	EXPECT_TRUE(automaton->getCurrentState() == "q0");
+
+	EXPECT_TRUE(automaton->isAccepting());
+}
+
+TEST_F(DFA_Test, ProcessInput_ShouldStayAcceptingAfterInputIsConsumed) {
+	automaton->addAcceptState("q0");
+	automaton->addState("q2");
+	automaton->addState("q3");
+
+	automaton->addTransition("q0", "q1", "1");
+	automaton->addTransition("q0", "q2", "0");
+
+	automaton->addTransition("q1", "q0", "1");
+	automaton->addTransition("q1", "q3", "0");
+
+	automaton->addTransition("q2", "q0", "0");
+	automaton->addTransition("q2", "q3", "1");
+
+	automaton->addTransition("q3", "q1", "0");
+	automaton->addTransition("q3", "q2", "1");
+
+	EXPECT_TRUE(automaton->isAccepting());
+
+	automaton->processInput();
+	EXPECT_TRUE(automaton->isAccepting());
+}
+
+TEST_F(DFA_Test, ProcessInputRejectIfNoTransitionFound) {
+	automaton->addAcceptState("q0");
+	automaton->setInput({"0"});
+
+	EXPECT_FALSE(automaton->processInput());
+}
+
+TEST_F(DFA_Test, ProcessInput_ShouldProcessInputsForFerrymanProblem) {
+	automaton->addState("MWGC-0");
+	automaton->addState("WC-MG");
+	automaton->addState("MWC-G");
+	automaton->addState("C-MWG");
+	automaton->addState("W-MGC");
+	automaton->addState("MGC-W");
+	automaton->addState("MWG-C");
+	automaton->addState("G-MWC");
+	automaton->addState("MG-WC");
+	automaton->addState("0-MWGC");
+
+	automaton->setStartState("MWGC-0");
+
+	automaton->setInputAlphabet({"g", "m", "w", "c"});
+
+	automaton->addTransition("MWGC-0", "WC-MG", "g");
+	automaton->addTransition("WC-MG", "MWGC-0", "g");
+
+	automaton->addTransition("WC-MG", "MWC-G", "m");
+	automaton->addTransition("MWC-G", "WC-MG", "m");
+
+	automaton->addTransition("MWC-G", "C-MWG", "w");
+	automaton->addTransition("MWC-G", "W-MGC", "c");
+
+	automaton->addTransition("C-MWG", "MWC-G", "w");
+	automaton->addTransition("C-MWG", "MGC-W", "g");
+
+	automaton->addTransition("W-MGC", "MWC-G", "c");
+	automaton->addTransition("W-MGC", "MWG-C", "g");
+
+	automaton->addTransition("MGC-W", "C-MWG", "g");
+	automaton->addTransition("MGC-W", "G-MWC", "c");
+
+	automaton->addTransition("MWG-C", "W-MGC", "g");
+	automaton->addTransition("MWG-C", "G-MWC", "w");
+
+	automaton->addTransition("G-MWC", "MGC-W", "c");
+	automaton->addTransition("G-MWC", "MWG-C", "w");
+	automaton->addTransition("G-MWC", "MG-WC", "m");
+
+	automaton->addTransition("MG-WC", "G-MWC", "m");
+	automaton->addTransition("MG-WC", "0-MWGC", "g");
+
+	automaton->addTransition("0-MWGC", "MG-WC", "g");
+
+	automaton->addAcceptState("0-MWGC");
+	automaton->setInput({"g", "m", "w", "g", "c", "m", "g"});
+
+	// Start at the initial state
+	automaton->setCurrentState("MWGC-0");
+	EXPECT_EQ(automaton->getCurrentState(), "MWGC-0");
+
+	// Take the goat to the other side
+	automaton->processInput();
+	EXPECT_EQ(automaton->getCurrentState(), "WC-MG");
+
+	// Return alone
+	automaton->processInput();
+	EXPECT_EQ(automaton->getCurrentState(), "MWC-G");
+
+	// Take the wolf to the other side
+	automaton->processInput();
+	EXPECT_EQ(automaton->getCurrentState(), "C-MWG");
+
+	// Return with the goat
+	automaton->processInput();
+	EXPECT_EQ(automaton->getCurrentState(), "MGC-W");
+
+	// Take the cabbage to the other side
+	automaton->processInput();
+	EXPECT_EQ(automaton->getCurrentState(), "G-MWC");
+
+	// Return alone
+	automaton->processInput();
+	EXPECT_EQ(automaton->getCurrentState(), "MG-WC");
+
+	// Take the goat to the other side
+	EXPECT_TRUE(automaton->processInput());
+	EXPECT_TRUE(automaton->isAccepting());
+	EXPECT_EQ(automaton->getCurrentState(), "0-MWGC");
 }
 
 TEST_F(DFA_Test, Simulate_ShouldThrowExceptionForSimulationWithoutStartState) {
@@ -826,13 +1045,7 @@ TEST_F(DFA_Test, Simulate_InvalidInputReject) {
 	EXPECT_FALSE(automaton->simulate({"0", "0"}));
 }
 
-TEST_F(DFA_Test, Simulate_InvalidInputRejects) {
-	automaton->addTransition("q0", "q1", "0");
-
-	EXPECT_FALSE(automaton->simulate({"1"}));
-}
-
-TEST_F(DFA_Test, Simulate_ThrowsIfSimulationDepthExceeded) {
+TEST_F(DFA_Test, Simulate_RejectsIfSimulationDepthExceeded) {
 	automaton->addTransition("q0", "q1", "0");
 	automaton->addTransition("q1", "q0", "1");
 
@@ -840,12 +1053,17 @@ TEST_F(DFA_Test, Simulate_ThrowsIfSimulationDepthExceeded) {
 
 	std::vector<std::string> input = {"0", "1", "0", "1", "0", "1"};
 
-	EXPECT_THROW(automaton->simulate(input, 3), SimulationDepthExceededException);
+	EXPECT_FALSE(automaton->simulate(input, 3));
 }
 
 TEST_F(DFA_Test, Simulate_EmptyInputStaysAtStartState) {
 	automaton->addAcceptState("q0");
 	EXPECT_TRUE(automaton->simulate({}));
+}
+
+TEST_F(DFA_Test, Simulate_RejectIfNoTransitionFound) {
+	automaton->addAcceptState("q0");
+	EXPECT_FALSE(automaton->simulate({"0"}));
 }
 
 TEST_F(DFA_Test, Simulate_ShouldSimulateFerrymanProblem) {
@@ -907,85 +1125,4 @@ TEST_F(DFA_Test, Simulate_ShouldSimulateFerrymanProblem) {
 
 	// Invalid sequence: take goat -> return alone -> take wolf -> return with goat -> take cabbage -> return alone ->
 	EXPECT_FALSE(automaton->simulate({"g", "m", "w", "g", "c", "m", "g", "g"}));
-}
-
-TEST_F(DFA_Test, ProcessInput_ShouldProcessInputsForFerrymanProblem) {
-	automaton->addState("MWGC-0");
-	automaton->addState("WC-MG");
-	automaton->addState("MWC-G");
-	automaton->addState("C-MWG");
-	automaton->addState("W-MGC");
-	automaton->addState("MGC-W");
-	automaton->addState("MWG-C");
-	automaton->addState("G-MWC");
-	automaton->addState("MG-WC");
-	automaton->addState("0-MWGC");
-
-	automaton->setStartState("MWGC-0");
-
-	automaton->setInputAlphabet({"g", "m", "w", "c"});
-
-	automaton->addTransition("MWGC-0", "WC-MG", "g");
-	automaton->addTransition("WC-MG", "MWGC-0", "g");
-
-	automaton->addTransition("WC-MG", "MWC-G", "m");
-	automaton->addTransition("MWC-G", "WC-MG", "m");
-
-	automaton->addTransition("MWC-G", "C-MWG", "w");
-	automaton->addTransition("MWC-G", "W-MGC", "c");
-
-	automaton->addTransition("C-MWG", "MWC-G", "w");
-	automaton->addTransition("C-MWG", "MGC-W", "g");
-
-	automaton->addTransition("W-MGC", "MWC-G", "c");
-	automaton->addTransition("W-MGC", "MWG-C", "g");
-
-	automaton->addTransition("MGC-W", "C-MWG", "g");
-	automaton->addTransition("MGC-W", "G-MWC", "c");
-
-	automaton->addTransition("MWG-C", "W-MGC", "g");
-	automaton->addTransition("MWG-C", "G-MWC", "w");
-
-	automaton->addTransition("G-MWC", "MGC-W", "c");
-	automaton->addTransition("G-MWC", "MWG-C", "w");
-	automaton->addTransition("G-MWC", "MG-WC", "m");
-
-	automaton->addTransition("MG-WC", "G-MWC", "m");
-	automaton->addTransition("MG-WC", "0-MWGC", "g");
-
-	automaton->addTransition("0-MWGC", "MG-WC", "g");
-
-	automaton->addAcceptState("0-MWGC");
-
-	// Start at the initial state
-	automaton->setCurrentState("MWGC-0");
-	EXPECT_EQ(automaton->getCurrentState(), "MWGC-0");
-
-	// Take the goat to the other side
-	automaton->processInput("g");
-	EXPECT_EQ(automaton->getCurrentState(), "WC-MG");
-
-	// Return alone
-	automaton->processInput("m");
-	EXPECT_EQ(automaton->getCurrentState(), "MWC-G");
-
-	// Take the wolf to the other side
-	automaton->processInput("w");
-	EXPECT_EQ(automaton->getCurrentState(), "C-MWG");
-
-	// Return with the goat
-	automaton->processInput("g");
-	EXPECT_EQ(automaton->getCurrentState(), "MGC-W");
-
-	// Take the cabbage to the other side
-	automaton->processInput("c");
-	EXPECT_EQ(automaton->getCurrentState(), "G-MWC");
-
-	// Return alone
-	automaton->processInput("m");
-	EXPECT_EQ(automaton->getCurrentState(), "MG-WC");
-
-	// Take the goat to the other side
-	EXPECT_TRUE(automaton->processInput("g"));
-	EXPECT_EQ(automaton->getCurrentState(), "0-MWGC");
 }

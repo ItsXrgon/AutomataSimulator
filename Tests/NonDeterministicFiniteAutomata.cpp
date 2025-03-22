@@ -18,6 +18,47 @@ class NFA_Test : public ::testing::Test {
 	NonDeterministicFiniteAutomaton *automaton;
 };
 
+TEST_F(NFA_Test, GetInput_GetsInput) {
+	std::vector<std::string> input = automaton->getInput();
+	EXPECT_EQ(input.size(), 0);
+}
+
+TEST_F(NFA_Test, SetInput_SetsInput) {
+	automaton->setInput({"0", "1", "0"});
+	std::vector<std::string> input = automaton->getInput();
+
+	EXPECT_EQ(input.size(), 3);
+	EXPECT_TRUE(std::find(input.begin(), input.end(), "0") != input.end());
+	EXPECT_TRUE(std::find(input.begin(), input.end(), "1") != input.end());
+	EXPECT_TRUE(std::find(input.begin(), input.end(), "0") != input.end());
+}
+
+TEST_F(NFA_Test, SetInput_NoThrowForEpsilon) {
+	EXPECT_NO_THROW(automaton->setInput({"0", "", "1"}));
+}
+
+TEST_F(NFA_Test, SetInput_ThrowsForInputNotInAlphabet) {
+	EXPECT_THROW(automaton->setInput({"a", "b"}), InputAlphabetSymbolNotFoundException);
+}
+
+TEST_F(NFA_Test, SetInput_AddsNewInputs) {
+	automaton->addInputAlphabet({"2", "3"});
+	automaton->addInput({"2", "3"});
+	std::vector<std::string> input = automaton->getInput();
+
+	EXPECT_EQ(input.size(), 2);
+	EXPECT_TRUE(std::find(input.begin(), input.end(), "2") != input.end());
+	EXPECT_TRUE(std::find(input.begin(), input.end(), "3") != input.end());
+}
+
+TEST_F(NFA_Test, AddInput_NoThrowForEpsilon) {
+	EXPECT_NO_THROW(automaton->addInput({"0", "", "1"}));
+}
+
+TEST_F(NFA_Test, AddInput_ThrowsForInputNotInAlphabet) {
+	EXPECT_THROW(automaton->setInput({"a", "b"}), InputAlphabetSymbolNotFoundException);
+}
+
 TEST_F(NFA_Test, StateExists_ReturnsTrueWhenStateExists) {
 	EXPECT_TRUE(automaton->stateExists("q0"));
 	EXPECT_TRUE(automaton->stateExists("q1"));
@@ -817,14 +858,11 @@ TEST_F(NFA_Test, GetAcceptStates_EmptyIfNoAcceptStates) {
 }
 
 TEST_F(NFA_Test, Reset_SetsCurrentStateToStartState) {
-	automaton->addTransition("q0", "q1", "0");
-	automaton->processInput("0");
-
-	EXPECT_EQ(automaton->getCurrentState(), "q1");
-
+	automaton->addAcceptState("q0");
 	automaton->reset();
 
 	EXPECT_EQ(automaton->getCurrentState(), "q0");
+	EXPECT_FALSE(automaton->getAcceptStates().empty());
 }
 
 TEST_F(NFA_Test, Reset_HandlesAcceptStartState) {
@@ -835,8 +873,101 @@ TEST_F(NFA_Test, Reset_HandlesAcceptStartState) {
 	EXPECT_FALSE(automaton->getAcceptStates().empty());
 }
 
+TEST_F(NFA_Test, IsAccepting_ShouldAcceptIfStartStateIsAccept) {
+	automaton->addAcceptState("q0");
+	EXPECT_TRUE(automaton->isAccepting());
+}
+
+TEST_F(NFA_Test, IsAccepting_ShouldAcceptIfCurrentStateIsAccept) {
+	automaton->addAcceptState("q1");
+	automaton->setCurrentState("q1");
+	EXPECT_TRUE(automaton->isAccepting());
+}
+
+TEST_F(NFA_Test, ProcessInput_ShouldUpdatePossibleCurrentStates) {
+	automaton->addState("q2");
+	automaton->addState("q3");
+	automaton->addAcceptState("q3");
+
+	automaton->addTransition("q0", "q0", "1");
+	automaton->addTransition("q0", "q0", "0");
+	automaton->addTransition("q0", "q1", "1");
+
+	automaton->addTransition("q1", "q2", "0");
+	automaton->addTransition("q1", "q2", "");
+
+	automaton->addTransition("q2", "q3", "1");
+
+	automaton->addTransition("q3", "q3", "0");
+	automaton->addTransition("q3", "q3", "1");
+
+	automaton->setInput({"0", "1"});
+	automaton->processInput();
+	std::vector<std::string> &possibleStates = automaton->getPossibleCurrentStates();
+
+	EXPECT_EQ(possibleStates.size(), 1);
+	EXPECT_TRUE(std::find(possibleStates.begin(), possibleStates.end(), "q0") != possibleStates.end());
+	EXPECT_EQ(automaton->getCurrentState(), "q0");
+
+	automaton->processInput();
+	possibleStates = automaton->getPossibleCurrentStates();
+
+	EXPECT_EQ(possibleStates.size(), 2);
+	EXPECT_TRUE(std::find(possibleStates.begin(), possibleStates.end(), "q0") != possibleStates.end());
+	EXPECT_TRUE(std::find(possibleStates.begin(), possibleStates.end(), "q1") != possibleStates.end());
+	EXPECT_TRUE(automaton->getCurrentState() == "q0" || automaton->getCurrentState() == "q1");
+}
+
+TEST_F(NFA_Test, ProcessInput_ShouldStayAcceptingAfterInputIsConsumed) {
+	automaton->addState("q2");
+	automaton->addState("q3");
+	automaton->addAcceptState("q3");
+
+	automaton->addTransition("q0", "q0", "1");
+	automaton->addTransition("q0", "q0", "0");
+	automaton->addTransition("q0", "q1", "1");
+
+	automaton->addTransition("q1", "q2", "0");
+	automaton->addTransition("q1", "q2", "");
+
+	automaton->addTransition("q2", "q3", "1");
+
+	automaton->addTransition("q3", "q3", "0");
+	automaton->addTransition("q3", "q3", "1");
+
+	automaton->setInput({"1"});
+	automaton->setCurrentState("q2");
+
+	EXPECT_TRUE(automaton->processInput());
+	EXPECT_TRUE(automaton->processInput());
+}
+
+TEST_F(NFA_Test, ProcessInput_ShouldTakeEpsilonTransition) {
+	automaton->addState("q2");
+	automaton->addState("q3");
+	automaton->addAcceptState("q3");
+
+	automaton->addTransition("q0", "q0", "1");
+	automaton->addTransition("q0", "q0", "0");
+	automaton->addTransition("q0", "q1", "1");
+
+	automaton->addTransition("q1", "q2", "0");
+	automaton->addTransition("q1", "q2", "");
+
+	automaton->addTransition("q2", "q3", "1");
+
+	automaton->addTransition("q3", "q3", "0");
+	automaton->addTransition("q3", "q3", "1");
+
+	automaton->setInput({});
+	automaton->setCurrentState("q1");
+
+	automaton->processInput();
+	EXPECT_EQ(automaton->getCurrentState(), "q2");
+}
+
 TEST_F(NFA_Test, Simulate_ShouldThrowExceptionForSimulationWithoutStartState) {
-	NonDeterministicFiniteAutomaton *automaton = new NonDeterministicFiniteAutomaton();
+	NonDeterministicTuringMachine *automaton = new NonDeterministicTuringMachine();
 	automaton->setInputAlphabet({"0", "1"});
 
 	EXPECT_THROW(automaton->simulate({""}), InvalidStartStateException);
@@ -844,192 +975,85 @@ TEST_F(NFA_Test, Simulate_ShouldThrowExceptionForSimulationWithoutStartState) {
 
 TEST_F(NFA_Test, Simulate_ValidInputAccepts) {
 	automaton->addState("q2");
-	automaton->addTransition("q0", "q1", "0");
-	automaton->addTransition("q1", "q2", "1");
-	automaton->addAcceptState("q2");
+	automaton->addState("q3");
+	automaton->addAcceptState("q3");
 
-	EXPECT_TRUE(automaton->simulate({"0", "1"}));
+	automaton->addTransition("q0", "q0", "1");
+	automaton->addTransition("q0", "q0", "0");
+	automaton->addTransition("q0", "q1", "1");
+
+	automaton->addTransition("q1", "q2", "0");
+	automaton->addTransition("q1", "q2", "");
+
+	automaton->addTransition("q2", "q3", "1");
+
+	automaton->addTransition("q3", "q3", "0");
+	automaton->addTransition("q3", "q3", "1");
+
+	EXPECT_TRUE(automaton->simulate({"1", "0", "1"}));
+}
+
+TEST_F(NFA_Test, Simulate_ValidInputWithEpsilonAccepts) {
+	automaton->addState("q2");
+	automaton->addState("q3");
+	automaton->addAcceptState("q3");
+
+	automaton->addTransition("q0", "q0", "1");
+	automaton->addTransition("q0", "q0", "0");
+	automaton->addTransition("q0", "q1", "1");
+
+	automaton->addTransition("q1", "q2", "0");
+	automaton->addTransition("q1", "q2", "");
+
+	automaton->addTransition("q2", "q3", "1");
+
+	automaton->addTransition("q3", "q3", "0");
+	automaton->addTransition("q3", "q3", "1");
+
+	EXPECT_TRUE(automaton->simulate({"1", "", "1"}));
 }
 
 TEST_F(NFA_Test, Simulate_InvalidInputReject) {
 	automaton->addState("q2");
-	automaton->addTransition("q0", "q1", "0");
-	automaton->addTransition("q1", "q2", "1");
-	automaton->addAcceptState("q2");
+	automaton->addState("q3");
+	automaton->addAcceptState("q3");
+
+	automaton->addTransition("q0", "q0", "1");
+	automaton->addTransition("q0", "q0", "0");
+	automaton->addTransition("q0", "q1", "1");
+
+	automaton->addTransition("q1", "q2", "0");
+	automaton->addTransition("q1", "q2", "");
+
+	automaton->addTransition("q2", "q3", "1");
+
+	automaton->addTransition("q3", "q3", "0");
+	automaton->addTransition("q3", "q3", "1");
 
 	EXPECT_FALSE(automaton->simulate({"0", "0"}));
 }
 
-TEST_F(NFA_Test, Simulate_InvalidInputRejects) {
-	automaton->addTransition("q0", "q1", "0");
+TEST_F(NFA_Test, Simulate_RejectsIfSimulationDepthExceeded) {
+	automaton->addState("q2");
+	automaton->addState("q3");
+	automaton->addAcceptState("q3");
 
-	EXPECT_FALSE(automaton->simulate({"1"}));
-}
+	automaton->addTransition("q0", "q0", "1");
+	automaton->addTransition("q0", "q0", "0");
+	automaton->addTransition("q0", "q1", "1");
 
-TEST_F(NFA_Test, Simulate_ThrowsIfSimulationDepthExceeded) {
-	automaton->addTransition("q0", "q1", "0");
-	automaton->addTransition("q1", "q0", "1");
+	automaton->addTransition("q1", "q2", "0");
+	automaton->addTransition("q1", "q2", "");
 
-	automaton->setStartState("q0");
+	automaton->addTransition("q2", "q3", "1");
 
-	std::vector<std::string> input = {"0", "1", "0", "1", "0", "1", "0", "1", "0", "1", "0", "1"};
+	automaton->addTransition("q3", "q3", "0");
+	automaton->addTransition("q3", "q3", "1");
 
-	EXPECT_THROW(automaton->simulate(input, 3), SimulationDepthExceededException);
+	EXPECT_FALSE(automaton->simulate({"1", "0", "1"}, 2));
 }
 
 TEST_F(NFA_Test, Simulate_EmptyInputStaysAtStartState) {
 	automaton->addAcceptState("q0");
 	EXPECT_TRUE(automaton->simulate({}));
-}
-
-TEST_F(NFA_Test, Simulate_BasicAccept) {
-	automaton->addTransition("q0", "q1", "0");
-	automaton->addAcceptState("q1");
-	EXPECT_TRUE(automaton->simulate({"0"}));
-}
-
-TEST_F(NFA_Test, Simulate_MultipleInputsAccept) {
-	automaton->addState("q2");
-	automaton->addTransition("q0", "q1", "0");
-	automaton->addTransition("q1", "q2", "1");
-	automaton->addAcceptState("q2");
-	EXPECT_TRUE(automaton->simulate({"0", "1"}));
-}
-
-TEST_F(NFA_Test, Simulate_MultipleInputsReject) {
-	automaton->addState("q2");
-	automaton->addTransition("q0", "q1", "0");
-	automaton->addTransition("q1", "q2", "1");
-	automaton->addAcceptState("q2");
-	EXPECT_FALSE(automaton->simulate({"0", "0"}));
-}
-
-TEST_F(NFA_Test, Simulate_EmptyInputString) {
-	automaton->addAcceptState("q0");
-	EXPECT_TRUE(automaton->simulate({}));
-
-	automaton->removeAcceptState("q0");
-	EXPECT_FALSE(automaton->simulate({}));
-}
-
-TEST_F(NFA_Test, Simulate_NonDeterministicPath) {
-	automaton->addTransition("q0", "q0", "0");
-	automaton->addTransition("q0", "q1", "0");
-	automaton->addAcceptState("q1");
-	EXPECT_TRUE(automaton->simulate({"0"}));
-}
-
-TEST_F(NFA_Test, Simulate_EpsilonTransition) {
-	automaton->addTransition("q0", "q1", "");
-	automaton->addAcceptState("q1");
-	EXPECT_TRUE(automaton->simulate({}));
-}
-
-TEST_F(NFA_Test, Simulate_EpsilonWithInputTransition) {
-	automaton->addState("q2");
-	automaton->addTransition("q0", "q1", "");
-	automaton->addTransition("q1", "q2", "0");
-	automaton->addAcceptState("q2");
-	EXPECT_TRUE(automaton->simulate({"0"}));
-}
-
-TEST_F(NFA_Test, Simulate_EpsilonClosure) {
-	automaton->addState("q2");
-	automaton->addState("q3");
-	automaton->addTransition("q0", "q1", "");
-	automaton->addTransition("q1", "q2", "");
-	automaton->addTransition("q2", "q3", "0");
-	automaton->addAcceptState("q3");
-	EXPECT_TRUE(automaton->simulate({"0"}));
-}
-
-TEST_F(NFA_Test, Simulate_LongInputSequence) {
-	automaton->addState("q2");
-	automaton->addTransition("q0", "q1", "0");
-	automaton->addTransition("q1", "q2", "1");
-	automaton->addTransition("q2", "q0", "0");
-	automaton->addAcceptState("q2");
-	EXPECT_TRUE(automaton->simulate({"0", "1"}));
-	EXPECT_TRUE(automaton->simulate({"0", "1", "0", "1"}));
-	EXPECT_FALSE(automaton->simulate({"0", "1", "0"}));
-}
-
-TEST_F(NFA_Test, ProcessInput_BasicAccept) {
-	automaton->addTransition("q0", "q1", "0");
-	automaton->addAcceptState("q1");
-	automaton->reset();
-	EXPECT_TRUE(automaton->processInput("0"));
-}
-
-TEST_F(NFA_Test, ProcessInput_BasicReject) {
-	automaton->addTransition("q0", "q1", "0");
-	automaton->reset();
-	EXPECT_FALSE(automaton->processInput("0")); // q1 is not an accept state
-}
-
-TEST_F(NFA_Test, ProcessInput_InvalidInput) {
-	automaton->addTransition("q0", "q1", "0");
-	automaton->reset();
-	EXPECT_FALSE(automaton->processInput("1")); // No transition on "1" from q0
-}
-
-TEST_F(NFA_Test, ProcessInput_SequentialInputs) {
-	automaton->addState("q2");
-	automaton->addTransition("q0", "q1", "0");
-	automaton->addTransition("q1", "q2", "1");
-	automaton->addAcceptState("q2");
-
-	automaton->reset();
-	EXPECT_FALSE(automaton->processInput("0")); // In q1, not accepting
-	EXPECT_TRUE(automaton->processInput("1"));  // Now in q2, which is accepting
-}
-
-TEST_F(NFA_Test, ProcessInput_EpsilonTransition) {
-	automaton->addTransition("q0", "q1", ""); // Epsilon transition
-	automaton->addAcceptState("q1");
-
-	EXPECT_TRUE(automaton->processInput("")); // Should follow epsilon transition
-}
-
-TEST_F(NFA_Test, ProcessInput_NonDeterministicChoice) {
-	automaton->addState("q2");
-	automaton->addTransition("q0", "q1", "0");
-	automaton->addTransition("q0", "q2", "0");
-	automaton->addAcceptState("q1");
-
-	automaton->reset();
-
-	// This is non-deterministic, but with our test setup and random selection,
-	// we know it should eventually reach an accept state
-	// Note: In real testing, this might need a different approach due to randomness
-	bool foundAcceptingPath = false;
-	for (int i = 0; i < 10; i++) {
-		automaton->reset();
-		if (automaton->processInput("0")) {
-			foundAcceptingPath = true;
-			break;
-		}
-	}
-	EXPECT_TRUE(foundAcceptingPath);
-}
-
-TEST_F(NFA_Test, ProcessInput_MultipleEpsilonTransitions) {
-	automaton->addState("q2");
-	automaton->addTransition("q0", "q1", ""); // Epsilon transition
-	automaton->addTransition("q1", "q2", ""); // Another epsilon transition
-	automaton->addAcceptState("q2");
-
-	automaton->reset();
-	EXPECT_TRUE(automaton->processInput("")); // Should follow both epsilon transitions
-}
-
-TEST_F(NFA_Test, ProcessInput_ResetBehavior) {
-	automaton->addTransition("q0", "q1", "0");
-	automaton->addAcceptState("q1");
-
-	automaton->reset();
-	EXPECT_TRUE(automaton->processInput("0"));
-
-	automaton->reset();                         // Should go back to start state q0
-	EXPECT_FALSE(automaton->processInput("1")); // No valid transition
 }

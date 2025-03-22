@@ -91,6 +91,8 @@ class AUTOMATASIMULATOR_API FAState {
 	 */
 	FAState &operator=(FAState &&other) noexcept;
 
+	bool operator==(const FAState &other) const;
+
 	/**
 	 * @brief Destructor for the State object.
 	 */

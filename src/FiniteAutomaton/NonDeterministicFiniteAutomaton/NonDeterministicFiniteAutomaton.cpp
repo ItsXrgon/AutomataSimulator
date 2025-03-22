@@ -1,74 +1,54 @@
 #define AUTOMATASIMULATOR_EXPORTS
 #include "NonDeterministicFiniteAutomaton.h"
 
-void NonDeterministicFiniteAutomaton::addEpsilonClosure(std::unordered_set<std::string> &states) {
-	std::queue<std::string> stateQueue;
-
-	// Initialize queue with all current states
-	for (const auto &state : states) {
-		stateQueue.push(state);
-	}
-
-	// Process queue to find all epsilon transitions
-	while (!stateQueue.empty()) {
-		std::string currentStateKey = stateQueue.front();
-		stateQueue.pop();
-
-		FAState *state = getStateInternal(currentStateKey);
-
-		// Find all epsilon transitions from this state
-		for (const auto &transition : state->getTransitions()) {
-			if (transition.getInput().empty()) {
-				std::string nextStateKey = transition.getToStateKey();
-
-				// If this state hasn't been seen before, add it
-				if (states.find(nextStateKey) == states.end()) {
-					states.insert(nextStateKey);
-					stateQueue.push(nextStateKey);
-				}
-			}
-		}
-	}
-}
-
-std::string NonDeterministicFiniteAutomaton::decideRandomState(const std::unordered_set<std::string> &states) {
-	// If empty, return empty string
-	if (states.empty()) {
-		return "";
-	}
-
-	// Randomly choose a state from the set of states
-	int randomIndex = rand() % states.size();
-	auto it = states.begin();
+FATransition
+NonDeterministicFiniteAutomaton::decideRandomTransition(const std::unordered_set<FATransition> &transitions) {
+	int randomIndex = rand() % transitions.size();
+	auto it = transitions.begin();
 	std::advance(it, randomIndex);
 	return *it;
 }
 
-std::unordered_set<std::string>
-NonDeterministicFiniteAutomaton::getNextPossibleStates(const std::unordered_set<std::string> &currentStates,
-                                                       const std::string &input) {
+void NonDeterministicFiniteAutomaton::setInput(const std::vector<std::string> &input) {
+	std::unordered_set<std::string> missingSymbols;
 
-	// Start with current states and compute their epsilon closure
-	std::unordered_set<std::string> epsilonClosureStates = currentStates;
-	addEpsilonClosure(epsilonClosureStates);
-
-	// Get states reachable by the input from the epsilon closure
-	std::unordered_set<std::string> nextStates;
-
-	for (const auto &stateKey : currentStates) {
-		FAState *state = getStateInternal(stateKey);
-
-		for (const auto &transition : state->getTransitions()) {
-			if (transition.getInput() == input) {
-				nextStates.insert(transition.getToStateKey());
-			}
+	for (const auto &symbol : input) {
+		if (!symbol.empty() && !inputAlphabetSymbolExists(symbol)) {
+			missingSymbols.insert(symbol);
 		}
 	}
 
-	// Compute epsilon closure of the resulting states
-	addEpsilonClosure(nextStates);
+	if (!missingSymbols.empty()) {
+		std::string missingSymbolsString = "[" + *missingSymbols.begin();
+		for (const auto &symbol : missingSymbols) {
+			missingSymbolsString += ", " + symbol;
+		}
+		missingSymbolsString += "]";
+		throw InputAlphabetSymbolNotFoundException(missingSymbolsString);
+	}
 
-	return nextStates;
+	FiniteAutomaton::setInput(input);
+}
+
+void NonDeterministicFiniteAutomaton::addInput(const std::vector<std::string> &input) {
+	std::unordered_set<std::string> missingSymbols;
+
+	for (const auto &symbol : input) {
+		if (!symbol.empty() && !inputAlphabetSymbolExists(symbol)) {
+			missingSymbols.insert(symbol);
+		}
+	}
+
+	if (!missingSymbols.empty()) {
+		std::string missingSymbolsString = "[" + *missingSymbols.begin();
+		for (const auto &symbol : missingSymbols) {
+			missingSymbolsString += ", " + symbol;
+		}
+		missingSymbolsString += "]";
+		throw InputAlphabetSymbolNotFoundException(missingSymbolsString);
+	}
+
+	FiniteAutomaton::addInput(input);
 }
 
 void NonDeterministicFiniteAutomaton::updateStateLabel(const std::string &key, const std::string &label) {
@@ -98,7 +78,7 @@ void NonDeterministicFiniteAutomaton::removeState(const std::string &key, const 
 
 void NonDeterministicFiniteAutomaton::removeStates(const std::vector<std::string> &keys, const bool &strict) {
 	FiniteAutomaton::removeStates(keys, strict);
-	
+
 	for (const auto &key : keys) {
 		if (possibleCurrentStates.find(key) != possibleCurrentStates.end()) {
 			possibleCurrentStates.erase(key);
@@ -124,7 +104,8 @@ void NonDeterministicFiniteAutomaton::setStartState(const std::string &key) {
 
 void NonDeterministicFiniteAutomaton::addTransition(const std::string &fromStateKey, const std::string &toStateKey,
                                                     const std::string &input) {
-	if (input != "" && inputAlphabet.find(input) == inputAlphabet.end()) {
+	// Check if the input is in the alphabet
+	if (!input.empty() && !inputAlphabetSymbolExists(input)) {
 		throw InvalidTransitionException("Input not in alphabet: " + input);
 	}
 
@@ -133,7 +114,8 @@ void NonDeterministicFiniteAutomaton::addTransition(const std::string &fromState
 
 void NonDeterministicFiniteAutomaton::updateTransitionInput(const std::string &transitionKey,
                                                             const std::string &input) {
-	if (input != "" && inputAlphabet.find(input) == inputAlphabet.end()) {
+	// Check if the input is in the alphabet
+	if (!input.empty() && !inputAlphabetSymbolExists(input)) {
 		throw InvalidTransitionException("Input not in alphabet: " + input);
 	}
 
@@ -153,97 +135,122 @@ std::vector<std::string> NonDeterministicFiniteAutomaton::getPossibleCurrentStat
 }
 
 void NonDeterministicFiniteAutomaton::reset() {
+	FiniteAutomaton::reset();
 	possibleCurrentStates.clear();
 	possibleCurrentStates.insert(startState);
-	addEpsilonClosure(possibleCurrentStates);
 	currentState = startState;
 	possibleCurrentStatesCacheInvalidated = true;
 }
 
-bool NonDeterministicFiniteAutomaton::processInput(const std::string &input) {
-	// If input is empty (epsilon), we should follow epsilon transitions
-	if (input.empty()) {
-		// Compute new states reachable via epsilon transitions from current possible states
-		std::unordered_set<std::string> nextStates = possibleCurrentStates;
-		addEpsilonClosure(nextStates);
+bool NonDeterministicFiniteAutomaton::processInput() {
+	if (currentState.empty()) {
+		throw InvalidAutomatonDefinitionException("Current state or start state must be set to run process input");
+	}
 
-		// Only update if we found new states (this avoids unnecessary updates
-		// when epsilon closure doesn't add any new states)
-		if (nextStates != possibleCurrentStates) {
-			possibleCurrentStates = nextStates;
-			possibleCurrentStatesCacheInvalidated = true;
+	std::string input = "";
+	if (inputHead < this->input.size()) {
+		input = this->input[inputHead];
+	}
 
-			// Choose a random state from the possible current states
-			currentState = decideRandomState(possibleCurrentStates);
+	std::unordered_set<FATransition> possibleTransitions;
+	std::unordered_set<std::string> possibleCurrentStates;
+
+	const std::vector<FATransition> &transitions = getStateInternal(currentState)->getTransitions();
+
+	for (const auto &transition : transitions) {
+		if (transition.getInput() == input || transition.getInput().empty()) {
+			possibleTransitions.insert(transition);
+			possibleCurrentStates.insert(transition.getToStateKey());
 		}
-
-		return getStateInternal(currentState)->getIsAccept();
 	}
 
-	// Compute the next possible states using our helper method
-	std::unordered_set<std::string> nextStates = getNextPossibleStates(possibleCurrentStates, input);
-
-	// If no valid transitions are found, remain in current state
-	if (nextStates.empty()) {
-		return getStateInternal(currentState)->getIsAccept();
+	if (possibleTransitions.empty()) {
+		return false;
 	}
 
-	// Update the possibleCurrentStates
-	possibleCurrentStates = nextStates;
+	FATransition transitionChosen = decideRandomTransition(possibleTransitions);
+
+	// Update current state to the chosen transition
+	currentState = transitionChosen.getToStateKey();
+	// Only increment the head if the input is a match
+	const bool &incrementHead = transitionChosen.getInput() == input && inputHead < this->input.size();
+	if (incrementHead) {
+		inputHead++;
+	}
+
+	this->possibleCurrentStates = possibleCurrentStates;
 	possibleCurrentStatesCacheInvalidated = true;
-
-	// Choose a random state from the possible current states
-	currentState = decideRandomState(possibleCurrentStates);
 
 	// Return whether the randomly chosen current state is an accept state
 	return getStateInternal(currentState)->getIsAccept();
 }
 
+struct Visited {
+	std::string state;
+	int head;
+
+	bool operator==(const Visited &other) const {
+		return state == other.state && head == other.head;
+	}
+};
+
+namespace std {
+template <> struct hash<Visited> {
+	size_t operator()(const Visited &v) const {
+		return hash<std::string>()(v.state) ^ (hash<int>()(v.head) << 1);
+	}
+};
+} // namespace std
+
 bool NonDeterministicFiniteAutomaton::simulate(const std::vector<std::string> &input, const int &simulationDepth) {
-	// Start with the initial state
-	std::unordered_set<std::string> currentStates;
-	currentStates.insert(startState);
-
-	// Compute epsilon closure of the initial state
-	addEpsilonClosure(currentStates);
-
-	// Process each input symbol
-	for (size_t inputIdx = 0; inputIdx < input.size(); inputIdx++) {
-		// Get next states for current input symbol
-		std::unordered_set<std::string> nextStates;
-
-		for (const auto &stateKey : currentStates) {
-			FAState *state = getStateInternal(stateKey);
-
-			// Find all transitions that match the current input
-			for (const auto &transition : state->getTransitions()) {
-				if (transition.getInput() == input[inputIdx]) {
-					nextStates.insert(transition.getToStateKey());
-				}
-			}
-		}
-
-		// Compute epsilon closure of the resulting states
-		addEpsilonClosure(nextStates);
-
-		// If no valid transitions are found, input is rejected
-		if (nextStates.empty()) {
-			return false;
-		}
-
-		// Update current states to the next states
-		currentStates = nextStates;
-
-		// Check simulation depth to prevent infinite loops
-		if (inputIdx >= simulationDepth) {
-			throw SimulationDepthExceededException(simulationDepth);
-		}
+	if (startState.empty()) {
+		throw InvalidStartStateException("Start state must be set to run simulate");
 	}
 
-	// After processing all input, check if any of the current states is an accepting state
-	for (const auto &stateKey : currentStates) {
-		if (getStateInternal(stateKey)->getIsAccept()) {
+	struct Branch {
+		std::string state;
+		int head;
+		int depth;
+	};
+
+	std::queue<Branch> branches;
+	std::unordered_set<Visited> visited;
+
+	branches.push({startState, 0, 0});
+
+	while (!branches.empty()) {
+		Branch branch = branches.front();
+		branches.pop();
+
+		visited.insert({branch.state, branch.head});
+
+		if (branch.head == input.size() && getStateInternal(branch.state)->getIsAccept()) {
 			return true;
+		}
+
+		if (branch.depth >= simulationDepth) {
+			continue;
+		}
+
+		std::string currentInput = "";
+		if (branch.head < input.size()) {
+			currentInput = input[branch.head];
+		}
+
+		const std::vector<FATransition> &transitions = getStateInternal(branch.state)->getTransitions();
+
+		for (const auto &transition : transitions) {
+			if (transition.getInput().empty() || transition.getInput() == currentInput) {
+				// Only increment the head if the input is a match and the input head is less than the input size
+				const bool &incrementHead = transition.getInput() == currentInput && branch.head < input.size();
+				const int &newHead = incrementHead ? branch.head + 1 : branch.head;
+
+				if (visited.find({transition.getToStateKey(), newHead}) != visited.end()) {
+					continue;
+				}
+
+				branches.push({transition.getToStateKey(), newHead, branch.depth + 1});
+			}
 		}
 	}
 

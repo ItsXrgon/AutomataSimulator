@@ -75,6 +75,8 @@ class AUTOMATASIMULATOR_API FATransition {
 	 */
 	FATransition &operator=(FATransition &&other) noexcept;
 
+	bool operator==(const FATransition &other) const;
+
 	/**
 	 * @brief Destructor for the Transition object.
 	 */
@@ -159,3 +161,13 @@ class AUTOMATASIMULATOR_API FATransition {
 	 */
 	std::string toString() const;
 };
+
+namespace std {
+template <> struct hash<FATransition> {
+	size_t operator()(const FATransition &t) const {
+		size_t hashValue = hash<std::string>()(t.getFromStateKey()) ^ (hash<std::string>()(t.getToStateKey()) << 1) ^
+		                   (hash<std::string>()(t.getInput()) << 2);
+		return hashValue;
+	}
+};
+} // namespace std

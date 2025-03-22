@@ -2,7 +2,7 @@
 #include "FiniteAutomaton.h"
 
 FiniteAutomaton::FiniteAutomaton()
-    : startState(""), inputAlphabetCacheInvalidated(false), statesCacheInvalidated(false) {}
+    : inputHead(0), startState(""), inputAlphabetCacheInvalidated(false), statesCacheInvalidated(false) {}
 
 FiniteAutomaton::~FiniteAutomaton() {}
 
@@ -39,6 +39,66 @@ bool FiniteAutomaton::stateExists(const std::string &key) const {
 
 bool FiniteAutomaton::inputAlphabetSymbolExists(const std::string &symbol) const {
 	return inputAlphabet.find(symbol) != inputAlphabet.end();
+}
+
+std::vector<std::string> FiniteAutomaton::getInput() const {
+	return input;
+}
+
+void FiniteAutomaton::setInput(const std::vector<std::string> &input) {
+	std::vector<std::string> missingSymbols;
+	for (const auto &symbol : input) {
+		if (!inputAlphabetSymbolExists(symbol)) {
+			missingSymbols.push_back(symbol);
+		}
+	}
+
+	if (!missingSymbols.empty()) {
+		std::string missingSymbolsString = "[" + missingSymbols[0];
+		for (size_t i = 1; i < missingSymbols.size(); i++) {
+			missingSymbolsString += ", " + missingSymbols[i];
+		}
+		missingSymbolsString += "]";
+		throw InputAlphabetSymbolNotFoundException(missingSymbolsString);
+	}
+
+	this->input = input;
+	this->inputHead = 0;
+}
+
+void FiniteAutomaton::addInput(const std::vector<std::string> &input) {
+
+	std::vector<std::string> missingSymbols;
+	for (const auto &symbol : input) {
+		if (!inputAlphabetSymbolExists(symbol)) {
+			missingSymbols.push_back(symbol);
+		}
+	}
+
+	if (!missingSymbols.empty()) {
+		std::string missingSymbolsString = "[" + missingSymbols[0];
+		for (size_t i = 1; i < missingSymbols.size(); i++) {
+			missingSymbolsString += ", " + missingSymbols[i];
+		}
+		missingSymbolsString += "]";
+		throw InputAlphabetSymbolNotFoundException(missingSymbolsString);
+	}
+
+	this->input.insert(this->input.end(), input.begin(), input.end());
+}
+
+int FiniteAutomaton::getInputHead() const {
+	return inputHead;
+}
+
+void FiniteAutomaton::setInputHead(const int &inputHead) {
+	if (inputHead < 0) {
+		this->inputHead = 0;
+	} else if (inputHead >= input.size()) {
+		this->inputHead = input.size() - 1;
+	} else {
+		this->inputHead = inputHead;
+	}
 }
 
 void FiniteAutomaton::addState(const std::string &label, const bool &isAccept) {
@@ -634,4 +694,9 @@ std::vector<FAState> FiniteAutomaton::getAcceptStates() const {
 
 void FiniteAutomaton::reset() {
 	currentState = startState;
+	inputHead = 0;
+}
+
+bool FiniteAutomaton::isAccepting() const {
+	return getState(currentState).getIsAccept();
 }

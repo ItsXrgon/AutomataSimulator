@@ -23,6 +23,48 @@ bool DeterministicFiniteAutomaton::checkTransitionDeterminisim(const std::string
 	return true;
 }
 
+void DeterministicFiniteAutomaton::setInput(const std::vector<std::string> &input) {
+	std::unordered_set<std::string> missingSymbols;
+
+	for (const auto &symbol : input) {
+		if (!inputAlphabetSymbolExists(symbol)) {
+			missingSymbols.insert(symbol);
+		}
+	}
+
+	if (!missingSymbols.empty()) {
+		std::string missingSymbolsString = "[" + *missingSymbols.begin();
+		for (const auto &symbol : missingSymbols) {
+			missingSymbolsString += ", " + symbol;
+		}
+		missingSymbolsString += "]";
+		throw InputAlphabetSymbolNotFoundException(missingSymbolsString);
+	}
+
+	FiniteAutomaton::setInput(input);
+}
+
+void DeterministicFiniteAutomaton::addInput(const std::vector<std::string> &input) {
+	std::unordered_set<std::string> missingSymbols;
+
+	for (const auto &symbol : input) {
+		if (!inputAlphabetSymbolExists(symbol)) {
+			missingSymbols.insert(symbol);
+		}
+	}
+
+	if (!missingSymbols.empty()) {
+		std::string missingSymbolsString = "[" + *missingSymbols.begin();
+		for (const auto &symbol : missingSymbols) {
+			missingSymbolsString += ", " + symbol;
+		}
+		missingSymbolsString += "]";
+		throw InputAlphabetSymbolNotFoundException(missingSymbolsString);
+	}
+
+	FiniteAutomaton::addInput(input);
+}
+
 void DeterministicFiniteAutomaton::setInputAlphabet(const std::vector<std::string> &inputAlphabet, const bool &strict) {
 	checkAlphabetValidity(inputAlphabet);
 
@@ -89,59 +131,56 @@ void DeterministicFiniteAutomaton::updateTransitionFromState(const std::string &
 	FiniteAutomaton::updateTransitionFromState(transitionKey, fromStateKey);
 }
 
-bool DeterministicFiniteAutomaton::processInput(const std::string &input) {
+bool DeterministicFiniteAutomaton::processInput() {
+	if (currentState.empty()) {
+		throw InvalidAutomatonDefinitionException("Current state or start state must be set to run process input");
+	}
+
+	if (inputHead >= this->input.size()) {
+		return getStateInternal(currentState)->getIsAccept();
+	}
+
+	const std::string &input = this->input[inputHead];
+
 	const std::vector<FATransition> &transitions = getStateInternal(currentState)->getTransitions();
 
 	for (const auto &transition : transitions) {
 		if (transition.getInput() == input) {
 			currentState = transition.getToStateKey();
-			break;
+			inputHead++;
+			return getStateInternal(currentState)->getIsAccept();
 		}
 	}
-
-	return getStateInternal(currentState)->getIsAccept();
+	return false;
 }
 
 bool DeterministicFiniteAutomaton::simulate(const std::vector<std::string> &input, const int &simulationDepth) {
-	size_t inputIdx = 0;
-	size_t currentDepth = 0;
+	if (startState.empty()) {
+		throw InvalidStartStateException("Start state must be set to run simulate");
+	}
+
+	int inputIdx = 0;
+	int currentDepth = 0;
 	std::string simulationCurrentState = getStartState();
 
-	while (currentDepth <= simulationDepth) {
-		bool transitioned = false;
+	while (currentDepth <= simulationDepth && inputIdx < input.size()) {
 		const std::vector<FATransition> &transitions = getStateInternal(simulationCurrentState)->getTransitions();
 
-		// First try to process the next input symbol if available
-		if (inputIdx < input.size()) {
-			std::string currentInput = input[inputIdx];
+		std::string currentInput = input[inputIdx];
 
-			for (const auto &transition : transitions) {
-				if (transition.getInput() == currentInput) {
-					// Process transition
-					simulationCurrentState = transition.getToStateKey();
-					transitioned = true;
-					inputIdx++;
-					break;
-				}
-			}
-		}
-		currentDepth++;
-
-		// Exit conditions:
-		// 1) No transition available and all input processed
-		// 2) Simulation depth exceeded
-		if (!transitioned) {
-			if (inputIdx <= input.size()) {
-				inputIdx++;
-			} else {
+		bool transitionFound = false;
+		for (const auto &transition : transitions) {
+			if (transition.getInput() == currentInput) {
+				simulationCurrentState = transition.getToStateKey();
+				transitionFound = true;
 				break;
 			}
 		}
-	}
-
-	// Check if we exceeded simulation depth
-	if (currentDepth > simulationDepth) {
-		throw SimulationDepthExceededException(simulationDepth);
+		if (!transitionFound) {
+			return false;
+		}
+		currentDepth++;
+		inputIdx++;
 	}
 
 	return getStateInternal(simulationCurrentState)->getIsAccept();

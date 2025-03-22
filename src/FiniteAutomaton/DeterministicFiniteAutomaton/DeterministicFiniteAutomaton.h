@@ -38,6 +38,20 @@ class AUTOMATASIMULATOR_API DeterministicFiniteAutomaton : public FiniteAutomato
 
   public:
 	/**
+	 * @brief Sets the input of the automaton.
+	 * @param input The value to load into the tape.
+	 * @throws InvalidAlphabetException If the input contains symbols not in the alphabet.
+	 */
+	void setInput(const std::vector<std::string> &input) override;
+
+	/**
+	 * @brief Adds to the input of the automaton.
+	 * @param input The value to load into the tape.
+	 * @throws InvalidAlphabetException If the input contains symbols not in the alphabet.
+	 */
+	void addInput(const std::vector<std::string> &input) override;
+
+	/**
 	 * @brief Sets the input alphabet.
 	 * @param inputAlphabet The value to load into the tape.
 	 * @param strict If true, will throw an exception if the alphabet symbols are used in transitions.
@@ -86,20 +100,21 @@ class AUTOMATASIMULATOR_API DeterministicFiniteAutomaton : public FiniteAutomato
 	void updateTransitionFromState(const std::string &transitionKey, const std::string &fromStateKey);
 
 	/**
-	 * @brief Moves the automaton to the next state based on the input.
-	 * @param input The input string to process.
+	 * @brief Moves the automaton to the next state based on the current input head.
 	 * @return True if the current state is accept.
-	 * @throws InvalidStartStateException If the current or start state are not set.
+	 * @throws InvalidStartStateException If the start state is not set.
+	 * @throws InvalidAlphabetException If the alphabet is not set.
+	 * @throws InputConsumedException If the input head exceeds the length of the input.
 	 */
-	bool processInput(const std::string &input) override;
+	bool processInput() override;
 
 	/**
 	 * @brief Simulates the automaton on a given input string and depth.
+	 * @brief Returns false if the simulation depth is exceeded and no accept state is reached.
 	 * @param input The input strings to process.
 	 * @param simulationDepth The maximum number of transitions to simulate. Default is 50.
 	 * @return True if the input is accepted, false otherwise.
 	 * @throws InvalidStartStateException If the start state is not set.
-	 * @throws SimulationDepthExceededException If the simulation depth is exceeded.
 	 */
 	bool simulate(const std::vector<std::string> &input, const int &simulationDepth = 50) override;
 };

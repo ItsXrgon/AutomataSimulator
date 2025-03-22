@@ -34,6 +34,10 @@ FAState &FAState::operator=(FAState &&other) noexcept {
 	return *this;
 }
 
+bool FAState::operator==(const FAState &other) const {
+	return key == other.key && label == other.label && isAccept == other.isAccept && transitions == other.transitions;
+}
+
 FAState::~FAState() {}
 
 FATransition *FAState::getTransitionInternal(const std::string &key) {
