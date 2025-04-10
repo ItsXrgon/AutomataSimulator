@@ -46,44 +46,11 @@ std::vector<std::string> FiniteAutomaton::getInput() const {
 }
 
 void FiniteAutomaton::setInput(const std::vector<std::string> &input) {
-	std::vector<std::string> missingSymbols;
-	for (const auto &symbol : input) {
-		if (!inputAlphabetSymbolExists(symbol)) {
-			missingSymbols.push_back(symbol);
-		}
-	}
-
-	if (!missingSymbols.empty()) {
-		std::string missingSymbolsString = "[" + missingSymbols[0];
-		for (size_t i = 1; i < missingSymbols.size(); i++) {
-			missingSymbolsString += ", " + missingSymbols[i];
-		}
-		missingSymbolsString += "]";
-		throw InputAlphabetSymbolNotFoundException(missingSymbolsString);
-	}
-
 	this->input = input;
 	this->inputHead = 0;
 }
 
 void FiniteAutomaton::addInput(const std::vector<std::string> &input) {
-
-	std::vector<std::string> missingSymbols;
-	for (const auto &symbol : input) {
-		if (!inputAlphabetSymbolExists(symbol)) {
-			missingSymbols.push_back(symbol);
-		}
-	}
-
-	if (!missingSymbols.empty()) {
-		std::string missingSymbolsString = "[" + missingSymbols[0];
-		for (size_t i = 1; i < missingSymbols.size(); i++) {
-			missingSymbolsString += ", " + missingSymbols[i];
-		}
-		missingSymbolsString += "]";
-		throw InputAlphabetSymbolNotFoundException(missingSymbolsString);
-	}
-
 	this->input.insert(this->input.end(), input.begin(), input.end());
 }
 

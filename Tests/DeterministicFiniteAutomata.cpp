@@ -740,7 +740,7 @@ TEST_F(DFA_Test, AddAcceptStates_AddsMultipleAcceptStates) {
 	auto acceptStates = automaton->getAcceptStates();
 	ASSERT_EQ(acceptStates.size(), 2);
 	EXPECT_EQ(acceptStates[0].getKey(), "q1");
-	EXPECT_EQ(acceptStates[0].getKey(), "q2");
+	EXPECT_EQ(acceptStates[1].getKey(), "q2");
 }
 
 TEST_F(DFA_Test, AddAcceptStates_ThrowsForMissingStates) {

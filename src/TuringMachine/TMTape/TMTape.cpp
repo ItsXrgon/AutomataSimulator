@@ -68,14 +68,15 @@ int TMTape::getHeadPosition() const {
 }
 
 std::string TMTape::read() const {
-	if (tape.find(headPosition) == tape.end()) {
-		return blankSymbol;
+	auto it = tape.find(headPosition);
+	if (it == tape.end()) {
+		return blankSymbol; // Return default blank symbol if headPosition not in tape
 	}
-	return tape.at(headPosition);
+	return it->second;
 }
 
 void TMTape::write(std::string symbol) {
-	tape[headPosition] = symbol;
+	tape.insert_or_assign(headPosition, symbol);
 }
 
 void TMTape::moveLeft() {
@@ -83,6 +84,10 @@ void TMTape::moveLeft() {
 		return;
 	}
 	headPosition--;
+}
+
+void TMTape::moveRight() {
+	headPosition++;
 }
 
 void TMTape::move(TMDirection direction) {
@@ -97,11 +102,6 @@ void TMTape::move(TMDirection direction) {
 		break;
 	}
 }
-
-void TMTape::moveRight() {
-	headPosition++;
-}
-
 bool TMTape::isEmpty() const {
 	return tape.empty();
 }
@@ -117,10 +117,19 @@ bool TMTape::isAtLeftEnd() const {
 
 std::string TMTape::toString() const {
 	std::string tapeStr = "[";
-	for (auto it = tape.begin(); it != tape.end(); ++it) {
-		tapeStr += it->second + ", ";
+
+	// Iterate through the tape and append the symbol avoiding invalid string position
+	for (const auto &pair : tape) {
+		if (pair.first == headPosition) {
+			tapeStr += "(" + pair.second + "), ";
+		} else {
+			tapeStr += pair.second + ", ";
+		}
 	}
-	tapeStr.erase(tapeStr.size() - 2, 2);
+
+	if (tapeStr.size() > 1) {
+		tapeStr.erase(tapeStr.size() - 2, 2);
+	}
 	tapeStr += "]";
 	return tapeStr;
 }

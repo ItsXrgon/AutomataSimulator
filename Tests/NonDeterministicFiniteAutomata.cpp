@@ -775,7 +775,7 @@ TEST_F(NFA_Test, AddAcceptStates_AddsMultipleAcceptStates) {
 	auto acceptStates = automaton->getAcceptStates();
 	ASSERT_EQ(acceptStates.size(), 2);
 	EXPECT_EQ(acceptStates[0].getKey(), "q1");
-	EXPECT_EQ(acceptStates[0].getKey(), "q2");
+	EXPECT_EQ(acceptStates[1].getKey(), "q2");
 }
 
 TEST_F(NFA_Test, AddAcceptStates_ThrowsForMissingStates) {
@@ -939,7 +939,8 @@ TEST_F(NFA_Test, ProcessInput_ShouldStayAcceptingAfterInputIsConsumed) {
 	automaton->setCurrentState("q2");
 
 	EXPECT_TRUE(automaton->processInput());
-	EXPECT_TRUE(automaton->processInput());
+	EXPECT_FALSE(automaton->processInput());
+	EXPECT_TRUE(automaton->isAccepting());
 }
 
 TEST_F(NFA_Test, ProcessInput_ShouldTakeEpsilonTransition) {

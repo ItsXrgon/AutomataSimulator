@@ -363,7 +363,7 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	/**
 	 * @brief Clears the accept states of the automaton.
 	 */
-	void clearAcceptStates();
+	void clearAcceptStates();	
 
 	/**
 	 * @brief Gets the accept states of the automaton.

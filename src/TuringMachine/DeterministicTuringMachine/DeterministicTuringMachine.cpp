@@ -1,7 +1,7 @@
 #define AUTOMATASIMULATOR_EXPORTS
 #include "DeterministicTuringMachine.h"
 
-bool DeterministicTuringMachine::checkTransitionDeterminisim(const std::string &fromStateKey, const std::string &input,
+bool DeterministicTuringMachine::checkTransitionDeterminisim(const std::string &fromStateKey,
                                                              const std::string &readSymbol) {
 	TMState *fromState = getStateInternal(fromStateKey);
 
@@ -9,13 +9,13 @@ bool DeterministicTuringMachine::checkTransitionDeterminisim(const std::string &
 	for (auto &transition : fromState->getTransitions()) {
 		// For a DTM, we can't have multiple transitions with:
 		// 1. Same read symbol (or both epsilon)
-		if (transition.getReadSymbol() == input) {
+		if (transition.getReadSymbol() == readSymbol) {
 			return false;
 		}
 
 		// 2. Both a non-empty input and an epsilon transition
-		if ((transition.getReadSymbol().empty() && !input.empty()) ||
-		    (!transition.getReadSymbol().empty() && input.empty())) {
+		if ((transition.getReadSymbol().empty() && !readSymbol.empty()) ||
+		    (!transition.getReadSymbol().empty() && readSymbol.empty())) {
 			return false;
 		}
 	}
@@ -29,9 +29,9 @@ void DeterministicTuringMachine::addTransition(const std::string &fromStateKey, 
 
 	// Check if the transition is deterministic
 	if (!checkTransitionDeterminisim(fromStateKey, readSymbol)) {
-		throw InvalidAutomatonDefinitionException("Transition already exists: " + fromStateKey + " -> " + toStateKey +
-		                                          " | read symbol: " + readSymbol + " | write symbol: " + writeSymbol +
-		                                          " | direction: " + TMDirectionHelper::toString(direction));
+		throw InvalidAutomatonDefinitionException(
+		    "Transition is not deterministic: " + fromStateKey + " -> " + toStateKey + " | read symbol: " + readSymbol +
+		    " | write symbol: " + writeSymbol + " | direction: " + TMDirectionHelper::toString(direction));
 	}
 
 	TuringMachine::addTransition(fromStateKey, toStateKey, readSymbol, writeSymbol, direction);
@@ -59,6 +59,11 @@ void DeterministicTuringMachine::updateTransitionFromState(const std::string &tr
 void DeterministicTuringMachine::updateTransitionReadSymbol(const std::string &transitionKey,
                                                             const std::string &readSymbol) {
 	std::string fromStateKey = TMTransition::getFromStateFromKey(transitionKey);
+	std::string toStateKey = TMTransition::getToStateFromKey(transitionKey);
+	std::string writeSymbol = TMTransition::getWriteSymbolFromKey(transitionKey);
+	TMDirection direction = TMTransition::getDirectionFromKey(transitionKey);
+
+	validateTransition(fromStateKey, toStateKey, readSymbol, writeSymbol, direction);
 
 	// Check if the transition is deterministic
 	if (!checkTransitionDeterminisim(fromStateKey, readSymbol)) {
@@ -78,32 +83,23 @@ bool DeterministicTuringMachine::processInput() {
 		throw InvalidAutomatonDefinitionException("Current state or start state must be set to run process input");
 	}
 
-	std::string input = "";
-	if (inputHead < this->input.size()) {
-		input = this->input[inputHead];
-	}
+	const std::string &input = tape.read();
 
 	const std::vector<TMTransition> &transitions = getStateInternal(currentState)->getTransitions();
 	std::string tapeValue = tape.read();
 
 	for (const auto &transition : transitions) {
-		if (transition.getReadSymbol() != tapeValue && transition.getReadSymbol() != tape.getBlankSymbol()) {
+		if (transition.getReadSymbol() != tapeValue && !transition.getReadSymbol().empty()) {
 			continue;
 		}
-		if (transition.getInput() == input || transition.getInput().empty()) {
-			// If the write symbol is not epsilon then write to the tape
-			if (!transition.getWriteSymbol().empty()) {
-				tape.write(transition.getWriteSymbol());
-			}
-			tape.move(transition.getDirection());
-			currentState = transition.getToStateKey();
-			// Only increment the head if the input is a match and the input head is less than the input size
-			const bool &incrementHead = transition.getInput() == input && inputHead < this->input.size();
-			if (incrementHead) {
-				inputHead++;
-			}
-			return getStateInternal(currentState)->getIsAccept();
+		// If the write symbol is not epsilon then write to the tape
+		if (!transition.getWriteSymbol().empty()) {
+			tape.write(transition.getWriteSymbol());
 		}
+		tape.move(transition.getDirection());
+		currentState = transition.getToStateKey();
+
+		return getStateInternal(currentState)->getIsAccept();
 	}
 
 	return false;
@@ -114,42 +110,34 @@ bool DeterministicTuringMachine::simulate(const std::vector<std::string> &input,
 		throw InvalidStartStateException("Start state must be set to run simulate");
 	}
 
-	int inputIdx = 0;
 	int currentDepth = 0;
 	std::string simulationCurrentState = getStartState();
 	TMTape simulationTape;
+	simulationTape.loadInput(input);
 
-	while (currentDepth <= simulationDepth && inputIdx < input.size()) {
-		const std::vector<TMTransition> &transitions = getStateInternal(simulationCurrentState)->getTransitions();
-
-		std::string currentInput = "";
-		if (inputIdx < input.size()) {
-			currentInput = input[inputIdx];
+	while (currentDepth <= simulationDepth) {
+		if (getStateInternal(simulationCurrentState)->getIsAccept()) {
+			return true;
 		}
 
-		std::string tapeValue = simulationTape.read();
+		const std::vector<TMTransition> &transitions = getStateInternal(simulationCurrentState)->getTransitions();
+		const std::string &tapeValue = simulationTape.read();
 
 		bool transitionFound = false;
 		for (const auto &transition : transitions) {
 			if (transition.getReadSymbol() != tapeValue && !transition.getReadSymbol().empty()) {
 				continue;
 			}
-			if (transition.getInput() == currentInput || transition.getInput().empty()) {
-				if (!transition.getWriteSymbol().empty()) {
-					simulationTape.write(transition.getWriteSymbol());
-				}
-				simulationTape.move(transition.getDirection());
-				currentState = transition.getToStateKey();
-				// Only increment the head if the input is a match and the input head is less than the input size
-				const bool &incrementHead = transition.getInput() == currentInput && inputIdx < input.size();
-				if (incrementHead) {
-					inputIdx++;
-				}
-				transitionFound = true;
-				break;
+			if (!transition.getWriteSymbol().empty()) {
+				simulationTape.write(transition.getWriteSymbol());
 			}
+			simulationTape.move(transition.getDirection());
+			simulationCurrentState = transition.getToStateKey();
+
+			transitionFound = true;
+			break;
 		}
-		if (!transitionFound && !currentInput.empty()) {
+		if (!transitionFound) {
 			return false;
 		}
 		currentDepth++;

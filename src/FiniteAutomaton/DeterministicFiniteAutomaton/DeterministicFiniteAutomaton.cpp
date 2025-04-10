@@ -145,11 +145,12 @@ bool DeterministicFiniteAutomaton::processInput() {
 	const std::vector<FATransition> &transitions = getStateInternal(currentState)->getTransitions();
 
 	for (const auto &transition : transitions) {
-		if (transition.getInput() == input) {
-			currentState = transition.getToStateKey();
-			inputHead++;
-			return getStateInternal(currentState)->getIsAccept();
+		if (transition.getInput() != input) {
+			continue;
 		}
+		currentState = transition.getToStateKey();
+		inputHead++;
+		return getStateInternal(currentState)->getIsAccept();
 	}
 	return false;
 }
@@ -170,11 +171,12 @@ bool DeterministicFiniteAutomaton::simulate(const std::vector<std::string> &inpu
 
 		bool transitionFound = false;
 		for (const auto &transition : transitions) {
-			if (transition.getInput() == currentInput) {
-				simulationCurrentState = transition.getToStateKey();
-				transitionFound = true;
-				break;
+			if (transition.getInput() != currentInput) {
+				continue;
 			}
+			simulationCurrentState = transition.getToStateKey();
+			transitionFound = true;
+			break;
 		}
 		if (!transitionFound) {
 			return false;

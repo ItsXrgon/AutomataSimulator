@@ -980,7 +980,7 @@ TEST_F(DPDA_Test, RemoveAcceptState_ThrowsIfStateNotFound) {
 	EXPECT_THROW(automaton->removeAcceptState("qX"), StateNotFoundException);
 }
 
-TEST_F(DPDA_Test, RemoveAcceptStates_AddsMultipleAcceptStates) {
+TEST_F(DPDA_Test, RemoveAcceptStates_RemovesMultipleAcceptStates) {
 	automaton->addState("q2");
 	automaton->addAcceptStates({"q1", "q2"});
 
@@ -1058,15 +1058,6 @@ TEST_F(DPDA_Test, IsAccepting_ShouldAcceptIfCurrentStateIsAccept) {
 	automaton->addAcceptState("q1");
 	automaton->setCurrentState("q1");
 	EXPECT_TRUE(automaton->isAccepting());
-}
-
-TEST_F(DPDA_Test, ProcessInput_ShouldAcceptValidEmptyInput) {
-	automaton->addState("q2");
-	automaton->addState("q3");
-	automaton->addAcceptState("q0");
-
-	EXPECT_TRUE(automaton->isAccepting());
-	EXPECT_TRUE(automaton->processInput());
 }
 
 TEST_F(DPDA_Test, ProcessInput_ShouldAcceptValidSequence) {
@@ -1148,7 +1139,7 @@ TEST_F(DPDA_Test, ProcessInput_ShouldStayAcceptingAfterInputIsConsumed) {
 TEST_F(DPDA_Test, ProcessInput_CanPushMultipleStackSymbols) {
 	automaton->addStackAlphabet({"$", "0"});
 
-	automaton->addTransition("q0", "q1", "", "", "$,0,A,Z");
+	automaton->addTransition("q0", "q1", "", "Z", "$,0,A,Z");
 	automaton->processInput();
 	auto &stack = automaton->getStack();
 

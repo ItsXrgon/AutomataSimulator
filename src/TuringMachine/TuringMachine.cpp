@@ -27,7 +27,7 @@ void TuringMachine::validateTransition(const std::string &fromStateKey, const st
 	}
 
 	TMState *fromState = getStateInternal(fromStateKey);
-	std::string transitionKey =
+	const std::string &transitionKey =
 	    TMTransition::generateTransitionKey(fromStateKey, toStateKey, readSymbol, writeSymbol, direction);
 
 	// Check if the new transition would be a duplicate
@@ -345,6 +345,7 @@ void TuringMachine::setInputAlphabet(const std::vector<std::string> &inputAlphab
 		    conflictMessage + " If you wish to delete these transitions, call the function again with strict=false.");
 	}
 
+	addTapeAlphabet(inputAlphabet);
 	this->inputAlphabet = newAlphabet;
 	inputAlphabetCacheInvalidated = true;
 }
@@ -353,6 +354,7 @@ void TuringMachine::addInputAlphabet(const std::vector<std::string> &inputAlphab
 	for (const auto &symbol : inputAlphabet) {
 		this->inputAlphabet.insert(symbol);
 	}
+	addTapeAlphabet(inputAlphabet);
 	inputAlphabetCacheInvalidated = true;
 }
 
@@ -462,6 +464,7 @@ void TuringMachine::removeInputAlphabetSymbols(const std::vector<std::string> &s
 	for (const auto &symbol : symbols) {
 		inputAlphabet.erase(symbol);
 	}
+
 	inputAlphabetCacheInvalidated = true;
 }
 
@@ -486,6 +489,18 @@ void TuringMachine::clearInputAlphabet(const bool &strict) {
 
 void TuringMachine::setTapeAlphabet(const std::vector<std::string> &tapeAlphabet, const bool &strict) {
 	this->tapeAlphabet = std::unordered_set<std::string>(tapeAlphabet.begin(), tapeAlphabet.end());
+
+	// remove elements in new tape alphabet but not input alphabet
+	std::unordered_set<std::string> missingSymbols;
+	for (auto &inputSymbol : inputAlphabet) {
+		if (!tapeAlphabetSymbolExists(inputSymbol)) {
+			missingSymbols.insert(inputSymbol);
+		}
+	}
+	for (auto &symbol : missingSymbols) {
+		removeInputAlphabetSymbol(symbol);
+	} 
+
 	tapeAlphabetCacheInvalidated = true;
 }
 
@@ -514,6 +529,10 @@ void TuringMachine::removeTapeAlphabetSymbol(const std::string &symbol, const bo
 		throw TapeAlphabetSymbolNotFoundException(symbol);
 	}
 
+	if (inputAlphabetSymbolExists(symbol)) {
+		removeInputAlphabetSymbol(symbol);
+	}
+
 	tapeAlphabet.erase(symbol);
 	tapeAlphabetCacheInvalidated = true;
 }
@@ -539,16 +558,28 @@ void TuringMachine::removeTapeAlphabetSymbols(const std::vector<std::string> &sy
 		throw TapeAlphabetSymbolNotFoundException(missingSymbolsString);
 	}
 
+
+
 	// If no missing symbols found then we remove
 	for (const auto &symbol : symbols) {
 		tapeAlphabet.erase(symbol);
 	}
+
+	// Remove symbols from input alphabet (subset)
+	for (auto &symbol : symbols) {
+		if (inputAlphabetSymbolExists(symbol)) {
+			removeInputAlphabetSymbol(symbol);
+		}
+	}
+
 	tapeAlphabetCacheInvalidated = true;
 }
 
 void TuringMachine::clearTapeAlphabet(const bool &strict) {
 	tapeAlphabet.clear();
 	tapeAlphabetCacheInvalidated = true;
+
+	clearInputAlphabet(strict);
 }
 
 void TuringMachine::setStartState(const std::string &key) {

@@ -969,7 +969,7 @@ TEST_F(NPDA_Test, AddAcceptStates_AddsMultipleAcceptStates) {
 	auto acceptStates = automaton->getAcceptStates();
 	ASSERT_EQ(acceptStates.size(), 2);
 	EXPECT_EQ(acceptStates[0].getKey(), "q1");
-	EXPECT_EQ(acceptStates[0].getKey(), "q2");
+	EXPECT_EQ(acceptStates[1].getKey(), "q2");
 }
 
 TEST_F(NPDA_Test, AddAcceptStates_ThrowsForMissingStates) {
@@ -982,12 +982,12 @@ TEST_F(NPDA_Test, RemoveAcceptState_ThrowsIfStateNotFound) {
 
 TEST_F(NPDA_Test, RemoveAcceptStates_RemovesMultipleAcceptStates) {
 	automaton->addState("q2");
-	automaton->removeAcceptStates({"q1", "q2"});
+	automaton->addAcceptStates({"q1", "q2"});
 
 	auto acceptStates = automaton->getAcceptStates();
 	ASSERT_EQ(acceptStates.size(), 2);
 
-	automaton->removeAcceptState({"q1", "q2"});
+	automaton->removeAcceptStates({"q1", "q2"});
 	acceptStates = automaton->getAcceptStates();
 	ASSERT_EQ(acceptStates.size(), 0);
 }
@@ -1100,7 +1100,8 @@ TEST_F(NPDA_Test, ProcessInput_ShouldStayAcceptingAfterInputIsConsumed) {
 	automaton->setCurrentState("q2");
 
 	EXPECT_TRUE(automaton->processInput());
-	EXPECT_TRUE(automaton->processInput());
+	EXPECT_FALSE(automaton->processInput());
+	EXPECT_TRUE(automaton->isAccepting());
 }
 
 TEST_F(NPDA_Test, ProcessInput_ShouldTakeEpsilonTransition) {
@@ -1108,17 +1109,17 @@ TEST_F(NPDA_Test, ProcessInput_ShouldTakeEpsilonTransition) {
 	automaton->addState("q3");
 	automaton->addAcceptState("q3");
 
-	automaton->addTransition("q0", "q0", "1");
-	automaton->addTransition("q0", "q0", "0");
-	automaton->addTransition("q0", "q1", "1");
+	automaton->addTransition("q0", "q0", "1", "", "");
+	automaton->addTransition("q0", "q0", "0", "", "");
+	automaton->addTransition("q0", "q1", "1", "", "");
 
-	automaton->addTransition("q1", "q2", "0");
-	automaton->addTransition("q1", "q2", "");
+	automaton->addTransition("q1", "q2", "0", "", "");
+	automaton->addTransition("q1", "q2", "", "", "");
 
-	automaton->addTransition("q2", "q3", "1");
+	automaton->addTransition("q2", "q3", "1", "", "");
 
-	automaton->addTransition("q3", "q3", "0");
-	automaton->addTransition("q3", "q3", "1");
+	automaton->addTransition("q3", "q3", "0", "", "");
+	automaton->addTransition("q3", "q3", "1", "", "");
 
 	automaton->setInput({});
 	automaton->setCurrentState("q1");

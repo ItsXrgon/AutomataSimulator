@@ -1,1 +1,0 @@
-﻿- [ ] Test State  & Transition classes

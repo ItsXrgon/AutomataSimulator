@@ -3,7 +3,7 @@
 
 TMTransition::TMTransition(const std::string &fromStateKey, const std::string &toStateKey,
                            const std::string &readSymbol, const std::string &writeSymbol, TMDirection direction)
-    : fromStateKey(fromStateKey), toStateKey(toStateKey), , readSymbol(readSymbol), writeSymbol(writeSymbol),
+    : fromStateKey(fromStateKey), toStateKey(toStateKey), readSymbol(readSymbol), writeSymbol(writeSymbol),
       direction(direction) {
 	key = generateTransitionKey(fromStateKey, toStateKey, readSymbol, writeSymbol, direction);
 }
@@ -25,7 +25,7 @@ TMTransition &TMTransition::operator=(const TMTransition &other) {
 }
 
 TMTransition::TMTransition(TMTransition &&other) noexcept
-    : fromStateKey(other.fromStateKey), toStateKey(other.toStateKey), , readSymbol(other.readSymbol),
+    : fromStateKey(other.fromStateKey), toStateKey(other.toStateKey), readSymbol(other.readSymbol),
       writeSymbol(other.writeSymbol), direction(other.direction), key(other.key) {}
 
 TMTransition &TMTransition::operator=(TMTransition &&other) noexcept {

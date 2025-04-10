@@ -24,11 +24,12 @@ class AUTOMATASIMULATOR_API DeterministicTuringMachine : public TuringMachine {
   private:
 	/**
 	 * @brief Checks the determinism of a transition.
+	 * @param fromStateKey The key of the state to transition from.
+	 * @param readSymbol The stack symbol of the transition.
 	 * @return True if alphabet is valid.
 	 * @throws StateNotFoundException If the form state is not found.
 	 */
-	bool checkTransitionDeterminisim(const std::string &fromStateKey, const std::string &input,
-	                                 const std::string &stackSymbol);
+	bool checkTransitionDeterminisim(const std::string &fromStateKey, const std::string &readSymbol);
 
   public:
 	/**

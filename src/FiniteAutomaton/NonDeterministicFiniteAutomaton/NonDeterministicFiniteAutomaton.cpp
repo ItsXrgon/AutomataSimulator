@@ -158,10 +158,12 @@ bool NonDeterministicFiniteAutomaton::processInput() {
 	const std::vector<FATransition> &transitions = getStateInternal(currentState)->getTransitions();
 
 	for (const auto &transition : transitions) {
-		if (transition.getInput() == input || transition.getInput().empty()) {
-			possibleTransitions.insert(transition);
-			possibleCurrentStates.insert(transition.getToStateKey());
+		if (transition.getInput() != input && !transition.getInput().empty()) {
+			continue;
 		}
+
+		possibleTransitions.insert(transition);
+		possibleCurrentStates.insert(transition.getToStateKey());
 	}
 
 	if (possibleTransitions.empty()) {
@@ -240,17 +242,18 @@ bool NonDeterministicFiniteAutomaton::simulate(const std::vector<std::string> &i
 		const std::vector<FATransition> &transitions = getStateInternal(branch.state)->getTransitions();
 
 		for (const auto &transition : transitions) {
-			if (transition.getInput().empty() || transition.getInput() == currentInput) {
-				// Only increment the head if the input is a match and the input head is less than the input size
-				const bool &incrementHead = transition.getInput() == currentInput && branch.head < input.size();
-				const int &newHead = incrementHead ? branch.head + 1 : branch.head;
-
-				if (visited.find({transition.getToStateKey(), newHead}) != visited.end()) {
-					continue;
-				}
-
-				branches.push({transition.getToStateKey(), newHead, branch.depth + 1});
+			if (!transition.getInput().empty() && transition.getInput() != currentInput) {
+				continue;
 			}
+			// Only increment the head if the input is a match and the input head is less than the input size
+			const bool &incrementHead = transition.getInput() == currentInput && branch.head < input.size();
+			const int &newHead = incrementHead ? branch.head + 1 : branch.head;
+
+			if (visited.find({transition.getToStateKey(), newHead}) != visited.end()) {
+				continue;
+			}
+
+			branches.push({transition.getToStateKey(), newHead, branch.depth + 1});
 		}
 	}
 

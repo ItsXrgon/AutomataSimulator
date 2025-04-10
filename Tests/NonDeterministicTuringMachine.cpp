@@ -9,7 +9,7 @@ class NTM_Test : public ::testing::Test {
 		automaton->addState("q1");
 		automaton->setStartState("q0");
 		automaton->setInputAlphabet({"0", "1"});
-		automaton->setTapeAlphabet({"A", "Z"});
+		automaton->addTapeAlphabet({"A", "Z"});
 	}
 
 	void TearDown() override {
@@ -213,15 +213,15 @@ TEST_F(NTM_Test, RemoveState_ThrowsIfStateNotFound) {
 
 TEST_F(NTM_Test, RemoveState_RemovesTransitionsWithStateAsToIfNotStrict) {
 	automaton->setCurrentState("q0");
-	automaton->addTransition("q1", "q0", "0", "A", "A", TMDirection::LEFT);
+	automaton->addTransition("q1", "q0", "0", "A", TMDirection::LEFT);
 	automaton->removeState("q0", false);
 	EXPECT_FALSE(automaton->getState("q1").transitionExists(
-	    TMTransition::generateTransitionKey("q1", "q0", "0", "A", "A", TMDirection::LEFT)));
+	    TMTransition::generateTransitionKey("q1", "q0", "0", "A", TMDirection::LEFT)));
 }
 
 TEST_F(NTM_Test, RemoveState_ThrowsIfStateIsUsedInTransitionsIfStrict) {
 	automaton->setCurrentState("q0");
-	automaton->addTransition("q1", "q0", "0", "A", "A", TMDirection::LEFT);
+	automaton->addTransition("q1", "q0", "0", "A", TMDirection::LEFT);
 	EXPECT_THROW(automaton->removeState("q0", true), InvalidAutomatonDefinitionException);
 }
 
@@ -254,15 +254,15 @@ TEST_F(NTM_Test, RemoveStates_ThrowsIfStateNotFound) {
 }
 
 TEST_F(NTM_Test, RemoveStates_RemovesTransitionsWithStateAsToIfNotStrict) {
-	automaton->addTransition("q1", "q0", "0", "A", "A", TMDirection::LEFT);
+	automaton->addTransition("q1", "q0", "0", "A", TMDirection::LEFT);
 	automaton->removeStates({"q0"}, false);
 	EXPECT_FALSE(automaton->getState("q1").transitionExists(
-	    TMTransition::generateTransitionKey("q1", "q0", "0", "A", "A", TMDirection::LEFT)));
+	    TMTransition::generateTransitionKey("q1", "q0", "0", "A", TMDirection::LEFT)));
 }
 
 TEST_F(NTM_Test, RemoveStates_ThrowsIfStateIsUsedInTransitionsIfStrict) {
 	automaton->setCurrentState("q0");
-	automaton->addTransition("q1", "q0", "0", "A", "A", TMDirection::LEFT);
+	automaton->addTransition("q1", "q0", "0", "A", TMDirection::LEFT);
 	EXPECT_THROW(automaton->removeStates({"q0"}, true), InvalidAutomatonDefinitionException);
 }
 
@@ -299,20 +299,29 @@ TEST_F(NTM_Test, SetInputAlphabet_OverridesAlphabet) {
 	EXPECT_TRUE(std::find(alphabet.begin(), alphabet.end(), "c") != alphabet.end());
 }
 
+TEST_F(NTM_Test, SetInputAlphabet_AddsToTapeAlphabet) {
+	automaton->setInputAlphabet({"a", "b", "c"});
+	std::vector<std::string> alphabet = automaton->getTapeAlphabet();
+
+	EXPECT_TRUE(std::find(alphabet.begin(), alphabet.end(), "a") != alphabet.end());
+	EXPECT_TRUE(std::find(alphabet.begin(), alphabet.end(), "b") != alphabet.end());
+	EXPECT_TRUE(std::find(alphabet.begin(), alphabet.end(), "c") != alphabet.end());
+}
+
 TEST_F(NTM_Test, SetInputAlphabet_NoThrowForEpsilon) {
 	EXPECT_NO_THROW(automaton->setInputAlphabet({"a", "", "c"}));
 }
 
 TEST_F(NTM_Test, SetInputAlphabet_ThrowsForUsedSymbolIfStrict) {
-	automaton->addTransition("q1", "q0", "0", "A", "A", TMDirection::LEFT);
+	automaton->addTransition("q1", "q0", "0", "A", TMDirection::LEFT);
 	EXPECT_THROW(automaton->setInputAlphabet({"a", "b"}, true), InvalidAutomatonDefinitionException);
 }
 
 TEST_F(NTM_Test, SetInputAlphabet_RemovesTransitionsWithOldSymbolIfNotStrict) {
-	automaton->addTransition("q1", "q0", "0", "A", "A", TMDirection::LEFT);
+	automaton->addTransition("q1", "q0", "0", "A", TMDirection::LEFT);
 	automaton->setInputAlphabet({"a", "b"}, false);
 	EXPECT_FALSE(automaton->getState("q1").transitionExists(
-	    TMTransition::generateTransitionKey("q1", "q0", "0", "A", "A", TMDirection::LEFT)));
+	    TMTransition::generateTransitionKey("q1", "q0", "0", "A", TMDirection::LEFT)));
 }
 
 TEST_F(NTM_Test, AddInputAlphabet_AddsNewSymbols) {
@@ -320,6 +329,14 @@ TEST_F(NTM_Test, AddInputAlphabet_AddsNewSymbols) {
 	std::vector<std::string> alphabet = automaton->getInputAlphabet();
 
 	EXPECT_EQ(alphabet.size(), 4);
+	EXPECT_TRUE(std::find(alphabet.begin(), alphabet.end(), "2") != alphabet.end());
+	EXPECT_TRUE(std::find(alphabet.begin(), alphabet.end(), "3") != alphabet.end());
+}
+
+TEST_F(NTM_Test, AddInputAlphabet_AddsSymbolsToTapeAlphabet) {
+	automaton->addInputAlphabet({"2", "3"});
+	std::vector<std::string> alphabet = automaton->getTapeAlphabet();
+
 	EXPECT_TRUE(std::find(alphabet.begin(), alphabet.end(), "2") != alphabet.end());
 	EXPECT_TRUE(std::find(alphabet.begin(), alphabet.end(), "3") != alphabet.end());
 }
@@ -351,15 +368,15 @@ TEST_F(NTM_Test, RemoveInputAlphabetSymbol_ThrowsIfNotFound) {
 }
 
 TEST_F(NTM_Test, RemoveInputAlphabetSymbol_ThrowsForUsedSymbolIfStrict) {
-	automaton->addTransition("q1", "q0", "0", "A", "A", TMDirection::LEFT);
+	automaton->addTransition("q1", "q0", "0", "A", TMDirection::LEFT);
 	EXPECT_THROW(automaton->removeInputAlphabetSymbol("0", true), InvalidAutomatonDefinitionException);
 }
 
 TEST_F(NTM_Test, RemoveInputAlphabetSymbol_RemovesTransitionsWithOldSymbolIfNotStrict) {
-	automaton->addTransition("q1", "q0", "0", "A", "A", TMDirection::LEFT);
+	automaton->addTransition("q1", "q0", "0", "A", TMDirection::LEFT);
 	automaton->removeInputAlphabetSymbol("0", false);
 	EXPECT_FALSE(automaton->getState("q1").transitionExists(
-	    TMTransition::generateTransitionKey("q1", "q0", "0", "A", "A", TMDirection::LEFT)));
+	    TMTransition::generateTransitionKey("q1", "q0", "0", "A", TMDirection::LEFT)));
 }
 
 TEST_F(NTM_Test, RemoveInputAlphabetSymbols_RemovesMultipleSymbols) {
@@ -380,15 +397,15 @@ TEST_F(NTM_Test, RemoveInputAlphabetSymbols_ThrowsIfAnySymbolNotFound) {
 }
 
 TEST_F(NTM_Test, RemoveInputAlphabetSymbols_ThrowsForUsedSymbolIfStrict) {
-	automaton->addTransition("q1", "q0", "0", "A", "A", TMDirection::LEFT);
+	automaton->addTransition("q1", "q0", "0", "A", TMDirection::LEFT);
 	EXPECT_THROW(automaton->removeInputAlphabetSymbols({"0"}, true), InvalidAutomatonDefinitionException);
 }
 
 TEST_F(NTM_Test, RemoveInputAlphabetSymbols_RemovesTransitionsWithOldSymbolIfNotStrict) {
-	automaton->addTransition("q1", "q0", "0", "A", "A", TMDirection::LEFT);
+	automaton->addTransition("q1", "q0", "0", "A", TMDirection::LEFT);
 	automaton->removeInputAlphabetSymbols({"0"}, false);
 	EXPECT_FALSE(automaton->getState("q1").transitionExists(
-	    TMTransition::generateTransitionKey("q1", "q0", "0", "A", "A", TMDirection::LEFT)));
+	    TMTransition::generateTransitionKey("q1", "q0", "0", "A", TMDirection::LEFT)));
 }
 
 TEST_F(NTM_Test, ClearInputAlphabet_RemovesAllSymbols) {
@@ -397,23 +414,23 @@ TEST_F(NTM_Test, ClearInputAlphabet_RemovesAllSymbols) {
 }
 
 TEST_F(NTM_Test, ClearInputAlphabet_ThrowsForUsedSymbolIfStrict) {
-	automaton->addTransition("q1", "q0", "0", "A", "A", TMDirection::LEFT);
+	automaton->addTransition("q1", "q0", "0", "A", TMDirection::LEFT);
 	EXPECT_THROW(automaton->clearInputAlphabet(true), InvalidAutomatonDefinitionException);
 }
 
 TEST_F(NTM_Test, ClearInputAlphabet_RemovesNonEpsilonTransitionsWithOldSymbolIfNotStrict) {
-	automaton->addTransition("q1", "q0", "0", "A", "A", TMDirection::LEFT);
-	automaton->addTransition("q1", "q0", "", "Z", "A", TMDirection::LEFT);
+	automaton->addTransition("q1", "q0", "0", "A", TMDirection::LEFT);
+	automaton->addTransition("q1", "q0", "", "A", TMDirection::LEFT);
 	automaton->clearInputAlphabet(false);
 	EXPECT_FALSE(automaton->getState("q1").transitionExists(
-	    TMTransition::generateTransitionKey("q1", "q0", "0", "A", "A", TMDirection::LEFT)));
+	    TMTransition::generateTransitionKey("q1", "q0", "0", "A", TMDirection::LEFT)));
 	EXPECT_TRUE(automaton->getState("q1").transitionExists(
-	    TMTransition::generateTransitionKey("q1", "q0", "", "Z", "A", TMDirection::LEFT)));
+	    TMTransition::generateTransitionKey("q1", "q0", "", "A", TMDirection::LEFT)));
 }
 
 TEST_F(NTM_Test, GetTapeAlphabet_GetsAlphabet) {
 	std::vector<std::string> alphabet = automaton->getTapeAlphabet();
-	EXPECT_EQ(alphabet.size(), 2);
+
 	EXPECT_TRUE(std::find(alphabet.begin(), alphabet.end(), "A") != alphabet.end());
 	EXPECT_TRUE(std::find(alphabet.begin(), alphabet.end(), "Z") != alphabet.end());
 }
@@ -422,7 +439,6 @@ TEST_F(NTM_Test, SetTapeAlphabet_OverridesAlphabet) {
 	automaton->setTapeAlphabet({"A", "B", "C"});
 	std::vector<std::string> alphabet = automaton->getTapeAlphabet();
 
-	EXPECT_EQ(alphabet.size(), 3);
 	EXPECT_TRUE(std::find(alphabet.begin(), alphabet.end(), "A") != alphabet.end());
 	EXPECT_TRUE(std::find(alphabet.begin(), alphabet.end(), "B") != alphabet.end());
 	EXPECT_TRUE(std::find(alphabet.begin(), alphabet.end(), "C") != alphabet.end());
@@ -436,7 +452,6 @@ TEST_F(NTM_Test, AddTapeAlphabet_AddsNewSymbols) {
 	automaton->addTapeAlphabet({"B", "C"});
 	std::vector<std::string> alphabet = automaton->getTapeAlphabet();
 
-	EXPECT_EQ(alphabet.size(), 4);
 	EXPECT_TRUE(std::find(alphabet.begin(), alphabet.end(), "B") != alphabet.end());
 	EXPECT_TRUE(std::find(alphabet.begin(), alphabet.end(), "C") != alphabet.end());
 }
@@ -449,7 +464,6 @@ TEST_F(NTM_Test, AddTapeAlphabet_IgnoresDuplicates) {
 	automaton->addTapeAlphabet({"Z", "A", "Z"});
 	std::vector<std::string> alphabet = automaton->getTapeAlphabet();
 
-	EXPECT_EQ(alphabet.size(), 2);
 	EXPECT_TRUE(std::find(alphabet.begin(), alphabet.end(), "A") != alphabet.end());
 	EXPECT_TRUE(std::find(alphabet.begin(), alphabet.end(), "Z") != alphabet.end());
 }
@@ -458,9 +472,18 @@ TEST_F(NTM_Test, RemoveTapeAlphabetSymbol_RemovesSymbol) {
 	automaton->removeTapeAlphabetSymbol("A");
 	std::vector<std::string> alphabet = automaton->getTapeAlphabet();
 
-	EXPECT_EQ(alphabet.size(), 1);
 	EXPECT_FALSE(std::find(alphabet.begin(), alphabet.end(), "A") != alphabet.end());
 	EXPECT_TRUE(std::find(alphabet.begin(), alphabet.end(), "Z") != alphabet.end());
+}
+
+TEST_F(NTM_Test, RemoveTapeAlphabetSymbol_RemovesSymbolFromInputAlphabet) {
+	automaton->addInputAlphabet({"A"});
+	std::vector<std::string> alphabet = automaton->getInputAlphabet();
+	EXPECT_TRUE(std::find(alphabet.begin(), alphabet.end(), "A") != alphabet.end());
+
+	automaton->removeTapeAlphabetSymbol("A");
+	alphabet = automaton->getInputAlphabet();
+	EXPECT_FALSE(std::find(alphabet.begin(), alphabet.end(), "A") != alphabet.end());
 }
 
 TEST_F(NTM_Test, RemoveTapeAlphabetSymbol_ThrowsIfNotFound) {
@@ -472,11 +495,25 @@ TEST_F(NTM_Test, RemoveTapeAlphabetSymbols_RemovesMultipleSymbols) {
 	automaton->removeTapeAlphabetSymbols({"Z", "C"});
 	std::vector<std::string> alphabet = automaton->getTapeAlphabet();
 
-	EXPECT_EQ(alphabet.size(), 2);
 	EXPECT_FALSE(std::find(alphabet.begin(), alphabet.end(), "Z") != alphabet.end());
 	EXPECT_FALSE(std::find(alphabet.begin(), alphabet.end(), "C") != alphabet.end());
 	EXPECT_TRUE(std::find(alphabet.begin(), alphabet.end(), "A") != alphabet.end());
 	EXPECT_TRUE(std::find(alphabet.begin(), alphabet.end(), "B") != alphabet.end());
+}
+
+TEST_F(NTM_Test, RemoveTapeAlphabetSymbols_RemovesSymbolsFromInputAlphabet) {
+	automaton->addInputAlphabet({"B", "C"});
+	automaton->addTapeAlphabet({"B", "C"});
+
+	std::vector<std::string> alphabet = automaton->getInputAlphabet();
+	EXPECT_TRUE(std::find(alphabet.begin(), alphabet.end(), "B") != alphabet.end());
+	EXPECT_TRUE(std::find(alphabet.begin(), alphabet.end(), "C") != alphabet.end());
+
+	automaton->removeTapeAlphabetSymbols({"B", "C"});
+	alphabet = automaton->getInputAlphabet();
+
+	EXPECT_FALSE(std::find(alphabet.begin(), alphabet.end(), "B") != alphabet.end());
+	EXPECT_FALSE(std::find(alphabet.begin(), alphabet.end(), "C") != alphabet.end());
 }
 
 TEST_F(NTM_Test, RemoveTapeAlphabetSymbols_ThrowsIfAnySymbolNotFound) {
@@ -491,6 +528,11 @@ TEST_F(NTM_Test, ClearTapeAlphabet_RemovesAllSymbols) {
 
 TEST_F(NTM_Test, GetStartState_ReturnsCorrectState) {
 	EXPECT_EQ(automaton->getStartState(), "q0");
+}
+
+TEST_F(NTM_Test, ClearTapeAlphabet_RemovesInputAlphabetSymbols) {
+	automaton->clearTapeAlphabet();
+	EXPECT_TRUE(automaton->getInputAlphabet().empty());
 }
 
 TEST_F(NTM_Test, GetStartState_ThrowsIfNotSet) {
@@ -526,13 +568,13 @@ TEST_F(NTM_Test, SetStartState_DoesNotOverrideCurrentStateIfSet) {
 }
 
 TEST_F(NTM_Test, AddTransition_AddsValidTransition) {
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::LEFT);
+	automaton->addTransition("q0", "q1", "0", "A", TMDirection::LEFT);
 
 	const auto &transitions = automaton->getState("q0").getTransitions();
 	bool found = false;
 
 	for (const auto &transition : transitions) {
-		if (transition.getInput() == "0" && transition.getToStateKey() == "q1") {
+		if (transition.getReadSymbol() == "0" && transition.getToStateKey() == "q1") {
 			found = true;
 			break;
 		}
@@ -542,39 +584,39 @@ TEST_F(NTM_Test, AddTransition_AddsValidTransition) {
 }
 
 TEST_F(NTM_Test, AddTransition_ThrowsIfFromStateDoesNotExist) {
-	EXPECT_THROW(automaton->addTransition("qX", "q1", "0", "A", "A", TMDirection::STAY), StateNotFoundException);
+	EXPECT_THROW(automaton->addTransition("qX", "q1", "0", "A", TMDirection::STAY), StateNotFoundException);
 }
 
 TEST_F(NTM_Test, AddTransition_ThrowsIfToStateDoesNotExist) {
-	EXPECT_THROW(automaton->addTransition("q0", "qX", "0", "A", "A", TMDirection::STAY), StateNotFoundException);
+	EXPECT_THROW(automaton->addTransition("q0", "qX", "0", "A", TMDirection::STAY), StateNotFoundException);
 }
 
 TEST_F(NTM_Test, AddTransition_ThrowsIfInputNotInAlphabet) {
-	EXPECT_THROW(automaton->addTransition("q0", "q1", "2", "A", "A", TMDirection::STAY), InvalidTransitionException);
+	EXPECT_THROW(automaton->addTransition("q0", "q1", "2", "A", TMDirection::STAY), InvalidTransitionException);
 }
 
 TEST_F(NTM_Test, AddTransition_NoThrowIfEpsilonInDTM) {
-	EXPECT_NO_THROW(automaton->addTransition("q0", "q1", "", "A", "A", TMDirection::STAY));
+	EXPECT_NO_THROW(automaton->addTransition("q0", "q1", "", "A", TMDirection::STAY));
 }
 
 TEST_F(NTM_Test, AddTransition_NoThrowIfNonDeterministic) {
 	automaton->addState("q2");
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::STAY);
-	EXPECT_NO_THROW(automaton->addTransition("q0", "q2", "0", "A", "A", TMDirection::STAY));
+	automaton->addTransition("q0", "q1", "0", "A", TMDirection::STAY);
+	EXPECT_NO_THROW(automaton->addTransition("q0", "q2", "0", "A", TMDirection::STAY));
 }
 
 TEST_F(NTM_Test, AddTransition_AllowsDifferentInputs) {
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::STAY);
-	automaton->addTransition("q0", "q0", "1", "A", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q1", "0", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q0", "1", "A", TMDirection::STAY);
 
 	const auto &transitions = automaton->getState("q0").getTransitions();
 
 	bool found0 = false, found1 = false;
 	for (const auto &transition : transitions) {
-		if (transition.getInput() == "0" && transition.getToStateKey() == "q1") {
+		if (transition.getReadSymbol() == "0" && transition.getToStateKey() == "q1") {
 			found0 = true;
 		}
-		if (transition.getInput() == "1" && transition.getToStateKey() == "q0") {
+		if (transition.getReadSymbol() == "1" && transition.getToStateKey() == "q0") {
 			found1 = true;
 		}
 	}
@@ -584,8 +626,8 @@ TEST_F(NTM_Test, AddTransition_AllowsDifferentInputs) {
 }
 
 TEST_F(NTM_Test, AddTransition_DoesNotInvalidateExistingTransitions) {
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::STAY);
-	automaton->addTransition("q1", "q0", "1", "A", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q1", "0", "A", TMDirection::STAY);
+	automaton->addTransition("q1", "q0", "1", "A", TMDirection::STAY);
 
 	const auto &q0Transitions = automaton->getState("q0").getTransitions();
 	const auto &q1Transitions = automaton->getState("q1").getTransitions();
@@ -593,94 +635,29 @@ TEST_F(NTM_Test, AddTransition_DoesNotInvalidateExistingTransitions) {
 	EXPECT_EQ(q0Transitions.size(), 1);
 	EXPECT_EQ(q1Transitions.size(), 1);
 
-	EXPECT_EQ(q0Transitions[0].getInput(), "0");
-	EXPECT_EQ(q1Transitions[0].getInput(), "1");
-}
-
-TEST_F(NTM_Test, UpdateTransitionInput_ValidUpdate) {
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::STAY);
-	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", "A", TMDirection::STAY);
-
-	automaton->updateTransitionInput(transitionKey, "1");
-
-	const auto &transitions = automaton->getState("q0").getTransitions();
-	bool foundUpdated = false;
-
-	for (const auto &transition : transitions) {
-		if (transition.getInput() == "1" && transition.getToStateKey() == "q1") {
-			foundUpdated = true;
-		}
-	}
-
-	EXPECT_TRUE(foundUpdated);
-}
-
-TEST_F(NTM_Test, UpdateTransitionInput_DoesNotInvalidateOtherTransitions) {
-	automaton->addState("q2");
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::STAY);
-	automaton->addTransition("q0", "q2", "1", "A", "A", TMDirection::STAY);
-	automaton->addInputAlphabet({"2"});
-
-	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", "A", TMDirection::STAY);
-	automaton->updateTransitionInput(transitionKey, "2");
-
-	EXPECT_TRUE(automaton->getState("q0").transitionExists(
-	    TMTransition::generateTransitionKey("q0", "q2", "1", "A", "A", TMDirection::STAY)));
-	EXPECT_TRUE(automaton->getState("q0").transitionExists(
-	    TMTransition::generateTransitionKey("q0", "q1", "2", "A", "A", TMDirection::STAY)));
-}
-
-TEST_F(NTM_Test, UpdateTransitionInput_ThrowsIfInputNotInAlphabet) {
-	automaton->addState("q2");
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::STAY);
-
-	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", "A", TMDirection::STAY);
-
-	EXPECT_THROW(automaton->updateTransitionInput(transitionKey, "2"), InvalidTransitionException);
-}
-
-TEST_F(NTM_Test, UpdateTransitionInput_ThrowsIfTransitionExists) {
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::STAY);
-	automaton->addTransition("q0", "q1", "1", "A", "A", TMDirection::STAY);
-
-	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", "A", TMDirection::STAY);
-
-	EXPECT_THROW(automaton->updateTransitionInput(transitionKey, "1"), InvalidTransitionException);
-}
-
-TEST_F(NTM_Test, UpdateTransitionInput_ThrowsIfTransitionNotFound) {
-	EXPECT_THROW(automaton->updateTransitionInput("invalidKey", "1"), TransitionNotFoundException);
-}
-
-TEST_F(NTM_Test, UpdateTransitionInput_NoThrowIfNonDeterministic) {
-	automaton->addState("q2");
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::STAY);
-	automaton->addTransition("q0", "q2", "1", "A", "A", TMDirection::STAY);
-
-	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q2", "1", "A", "A", TMDirection::STAY);
-
-	EXPECT_NO_THROW(automaton->updateTransitionInput(transitionKey, "0"));
+	EXPECT_EQ(q0Transitions[0].getReadSymbol(), "0");
+	EXPECT_EQ(q1Transitions[0].getReadSymbol(), "1");
 }
 
 TEST_F(NTM_Test, UpdateTransitionFromState_ValidUpdate) {
 	automaton->addState("q2");
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q1", "0", "A", TMDirection::STAY);
 
-	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", "A", TMDirection::STAY);
+	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", TMDirection::STAY);
 
 	automaton->updateTransitionFromState(transitionKey, "q2");
 
 	EXPECT_TRUE(automaton->getState("q2").transitionExists(
-	    TMTransition::generateTransitionKey("q2", "q1", "0", "A", "A", TMDirection::STAY)));
+	    TMTransition::generateTransitionKey("q2", "q1", "0", "A", TMDirection::STAY)));
 	EXPECT_FALSE(automaton->getState("q0").transitionExists(transitionKey));
 }
 
 TEST_F(NTM_Test, UpdateTransitionFromState_ThrowsIfDuplicate) {
 	automaton->addState("q2");
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::STAY);
-	automaton->addTransition("q2", "q1", "0", "A", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q1", "0", "A", TMDirection::STAY);
+	automaton->addTransition("q2", "q1", "0", "A", TMDirection::STAY);
 
-	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", "A", TMDirection::STAY);
+	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", TMDirection::STAY);
 
 	EXPECT_THROW(automaton->updateTransitionFromState(transitionKey, "q2"), InvalidTransitionException);
 }
@@ -692,18 +669,18 @@ TEST_F(NTM_Test, UpdateTransitionFromState_ThrowsIfTransitionNotFound) {
 
 TEST_F(NTM_Test, UpdateTransitionFromState_NoThrowIfNonDeterministic) {
 	automaton->addState("q2");
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::STAY);
-	automaton->addTransition("q1", "q2", "0", "A", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q1", "0", "A", TMDirection::STAY);
+	automaton->addTransition("q1", "q2", "0", "A", TMDirection::STAY);
 
-	std::string transitionKey = TMTransition::generateTransitionKey("q1", "q2", "0", "A", "A", TMDirection::STAY);
+	std::string transitionKey = TMTransition::generateTransitionKey("q1", "q2", "0", "A", TMDirection::STAY);
 	EXPECT_NO_THROW(automaton->updateTransitionFromState(transitionKey, "q0"));
 }
 
 TEST_F(NTM_Test, UpdateTransitionToState_ValidUpdate) {
 	automaton->addState("q2");
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q1", "0", "A", TMDirection::STAY);
 
-	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", "A", TMDirection::STAY);
+	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", TMDirection::STAY);
 
 	automaton->updateTransitionToState(transitionKey, "q2");
 
@@ -711,7 +688,7 @@ TEST_F(NTM_Test, UpdateTransitionToState_ValidUpdate) {
 	bool foundUpdated = false;
 
 	for (const auto &transition : transitions) {
-		if (transition.getInput() == "0" && transition.getToStateKey() == "q2") {
+		if (transition.getReadSymbol() == "0" && transition.getToStateKey() == "q2") {
 			foundUpdated = true;
 		}
 	}
@@ -721,9 +698,9 @@ TEST_F(NTM_Test, UpdateTransitionToState_ValidUpdate) {
 }
 
 TEST_F(NTM_Test, UpdateTransitionToState_ThrowsIfStateNotFound) {
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q1", "0", "A", TMDirection::STAY);
 
-	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", "A", TMDirection::STAY);
+	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", TMDirection::STAY);
 
 	EXPECT_THROW(automaton->updateTransitionToState(transitionKey, "qX"), StateNotFoundException);
 }
@@ -734,19 +711,19 @@ TEST_F(NTM_Test, UpdateTransitionToState_ThrowsIfTransitionNotFound) {
 
 TEST_F(NTM_Test, UpdateTransitionToState_DoesNotInvalidateOtherTransitions) {
 	automaton->addState("q2");
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::STAY);
-	automaton->addTransition("q0", "q1", "1", "A", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q1", "0", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q1", "1", "A", TMDirection::STAY);
 
-	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", "A", TMDirection::STAY);
+	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", TMDirection::STAY);
 	automaton->updateTransitionToState(transitionKey, "q2");
 
 	EXPECT_TRUE(automaton->getState("q0").transitionExists(
-	    TMTransition::generateTransitionKey("q0", "q1", "1", "A", "A", TMDirection::STAY)));
+	    TMTransition::generateTransitionKey("q0", "q1", "1", "A", TMDirection::STAY)));
 }
 
 TEST_F(NTM_Test, UpdateTransitionReadSymbol_ValidUpdate) {
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::STAY);
-	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q1", "0", "A", TMDirection::STAY);
+	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", TMDirection::STAY);
 
 	automaton->updateTransitionReadSymbol(transitionKey, "Z");
 
@@ -764,33 +741,33 @@ TEST_F(NTM_Test, UpdateTransitionReadSymbol_ValidUpdate) {
 
 TEST_F(NTM_Test, UpdateTransitionReadSymbol_DoesNotInvalidateOtherTransitions) {
 	automaton->addState("q2");
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::STAY);
-	automaton->addTransition("q0", "q2", "1", "A", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q1", "0", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q2", "1", "A", TMDirection::STAY);
 	automaton->addInputAlphabet({"2"});
 
-	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", "A", TMDirection::STAY);
+	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", TMDirection::STAY);
 	automaton->updateTransitionReadSymbol(transitionKey, "Z");
 
 	EXPECT_TRUE(automaton->getState("q0").transitionExists(
-	    TMTransition::generateTransitionKey("q0", "q2", "1", "A", "A", TMDirection::STAY)));
+	    TMTransition::generateTransitionKey("q0", "q2", "1", "A", TMDirection::STAY)));
 	EXPECT_TRUE(automaton->getState("q0").transitionExists(
-	    TMTransition::generateTransitionKey("q0", "q1", "0", "Z", "A", TMDirection::STAY)));
+	    TMTransition::generateTransitionKey("q0", "q1", "Z", "A", TMDirection::STAY)));
 }
 
 TEST_F(NTM_Test, UpdateTransitionReadSymbol_ThrowsIfReadSymbolNotInAlphabet) {
 	automaton->addState("q2");
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q1", "0", "A", TMDirection::STAY);
 
-	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", "A", TMDirection::STAY);
+	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", TMDirection::STAY);
 
 	EXPECT_THROW(automaton->updateTransitionReadSymbol(transitionKey, "2"), InvalidTransitionException);
 }
 
 TEST_F(NTM_Test, UpdateTransitionReadSymbol_ThrowsIfTransitionExists) {
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::STAY);
-	automaton->addTransition("q0", "q1", "1", "A", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q1", "0", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q1", "1", "A", TMDirection::STAY);
 
-	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", "A", TMDirection::STAY);
+	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", TMDirection::STAY);
 
 	EXPECT_THROW(automaton->updateTransitionReadSymbol(transitionKey, "1"), InvalidTransitionException);
 }
@@ -801,17 +778,17 @@ TEST_F(NTM_Test, UpdateTransitionReadSymbol_ThrowsIfTransitionNotFound) {
 
 TEST_F(NTM_Test, UpdateTransitionReadSymbol_NoThrowIfNonDeterministic) {
 	automaton->addState("q2");
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::STAY);
-	automaton->addTransition("q0", "q2", "0", "Z", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q1", "0", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q2", "1", "A", TMDirection::STAY);
 
-	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q2", "0", "Z", "A", TMDirection::STAY);
+	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q2", "1", "A", TMDirection::STAY);
 
-	EXPECT_NO_THROW(automaton->updateTransitionReadSymbol(transitionKey, "A"));
+	EXPECT_NO_THROW(automaton->updateTransitionReadSymbol(transitionKey, "0"));
 }
 
 TEST_F(NTM_Test, UpdateTransitionWriteSymbol_ValidUpdate) {
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::STAY);
-	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q1", "0", "A", TMDirection::STAY);
+	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", TMDirection::STAY);
 
 	automaton->updateTransitionWriteSymbol(transitionKey, "Z");
 
@@ -829,35 +806,35 @@ TEST_F(NTM_Test, UpdateTransitionWriteSymbol_ValidUpdate) {
 
 TEST_F(NTM_Test, UpdateTransitionWriteSymbol_DoesNotInvalidateOtherTransitions) {
 	automaton->addState("q2");
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::STAY);
-	automaton->addTransition("q0", "q2", "1", "A", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q1", "0", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q2", "1", "A", TMDirection::STAY);
 	automaton->addInputAlphabet({"2"});
 
-	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", "A", TMDirection::STAY);
+	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", TMDirection::STAY);
 	automaton->updateTransitionWriteSymbol(transitionKey, "Z");
 
 	EXPECT_TRUE(automaton->getState("q0").transitionExists(
-	    TMTransition::generateTransitionKey("q0", "q2", "1", "A", "A", TMDirection::STAY)));
+	    TMTransition::generateTransitionKey("q0", "q2", "1", "A", TMDirection::STAY)));
 	EXPECT_TRUE(automaton->getState("q0").transitionExists(
-	    TMTransition::generateTransitionKey("q0", "q1", "0", "A", "Z", TMDirection::STAY)));
+	    TMTransition::generateTransitionKey("q0", "q1", "0", "Z", TMDirection::STAY)));
 }
 
 TEST_F(NTM_Test, UpdateTransitionWriteSymbol_ThrowsIfWriteSymbolNotInAlphabet) {
 	automaton->addState("q2");
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q1", "0", "A", TMDirection::STAY);
 
-	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", "A", TMDirection::STAY);
+	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", TMDirection::STAY);
 
 	EXPECT_THROW(automaton->updateTransitionWriteSymbol(transitionKey, "2"), InvalidTransitionException);
 }
 
 TEST_F(NTM_Test, UpdateTransitionWriteSymbol_ThrowsIfTransitionExists) {
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::STAY);
-	automaton->addTransition("q0", "q1", "1", "A", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q1", "0", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q1", "0", "Z", TMDirection::STAY);
 
-	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", "A", TMDirection::STAY);
+	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "Z", TMDirection::STAY);
 
-	EXPECT_THROW(automaton->updateTransitionWriteSymbol(transitionKey, "1"), InvalidTransitionException);
+	EXPECT_THROW(automaton->updateTransitionWriteSymbol(transitionKey, "A"), InvalidTransitionException);
 }
 
 TEST_F(NTM_Test, UpdateTransitionWriteSymbol_ThrowsIfTransitionNotFound) {
@@ -865,8 +842,8 @@ TEST_F(NTM_Test, UpdateTransitionWriteSymbol_ThrowsIfTransitionNotFound) {
 }
 
 TEST_F(NTM_Test, UpdateTransitionDirection_ValidUpdate) {
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::STAY);
-	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q1", "0", "A", TMDirection::STAY);
+	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", TMDirection::STAY);
 
 	automaton->updateTransitionDirection(transitionKey, TMDirection::LEFT);
 
@@ -884,24 +861,24 @@ TEST_F(NTM_Test, UpdateTransitionDirection_ValidUpdate) {
 
 TEST_F(NTM_Test, UpdateTransitionDirection_DoesNotInvalidateOtherTransitions) {
 	automaton->addState("q2");
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::STAY);
-	automaton->addTransition("q0", "q2", "1", "A", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q1", "0", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q2", "1", "A", TMDirection::STAY);
 	automaton->addInputAlphabet({"2"});
 
-	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", "A", TMDirection::STAY);
+	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", TMDirection::STAY);
 	automaton->updateTransitionDirection(transitionKey, TMDirection::LEFT);
 
 	EXPECT_TRUE(automaton->getState("q0").transitionExists(
-	    TMTransition::generateTransitionKey("q0", "q2", "1", "A", "A", TMDirection::STAY)));
+	    TMTransition::generateTransitionKey("q0", "q2", "1", "A", TMDirection::STAY)));
 	EXPECT_TRUE(automaton->getState("q0").transitionExists(
-	    TMTransition::generateTransitionKey("q0", "q1", "0", "A", "A", TMDirection::LEFT)));
+	    TMTransition::generateTransitionKey("q0", "q1", "0", "A", TMDirection::LEFT)));
 }
 
 TEST_F(NTM_Test, UpdateTransitionDirection_ThrowsIfTransitionExists) {
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::STAY);
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::LEFT);
+	automaton->addTransition("q0", "q1", "0", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q1", "0", "A", TMDirection::LEFT);
 
-	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", "A", TMDirection::STAY);
+	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", TMDirection::STAY);
 
 	EXPECT_THROW(automaton->updateTransitionDirection(transitionKey, TMDirection::LEFT), InvalidTransitionException);
 }
@@ -911,9 +888,9 @@ TEST_F(NTM_Test, UpdateTransitionDirection_ThrowsIfTransitionNotFound) {
 }
 
 TEST_F(NTM_Test, RemoveTransition_RemovesValidTransition) {
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q1", "0", "A", TMDirection::STAY);
 
-	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", "A", TMDirection::STAY);
+	std::string transitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", TMDirection::STAY);
 	EXPECT_TRUE(automaton->getState("q0").transitionExists(transitionKey));
 
 	automaton->removeTransition(transitionKey);
@@ -922,23 +899,22 @@ TEST_F(NTM_Test, RemoveTransition_RemovesValidTransition) {
 }
 
 TEST_F(NTM_Test, RemoveTransition_ThrowsIfTransitionNotFound) {
-	std::string invalidTransitionKey =
-	    TMTransition::generateTransitionKey("q0", "q1", "0", "A", "A", TMDirection::STAY);
+	std::string invalidTransitionKey = TMTransition::generateTransitionKey("q0", "q1", "0", "A", TMDirection::STAY);
 
 	EXPECT_THROW(automaton->removeTransition(invalidTransitionKey), TransitionNotFoundException);
 }
 
 TEST_F(NTM_Test, ClearTransitionsBetween_RemovesTransitions) {
 	automaton->addState("q2");
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::STAY);
-	automaton->addTransition("q0", "q2", "1", "A", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q1", "0", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q2", "1", "A", TMDirection::STAY);
 
 	automaton->clearTransitionsBetween("q0", "q1");
 
 	EXPECT_FALSE(automaton->getState("q0").transitionExists(
-	    TMTransition::generateTransitionKey("q0", "q1", "0", "A", "A", TMDirection::STAY)));
+	    TMTransition::generateTransitionKey("q0", "q1", "0", "A", TMDirection::STAY)));
 	EXPECT_TRUE(automaton->getState("q0").transitionExists(
-	    TMTransition::generateTransitionKey("q0", "q2", "1", "A", "A", TMDirection::STAY)));
+	    TMTransition::generateTransitionKey("q0", "q2", "1", "A", TMDirection::STAY)));
 }
 
 TEST_F(NTM_Test, ClearTransitionsBetween_ThrowsIfStateNotFound) {
@@ -947,8 +923,8 @@ TEST_F(NTM_Test, ClearTransitionsBetween_ThrowsIfStateNotFound) {
 
 TEST_F(NTM_Test, ClearStateTransitions_RemovesAllTransitionsFromState) {
 	automaton->addState("q2");
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::STAY);
-	automaton->addTransition("q0", "q2", "1", "A", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q1", "0", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q2", "1", "A", TMDirection::STAY);
 
 	automaton->clearStateTransitions("q0");
 
@@ -961,9 +937,9 @@ TEST_F(NTM_Test, ClearStateTransitions_ThrowsIfStateNotFound) {
 
 TEST_F(NTM_Test, ClearTransitions_RemovesAllTransitions) {
 	automaton->addState("q2");
-	automaton->addTransition("q0", "q1", "0", "A", "A", TMDirection::STAY);
-	automaton->addTransition("q0", "q2", "1", "A", "A", TMDirection::STAY);
-	automaton->addTransition("q1", "q0", "0", "A", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q1", "0", "A", TMDirection::STAY);
+	automaton->addTransition("q0", "q2", "1", "A", TMDirection::STAY);
+	automaton->addTransition("q1", "q0", "0", "A", TMDirection::STAY);
 
 	automaton->clearTransitions();
 
@@ -1009,7 +985,7 @@ TEST_F(NTM_Test, AddAcceptStates_AddsMultipleAcceptStates) {
 	auto acceptStates = automaton->getAcceptStates();
 	ASSERT_EQ(acceptStates.size(), 2);
 	EXPECT_EQ(acceptStates[0].getKey(), "q1");
-	EXPECT_EQ(acceptStates[0].getKey(), "q2");
+	EXPECT_EQ(acceptStates[1].getKey(), "q2");
 }
 
 TEST_F(NTM_Test, AddAcceptStates_ThrowsForMissingStates) {
@@ -1108,9 +1084,116 @@ TEST_F(NTM_Test, IsAccepting_ShouldAcceptIfCurrentStateIsAccept) {
 	EXPECT_TRUE(automaton->isAccepting());
 }
 
+TEST_F(NTM_Test, ProcessInput_ShouldAcceptValidSequence) {
+	automaton->addState("q2", false);
+	automaton->addState("q3", false);
+	automaton->addState("q4", false);
+	automaton->addState("q_reject", false);
+	automaton->addState("q_accept", true);
+
+	automaton->addInputAlphabet({"0", "X", "_"});
+
+	automaton->addTransition("q0", "q_reject", "", "", TMDirection::RIGHT);
+	automaton->addTransition("q0", "q_reject", "X", "", TMDirection::RIGHT);
+	automaton->addTransition("q0", "q1", "0", "", TMDirection::RIGHT);
+
+	automaton->addTransition("q1", "q1", "X", "", TMDirection::RIGHT);
+	automaton->addTransition("q1", "q2", "0", "X", TMDirection::RIGHT);
+	automaton->addTransition("q1", "q_accept", "#", "", TMDirection::RIGHT);
+
+	automaton->addTransition("q4", "q4", "0", "", TMDirection::LEFT);
+	automaton->addTransition("q4", "q4", "X", "", TMDirection::LEFT);
+	automaton->addTransition("q4", "q1", "", "", TMDirection::RIGHT);
+
+	automaton->addTransition("q2", "q4", "", "", TMDirection::LEFT);
+	automaton->addTransition("q2", "q2", "X", "", TMDirection::RIGHT);
+	automaton->addTransition("q2", "q3", "0", "", TMDirection::RIGHT);
+
+	automaton->addTransition("q3", "q2", "0", "X", TMDirection::RIGHT);
+	automaton->addTransition("q3", "q3", "X", "", TMDirection::RIGHT);
+	automaton->addTransition("q3", "q0", "", "", TMDirection::RIGHT);
+
+	automaton->setInput({"0", "0", "0", "0"});
+
+	std::map<int, std::string> tape = automaton->getTape();
+
+	automaton->processInput();
+}
+
+TEST_F(NTM_Test, ProcessInputRejectIfNoTransitionFound) {
+	automaton->addAcceptState("q0");
+	automaton->setInput({"0"});
+
+	EXPECT_FALSE(automaton->processInput());
+}
+
 TEST_F(NTM_Test, Simulate_ShouldThrowExceptionForSimulationWithoutStartState) {
 	NonDeterministicTuringMachine *automaton = new NonDeterministicTuringMachine();
 	automaton->setInputAlphabet({"0", "1"});
 
 	EXPECT_THROW(automaton->simulate({""}), InvalidStartStateException);
+}
+
+TEST_F(NTM_Test, Simulate_ValidInputAccepts) {
+	automaton->addState("q2", false);
+	automaton->addState("q3", false);
+	automaton->addState("q4", false);
+	automaton->addState("q_reject", false);
+	automaton->addState("q_accept", true);
+
+	automaton->addInputAlphabet({"0", "X", "_"});
+
+	automaton->addTransition("q0", "q_reject", "", "", TMDirection::RIGHT);
+	automaton->addTransition("q0", "q_reject", "X", "", TMDirection::RIGHT);
+	automaton->addTransition("q0", "q1", "0", "", TMDirection::RIGHT);
+
+	automaton->addTransition("q1", "q1", "X", "", TMDirection::RIGHT);
+	automaton->addTransition("q1", "q2", "0", "X", TMDirection::RIGHT);
+	automaton->addTransition("q1", "q_accept", "", "", TMDirection::RIGHT);
+
+	automaton->addTransition("q4", "q4", "0", "", TMDirection::LEFT);
+	automaton->addTransition("q4", "q4", "X", "", TMDirection::LEFT);
+	automaton->addTransition("q4", "q1", "", "", TMDirection::RIGHT);
+
+	automaton->addTransition("q2", "q4", "", "", TMDirection::LEFT);
+	automaton->addTransition("q2", "q2", "X", "", TMDirection::RIGHT);
+	automaton->addTransition("q2", "q3", "0", "", TMDirection::RIGHT);
+
+	automaton->addTransition("q3", "q2", "0", "X", TMDirection::RIGHT);
+	automaton->addTransition("q3", "q3", "X", "", TMDirection::RIGHT);
+	automaton->addTransition("q3", "q0", "", "", TMDirection::RIGHT);
+
+	EXPECT_TRUE(automaton->simulate({"0", "0", "0", "0"}));
+}
+
+TEST_F(NTM_Test, Simulate_InvalidInputReject) {
+	automaton->addState("q2", false);
+	automaton->addState("q3", false);
+	automaton->addState("q4", false);
+	automaton->addState("q_reject", false);
+	automaton->addState("q_accept", true);
+
+	automaton->addInputAlphabet({"0", "X", "_"});
+
+	automaton->addTransition("q0", "q_reject", "", "", TMDirection::RIGHT);
+	automaton->addTransition("q0", "q_reject", "X", "", TMDirection::RIGHT);
+	automaton->addTransition("q0", "q1", "0", "", TMDirection::RIGHT);
+
+	automaton->addTransition("q1", "q1", "X", "", TMDirection::RIGHT);
+	automaton->addTransition("q1", "q2", "0", "X", TMDirection::RIGHT);
+	automaton->addTransition("q1", "q_accept", "", "", TMDirection::RIGHT);
+
+	automaton->addTransition("q4", "q4", "0", "", TMDirection::LEFT);
+	automaton->addTransition("q4", "q4", "X", "", TMDirection::LEFT);
+	automaton->addTransition("q4", "q1", "", "", TMDirection::RIGHT);
+
+	automaton->addTransition("q2", "q4", "", "", TMDirection::LEFT);
+	automaton->addTransition("q2", "q2", "X", "", TMDirection::RIGHT);
+	automaton->addTransition("q2", "q3", "0", "", TMDirection::RIGHT);
+
+	automaton->addTransition("q3", "q2", "0", "X", TMDirection::RIGHT);
+	automaton->addTransition("q3", "q3", "X", "", TMDirection::RIGHT);
+	automaton->addTransition("q3", "q0", "", "", TMDirection::RIGHT);
+
+	EXPECT_FALSE(automaton->simulate({}));
 }

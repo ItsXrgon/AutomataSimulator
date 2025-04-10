@@ -119,25 +119,28 @@ bool DeterministicPushdownAutomaton::processInput() {
 	const std::string &stackTop = stack.empty() ? "" : stack.top();
 
 	for (const auto &transition : transitions) {
+		// Stack symbols have to match
 		if (transition.getStackSymbol() != stackTop && !transition.getStackSymbol().empty()) {
 			continue;
 		}
-		if (transition.getInput() == input || transition.getInput().empty()) {
-			if (!transition.getStackSymbol().empty()) {
-				stack.pop();
-			}
-			std::vector<std::string> pushSymbolsVec = parsePushSymbols(transition.getPushSymbol());
-			for (const auto &symbol : pushSymbolsVec) {
-				stack.push(symbol);
-			}
-			currentState = transition.getToStateKey();
-			// Only increment the head if the input is a match and the input head is less than the input size
-			const bool &incrementHead = transition.getInput() == input && inputHead < this->input.size();
-			if (incrementHead) {
-				inputHead++;
-			}
-			return getStateInternal(currentState)->getIsAccept();
+		// Inputs have to match
+		if (transition.getInput() != input && !transition.getInput().empty()) {
+			continue;
 		}
+		if (!transition.getStackSymbol().empty()) {
+			stack.pop();
+		}
+		std::vector<std::string> pushSymbolsVec = parsePushSymbols(transition.getPushSymbol());
+		for (const auto &symbol : pushSymbolsVec) {
+			stack.push(symbol);
+		}
+		currentState = transition.getToStateKey();
+		// Only increment the head if the input is a match and the input head is less than the input size
+		const bool &incrementHead = transition.getInput() == input && inputHead < this->input.size();
+		if (incrementHead) {
+			inputHead++;
+		}
+		return getStateInternal(currentState)->getIsAccept();
 	}
 
 	return false;
@@ -166,26 +169,29 @@ bool DeterministicPushdownAutomaton::simulate(const std::vector<std::string> &in
 
 		bool transitionFound = false;
 		for (const auto &transition : transitions) {
+			// Stack symbols have to match
 			if (transition.getStackSymbol() != stackTop && !transition.getStackSymbol().empty()) {
 				continue;
 			}
-			if (transition.getInput() == currentInput || transition.getInput().empty()) {
-				if (!transition.getStackSymbol().empty()) {
-					simulationStack.pop();
-				}
-				std::vector<std::string> pushSymbolsVec = parsePushSymbols(transition.getPushSymbol());
-				for (const auto &symbol : pushSymbolsVec) {
-					simulationStack.push(symbol);
-				}
-				simulationCurrentState = transition.getToStateKey();
-				// Only increment the head if the input is a match and the input head is less than the input size
-				const bool &incrementHead = transition.getInput() == currentInput && inputIdx < input.size();
-				if (incrementHead) {
-					inputIdx++;
-				}
-				transitionFound = true;
-				break;
+			// Inputs have to match
+			if (transition.getInput() != currentInput && !transition.getInput().empty()) {
+				continue;
 			}
+			if (!transition.getStackSymbol().empty()) {
+				simulationStack.pop();
+			}
+			std::vector<std::string> pushSymbolsVec = parsePushSymbols(transition.getPushSymbol());
+			for (const auto &symbol : pushSymbolsVec) {
+				simulationStack.push(symbol);
+			}
+			simulationCurrentState = transition.getToStateKey();
+			// Only increment the head if the input is a match and the input head is less than the input size
+			const bool &incrementHead = transition.getInput() == currentInput && inputIdx < input.size();
+			if (incrementHead) {
+				inputIdx++;
+			}
+			transitionFound = true;
+			break;
 		}
 		if (!transitionFound && !currentInput.empty()) {
 			return false;

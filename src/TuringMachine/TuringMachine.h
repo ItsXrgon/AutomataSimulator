@@ -235,14 +235,16 @@ class AUTOMATASIMULATOR_API TuringMachine {
 
 	/**
 	 * @brief Sets the input alphabet.
-	 * @param inputAlphabet The value to load into the tape.
+	 * @brief This also adds the symbols to the tape alphabet but does not remove old ones.
+	 * @param inputAlphabet The alphabet array.
 	 * @param strict If true, will throw an exception if the old symbols are used in transitions.
 	 */
 	void setInputAlphabet(const std::vector<std::string> &inputAlphabet, const bool &strict = true);
 
 	/**
 	 * @brief Adds to the input alphabet.
-	 * @param inputAlphabet The value to load into the tape.
+	 * @brief This also adds the symbols to the tape alphabet.
+	 * @param inputAlphabet The alphabet array.
 	 */
 	void addInputAlphabet(const std::vector<std::string> &inputAlphabet);
 
@@ -254,6 +256,7 @@ class AUTOMATASIMULATOR_API TuringMachine {
 
 	/**
 	 * @brief Remove a symbol from the alphabet
+	 * @brief This will not remove the symbol from the tape alphabet.
 	 * @param symbol The symbol to remove
 	 * @param strict If true, will throw an exception if the symbol is used in transitions.
 	 * @throws InputAlphabetSymbolNotFoundException If the alphabet symbol is not found.
@@ -262,6 +265,7 @@ class AUTOMATASIMULATOR_API TuringMachine {
 
 	/**
 	 * @brief Remove symbols from the alphabet
+	 * @brief This will not remove the symbols from the tape alphabet.
 	 * @param symbols The symbols to remove
 	 * @param strict If true, will throw an exception if the symbols are used in transitions.
 	 * @throws InputAlphabetSymbolNotFoundException If any of the alphabet symbols are not found.
@@ -269,31 +273,34 @@ class AUTOMATASIMULATOR_API TuringMachine {
 	void removeInputAlphabetSymbols(const std::vector<std::string> &symbols, const bool &strict = true);
 
 	/**
-	 * @brief Clears the input alphabet of the automaton.
+	 * @brief Clears the input alphabet of the automaton
+	 * @brief This will not remove the symbols from the tape alphabet..
 	 * @param strict If true, will throw an exception if the symbols are used in transitions.
 	 */
 	void clearInputAlphabet(const bool &strict = true);
 
 	/**
-	 * @brief Sets the stack alphabet.
-	 * @param tapeAlphabet The value to load into the tape.
+	 * @brief Sets the tape alphabet.
+	 * @brief This also removes any symbols from the tape alphabet that are not in the new tape alphabet.
+	 * @param tapeAlphabet The alphabet array.
 	 */
 	void setTapeAlphabet(const std::vector<std::string> &tapeAlphabet, const bool &strict = true);
 
 	/**
 	 * @brief Adds to the stack alphabet.
-	 * @param inputAlphabet The value to load into the tape.
+	 * @param tapeAlphabet The alphabet array.
 	 */
 	void addTapeAlphabet(const std::vector<std::string> &tapeAlphabet);
 
 	/**
 	 * @brief Gets the stack alphabet of the automaton.
-	 * @return The alphabet of the automaton.
+	 * @return The tape alphabet of the automaton.
 	 */
 	std::vector<std::string> getTapeAlphabet();
 
 	/**
 	 * @brief Remove a symbol from the stack alphabet
+	 * @brief This will also remove the symbol from the input alphabet if present.	
 	 * @param symbol The symbol to remove
 	 * @throws InputAlphabetSymbolNotFoundException If the alphabet symbol is not found.
 	 */
@@ -301,6 +308,7 @@ class AUTOMATASIMULATOR_API TuringMachine {
 
 	/**
 	 * @brief Remove symbols from the stack alphabet
+	 * @brief This will also remove the symbols from the input alphabet if present.
 	 * @param symbols The symbols to remove
 	 * @throws InputAlphabetSymbolNotFoundException If any of the alphabet symbols are not found.
 	 */
@@ -308,6 +316,7 @@ class AUTOMATASIMULATOR_API TuringMachine {
 
 	/**
 	 * @brief Clears the stack alphabet of the automaton.
+	 * @brief This will also clear the input alphabet.
 	 */
 	void clearTapeAlphabet(const bool &strict = true);
 
