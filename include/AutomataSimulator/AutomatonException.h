@@ -1,12 +1,7 @@
 #pragma once
+#include "config.h"
 #include <exception>
 #include <string>
-
-#ifdef AUTOMATASIMULATOR_EXPORTS
-#define AUTOMATASIMULATOR_API __declspec(dllexport)
-#else
-#define AUTOMATASIMULATOR_API __declspec(dllimport)
-#endif
 
 /**
  * @brief Base class for custom exceptions related to finite automata constraints.

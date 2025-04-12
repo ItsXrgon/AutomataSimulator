@@ -1,5 +1,4 @@
-#define AUTOMATASIMULATOR_EXPORTS
-#include "PDATransition.h"
+#include "AutomataSimulator/PDATransition.h"
 
 PDATransition::PDATransition(const std::string &fromStateKey, const std::string &toStateKey, const std::string &input,
                              const std::string &stackSymbol, const std::string &pushSymbol)

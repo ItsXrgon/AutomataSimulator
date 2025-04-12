@@ -1,14 +1,9 @@
 #pragma once
-#include "../../AutomatonException/AutomatonException.h"
-#include "../TMTransition/TMTransition.h"
+#include "AutomatonException.h"
+#include "TMTransition.h"
+#include "config.h"
 #include <string>
 #include <unordered_map>
-
-#ifdef AUTOMATASIMULATOR_EXPORTS
-#define AUTOMATASIMULATOR_API __declspec(dllexport)
-#else
-#define AUTOMATASIMULATOR_API __declspec(dllimport)
-#endif
 
 class AUTOMATASIMULATOR_API TMState {
   private:

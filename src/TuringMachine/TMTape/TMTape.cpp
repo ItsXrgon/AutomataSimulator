@@ -1,4 +1,4 @@
-#include "TMTape.h"
+#include "AutomataSimulator/TMTape.h"
 
 TMTape::TMTape() : blankSymbol("_"), headPosition(0) {}
 

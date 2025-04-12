@@ -1,5 +1,4 @@
-#define AUTOMATASIMULATOR_EXPORTS
-#include "FiniteAutomaton.h"
+#include "AutomataSimulator/FiniteAutomaton.h"
 
 FiniteAutomaton::FiniteAutomaton()
     : inputHead(0), startState(""), inputAlphabetCacheInvalidated(false), statesCacheInvalidated(false) {}

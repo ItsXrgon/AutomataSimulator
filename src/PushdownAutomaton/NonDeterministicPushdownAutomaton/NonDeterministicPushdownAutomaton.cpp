@@ -1,5 +1,4 @@
-#define AUTOMATASIMULATOR_EXPORTS
-#include "NonDeterministicPushdownAutomaton.h"
+#include "AutomataSimulator/NonDeterministicPushdownAutomaton.h"
 
 PDATransition
 NonDeterministicPushdownAutomaton::decideRandomTransition(const std::unordered_set<PDATransition> &transitions) {

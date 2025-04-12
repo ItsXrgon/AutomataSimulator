@@ -1,19 +1,13 @@
 #pragma once
-#include "../../AutomatonException/AutomatonException.h"
-#include "../TMDirection.h"
+#include "AutomatonException.h"
+#include "config.h"
 #include <string>
 
-#ifdef AUTOMATASIMULATOR_EXPORTS
-#define AUTOMATASIMULATOR_API __declspec(dllexport)
-#else
-#define AUTOMATASIMULATOR_API __declspec(dllimport)
-#endif
-
 /**
- * @brief Represents a transition between two states in a turing machine.
+ * @brief Represents a transition between two states in an automaton.
  * A transition is defined by a "from" state, a "to" state, and an input value.
  */
-class AUTOMATASIMULATOR_API TMTransition {
+class AUTOMATASIMULATOR_API PDATransition {
   private:
 	/**
 	 * @brief Unique identifier for the transition, formatted as "fromState-toState-Input".
@@ -31,19 +25,19 @@ class AUTOMATASIMULATOR_API TMTransition {
 	std::string toStateKey;
 
 	/**
-	 * @brief The top of the stack symbol,
+	 * @brief The input value that triggers the transition.
 	 */
-	std::string readSymbol;
+	std::string input;
 
 	/**
-	 * @brief Direction of the transition
+	 * @brief The top of the stack symbol,
 	 */
-	TMDirection direction;
+	std::string stackSymbol;
 
 	/**
 	 * @brief The Symbol to be pushed onto the stack.
 	 */
-	std::string writeSymbol;
+	std::string pushSymbol;
 
 	/**
 	 * @brief Validates the format of a transition key
@@ -51,62 +45,64 @@ class AUTOMATASIMULATOR_API TMTransition {
 	static void validateTransitionKeyFormat(const std::string &key);
 
   public:
-	TMTransition() = default;
+	PDATransition() = default;
 
 	/**
 	 * @brief Constructs a new Transition object.
 	 * @param fromState The state key from which the transition starts.
 	 * @param toState The state key to which the transition leads.
-	 * @param readSymbol The top of the stack symbol.
-	 * @param writeSymbol The symbol to be pushed onto the stack.
+	 * @param input The input value that triggers the transition.
+	 * @param stackSymbol The top of the stack symbol.
+	 * @param pushSymbol The symbol to be pushed onto the stack.
 	 */
-	TMTransition(const std::string &fromStateKey, const std::string &toStateKey, const std::string &readSymbol,
-	             const std::string &writeSymbol, TMDirection direction);
+	PDATransition(const std::string &fromStateKey, const std::string &toStateKey, const std::string &input,
+	              const std::string &stackSymbol, const std::string &pushSymbol);
 
 	/**
 	 * @brief Copy constructor for the Transition object.
 	 * @param other The Transition object to copy.
 	 */
-	TMTransition(const TMTransition &other);
+	PDATransition(const PDATransition &other);
 
 	/**
 	 * @brief Copy assignment operator for the Transition object.
 	 * @param other The Transition object to copy.
 	 * @return A reference to the copied Transition object.
 	 */
-	TMTransition &operator=(const TMTransition &other);
+	PDATransition &operator=(const PDATransition &other);
 
 	/**
 	 * @brief Move constructor for the Transition object.
 	 * @param other The Transition object to move.
 	 */
-	TMTransition(TMTransition &&other) noexcept;
+	PDATransition(PDATransition &&other) noexcept;
 
 	/**
 	 * @brief Move assignment operator for the Transition object.
 	 * @param other The Transition object to move.
 	 * @return A reference to the moved Transition object.
 	 */
-	TMTransition &operator=(TMTransition &&other) noexcept;
+	PDATransition &operator=(PDATransition &&other) noexcept;
 
-	bool operator==(const TMTransition &other) const;
+	bool operator==(const PDATransition &other) const;
 
 	/**
 	 * @brief Destructor for the Transition object.
 	 */
-	~TMTransition();
+	~PDATransition();
 
 	/**
 	 * @brief Generate a unique transition key.
 	 * @param fromStateKey The starting state key.
 	 * @param toStateKey The destination state key.
-	 * @param readSymbol The top of the stack symbol.
-	 * @param writeSymbol The symbol to be pushed onto the stack.
+	 * @param input The input symbol.
+	 * @param stackSymbol The top of the stack symbol.
+	 * @param pushSymbol The symbol to be pushed onto the stack.
 	 * @return A unique transition key string.
 	 */
 	static std::string generateTransitionKey(const std::string &fromStateKey, const std::string &toStateKey,
-	                                         const std::string &readSymbol, const std::string &writeSymbol,
-	                                         TMDirection direction);
+	                                         const std::string &input, const std::string &stackSymbol,
+	                                         const std::string &pushSymbol);
 
 	/**
 	 * @brief Gets the to state key of a transition from its key.
@@ -123,25 +119,25 @@ class AUTOMATASIMULATOR_API TMTransition {
 	static std::string getToStateFromKey(const std::string &key);
 
 	/**
-	 * @brief Gets the direction from the transition key.
+	 * @brief Gets the input value of a transition from its key.
 	 * @param key The transition key.
-	 * @return The direction enum.
+	 * @return The input value.
 	 */
-	static TMDirection getDirectionFromKey(const std::string &key);
+	static std::string getInputFromKey(const std::string &key);
 
 	/**
-	 * @brief Gets the read symbol from the transition key.
+	 * @brief Gets the stack symbol of a transition from its key.
 	 * @param key The transition key.
-	 * @return The read symbol.
+	 * @return The stack symbol.
 	 */
-	static std::string getReadSymbolFromKey(const std::string &key);
+	static std::string getStackSymbolFromKey(const std::string &key);
 
 	/**
-	 * @brief Gets the write symbol from the transition key.
+	 * @brief Gets the push symbol of a transition from its key.
 	 * @param key The transition key.
-	 * @return The write symbol.
+	 * @return The push symbol.
 	 */
-	static std::string getWriteSymbolFromKey(const std::string &key);
+	static std::string getPushSymbolFromKey(const std::string &key);
 
 	/**
 	 * @brief Gets the unique key for this transition.
@@ -174,40 +170,40 @@ class AUTOMATASIMULATOR_API TMTransition {
 	std::string getToStateKey() const;
 
 	/**
-	 * @brief Sets the top of the stack symbol for this transition.
-	 * @param readSymbol The new stack symbol.
+	 * @brief Sets the input value for this transition.
+	 * @param input The new input value.
 	 */
-	void setReadSymbol(const std::string &readSymbol);
+	void setInput(const std::string &input);
+
+	/**
+	 * @brief Gets the input value for this transition.
+	 * @return The input value as a string.
+	 */
+	std::string getInput() const;
+
+	/**
+	 * @brief Sets the top of the stack symbol for this transition.
+	 * @param stackSymbol The new stack symbol.
+	 */
+	void setStackSymbol(const std::string &stackSymbol);
 
 	/**
 	 * @brief Gets the top of the stack symbol for this transition.
 	 * @return The stack symbol as a string.
 	 */
-	std::string getReadSymbol() const;
+	std::string getStackSymbol() const;
 
 	/**
 	 * @brief Sets the symbol to be pushed onto the stack for this transition.
-	 * @param writeSymbol The new push symbol.
+	 * @param pushSymbol The new push symbol.
 	 */
-	void setWriteSymbol(const std::string &writeSymbol);
-
-	/**
-	 * @brief Sets the direction value for this transition.
-	 * @param input The new input value.
-	 */
-	void setDirection(TMDirection direction);
-
-	/**
-	 * @brief Gets the direction value for this transition.
-	 * @return The direction value as an enum.
-	 */
-	TMDirection getDirection() const;
+	void setPushSymbol(const std::string &pushSymbol);
 
 	/**
 	 * @brief Gets the symbol to be pushed onto the stack for this transition.
 	 * @return The push symbol as a string.
 	 */
-	std::string getWriteSymbol() const;
+	std::string getPushSymbol() const;
 
 	/**
 	 * @brief Gets a string representation of this transition.
@@ -217,12 +213,11 @@ class AUTOMATASIMULATOR_API TMTransition {
 };
 
 namespace std {
-template <> struct hash<TMTransition> {
-	size_t operator()(const TMTransition &t) const {
+template <> struct hash<PDATransition> {
+	size_t operator()(const PDATransition &t) const {
 		size_t hashValue = hash<std::string>()(t.getFromStateKey()) ^ (hash<std::string>()(t.getToStateKey()) << 1) ^
-		                   (hash<std::string>()(t.getReadSymbol()) << 2) ^
-		                   (hash<std::string>()(t.getWriteSymbol()) << 3) ^
-		                   (hash<int>()(static_cast<int>(t.getDirection())) << 4);
+		                   (hash<std::string>()(t.getInput()) << 2) ^ (hash<std::string>()(t.getStackSymbol()) << 3) ^
+		                   (hash<std::string>()(t.getPushSymbol()) << 4);
 		return hashValue;
 	}
 };

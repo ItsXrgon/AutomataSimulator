@@ -1,6 +1,4 @@
-#define AUTOMATASIMULATOR_EXPORTS
-#include "DeterministicPushdownAutomaton.h"
-#include <iostream>
+#include "AutomataSimulator/DeterministicPushdownAutomaton.h"
 
 bool DeterministicPushdownAutomaton::checkTransitionDeterminisim(const std::string &fromStateKey,
                                                                  const std::string &input,

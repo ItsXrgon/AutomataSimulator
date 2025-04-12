@@ -1,5 +1,4 @@
-#define AUTOMATASIMULATOR_EXPORTS
-#include "PDAState.h"
+#include "AutomataSimulator/PDAState.h"
 
 PDAState::PDAState(const std::string &label, const bool &isAccept)
     : key(label), label(label), isAccept(isAccept), transitionsCacheInvalidated(false) {}

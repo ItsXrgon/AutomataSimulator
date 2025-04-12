@@ -1,5 +1,4 @@
-#define AUTOMATASIMULATOR_EXPORTS
-#include "FATransition.h"
+#include "AutomataSimulator/FATransition.h"
 
 FATransition::FATransition(const std::string &fromStateKey, const std::string &toStateKey, const std::string &input)
     : fromStateKey(fromStateKey), toStateKey(toStateKey), input(input) {

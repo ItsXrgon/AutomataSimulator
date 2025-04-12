@@ -1,5 +1,4 @@
-#define AUTOMATASIMULATOR_EXPORTS
-#include "FAState.h"
+#include "AutomataSimulator/FAState.h"
 
 FAState::FAState(const std::string &label, const bool &isAccept)
     : key(label), label(label), isAccept(isAccept), transitionsCacheInvalidated(false) {}

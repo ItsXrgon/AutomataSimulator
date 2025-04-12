@@ -1,25 +1,13 @@
 #pragma once
-#include "../FiniteAutomaton.h"
+#include "FiniteAutomaton.h"
+#include "config.h"
 #include <queue>
 #include <set>
 #include <unordered_set>
 #include <vector>
 
-#ifdef AUTOMATASIMULATOR_EXPORTS
-#define AUTOMATASIMULATOR_API __declspec(dllexport)
-#else
-#define AUTOMATASIMULATOR_API __declspec(dllimport)
-#endif
-
 /**
  * @brief Represents a non-deterministic finite automaton.
- * @brief A deterministic finite automaton is defined by a
- * @brief - Finite set of states. Formally defined as Q. including their transitions.
- * @brief - Finite set of input symbols (alphabet). Formally defined as Sigma.
- * @brief - Start state key. Formally defined as q0.
- * @brief - Finite set of accept states.
- * @brief - Current state.
- * @brief - Possible current states (for non-deterministic transitions).
  */
 class AUTOMATASIMULATOR_API NonDeterministicFiniteAutomaton : public FiniteAutomaton {
   private:

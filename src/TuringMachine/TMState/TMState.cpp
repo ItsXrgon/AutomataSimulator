@@ -1,5 +1,4 @@
-#define AUTOMATASIMULATOR_EXPORTS
-#include "TMState.h"
+#include "AutomataSimulator/TMState.h"
 
 TMState::TMState(const std::string &label, const bool &isAccept)
     : key(label), label(label), isAccept(isAccept), transitionsCacheInvalidated(false) {}

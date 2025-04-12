@@ -1,23 +1,16 @@
 #pragma once
-#pragma once
-#include "../AutomatonException/AutomatonException.h"
-#include "FAState/FAState.h"
-#include "FATransition/FATransition.h"
+#include "AutomatonException.h"
+#include "FAState.h"
+#include "FATransition.h"
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
-#ifdef AUTOMATASIMULATOR_EXPORTS
-#define AUTOMATASIMULATOR_API __declspec(dllexport)
-#else
-#define AUTOMATASIMULATOR_API __declspec(dllimport)
-#endif
-
 /**
  * @brief Represents a finite automaton.
  */
-class AUTOMATASIMULATOR_API FiniteAutomaton {
+class FiniteAutomaton {
   protected:
 	/**
 	 * @brief The input of the automaton.

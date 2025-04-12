@@ -1,11 +1,6 @@
 #pragma once
+#include "config.h"
 #include <string>
-
-#ifdef AUTOMATASIMULATOR_EXPORTS
-#define AUTOMATASIMULATOR_API __declspec(dllexport)
-#else
-#define AUTOMATASIMULATOR_API __declspec(dllimport)
-#endif
 
 /**
  * @brief Represents the direction in which the tape head moves.

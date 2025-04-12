@@ -1,5 +1,4 @@
-#define AUTOMATASIMULATOR_EXPORTS
-#include "DeterministicTuringMachine.h"
+#include "AutomataSimulator/DeterministicTuringMachine.h"
 
 bool DeterministicTuringMachine::checkTransitionDeterminisim(const std::string &fromStateKey,
                                                              const std::string &readSymbol) {

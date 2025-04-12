@@ -1,17 +1,11 @@
 #pragma once
-#include "../../AutomatonException/AutomatonException.h"
-#include "../TMDirection.h"
+#include "AutomatonException.h"
+#include "TMDirection.h"
 #include <map>
 #include <string>
 #include <vector>
 
-#ifdef AUTOMATASIMULATOR_EXPORTS
-#define AUTOMATASIMULATOR_API __declspec(dllexport)
-#else
-#define AUTOMATASIMULATOR_API __declspec(dllimport)
-#endif
-
-class AUTOMATASIMULATOR_API TMTape {
+class TMTape {
   private:
 	/**
 	 * @brief The tape of the Turing Machine.

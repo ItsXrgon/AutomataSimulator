@@ -1,5 +1,4 @@
-#define AUTOMATASIMULATOR_EXPORTS
-#include "NonDeterministicFiniteAutomaton.h"
+#include "AutomataSimulator/NonDeterministicFiniteAutomaton.h"
 
 FATransition
 NonDeterministicFiniteAutomaton::decideRandomTransition(const std::unordered_set<FATransition> &transitions) {

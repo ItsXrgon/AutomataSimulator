@@ -1,22 +1,17 @@
 #pragma once
-#include "../../AutomatonException/AutomatonException.h"
-#include "../PDATransition/PDATransition.h"
+#include "AutomatonException.h"
+#include "FATransition.h"
+#include "config.h"
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-#ifdef AUTOMATASIMULATOR_EXPORTS
-#define AUTOMATASIMULATOR_API __declspec(dllexport)
-#else
-#define AUTOMATASIMULATOR_API __declspec(dllimport)
-#endif
 
 /**
  * @brief Represents a state in an automaton.
  * A state is defined by a "label" string, a vector of transitions that start from it, and a boolean indicating whether
  * it is an accept state.
  */
-class AUTOMATASIMULATOR_API PDAState {
+class AUTOMATASIMULATOR_API FAState {
   private:
 	/**
 	 * @brief Unique identifier for the transition, formatted as "label".
@@ -31,7 +26,7 @@ class AUTOMATASIMULATOR_API PDAState {
 	/**
 	 * @brief Transitions the start from the state.
 	 */
-	std::unordered_map<std::string, PDATransition> transitions;
+	std::unordered_map<std::string, FATransition> transitions;
 
 	/**
 	 * @brief Boolean indicating whether it is an accept state.
@@ -41,7 +36,7 @@ class AUTOMATASIMULATOR_API PDAState {
 	/**
 	 * @brief Cached convertion of the transitions from unordered map to vector.
 	 */
-	std::vector<PDATransition> cachedTransitions;
+	std::vector<FATransition> cachedTransitions;
 
 	/**
 	 * @brief Boolean indicating whether the cached states are invalidated or not.
@@ -53,50 +48,50 @@ class AUTOMATASIMULATOR_API PDAState {
 	 * @param key The key of the transition to get.
 	 * @return The transition with the specified key.
 	 */
-	PDATransition *getTransitionInternal(const std::string &key);
+	FATransition *getTransitionInternal(const std::string &key);
 
   public:
-	PDAState() = default;
+	FAState() = default;
 
 	/**
 	 * @brief Constructs a new State object.
 	 * @param label The label for the state.
 	 * @param isAccept Whether the state is an accept state or not.
 	 */
-	PDAState(const std::string &label, const bool &isAccept = false);
+	FAState(const std::string &label, const bool &isAccept = false);
 
 	/**
 	 * @brief Copy constructor for the State object.
 	 * @param other The State object to copy.
 	 */
-	PDAState(const PDAState &other);
+	FAState(const FAState &other);
 
 	/**
 	 * @brief Copy assignment operator for the State object.
 	 * @param other The State object to copy.
 	 * @return A reference to the copied State object.
 	 */
-	PDAState &operator=(const PDAState &other);
+	FAState &operator=(const FAState &other);
 
 	/**
 	 * @brief Move constructor for the State object.
 	 * @param other The State object to move.
 	 */
-	PDAState(PDAState &&other) noexcept;
+	FAState(FAState &&other) noexcept;
 
 	/**
 	 * @brief Move assignment operator for the State object.
 	 * @param other The State object to move.
 	 * @return A reference to the moved State object.
 	 */
-	PDAState &operator=(PDAState &&other) noexcept;
+	FAState &operator=(FAState &&other) noexcept;
 
-	bool operator==(const PDAState &other) const;
+	bool operator==(const FAState &other) const;
 
 	/**
 	 * @brief Destructor for the State object.
 	 */
-	~PDAState();
+	~FAState();
 
 	/**
 	 * @brief Gets the unique key for this transition.
@@ -105,16 +100,16 @@ class AUTOMATASIMULATOR_API PDAState {
 	std::string getKey() const;
 
 	/**
-	 * @brief Gets the label for the state.
-	 * @return The label for the state.
-	 */
-	std::string getLabel() const;
-
-	/**
 	 * @brief Sets the label for the state.
 	 * @param label The label for the state.
 	 */
 	void setLabel(const std::string &label);
+
+	/**
+	 * @brief Gets the label for the state.
+	 * @return The label for the state.
+	 */
+	std::string getLabel() const;
 
 	/**
 	 * @brief Returns whether the state is an accept state.
@@ -139,17 +134,9 @@ class AUTOMATASIMULATOR_API PDAState {
 	 * @brief Adds a transition to the state's transitions vector.
 	 * @param toStateKey The to state key of the transition.
 	 * @param input The input of the transition.
-	 * @param stackSymbol The top of the stack symbol.
-	 * @param pushSymbol The symbol to be pushed onto the stack.
+	 * @throws InvalidTransitionException If the transition already exists.
 	 */
-	void addTransition(const std::string &toStateKey, const std::string &input, const std::string &stackSymbol,
-	                   const std::string &pushSymbol);
-	/**
-	 * @brief Gets a transition input.
-	 * @param transitionKey The key of the transition.
-	 * @return The input of the transition.
-	 */
-	std::string getTransitionInput(const std::string &transitionKey);
+	void addTransition(const std::string &toStateKey, const std::string &input);
 
 	/**
 	 * @brief Gets the transition with the key provided.
@@ -157,7 +144,14 @@ class AUTOMATASIMULATOR_API PDAState {
 	 * @return The transition with the specified key.
 	 * @throw TransitionNotFoundException If transition is not found.
 	 */
-	PDATransition getTransition(const std::string &key); 
+	FATransition getTransition(const std::string &key);
+
+	/**
+	 * @brief Gets a transition input.
+	 * @param transitionKey The key of the transition.
+	 * @return The input of the transition.
+	 */
+	std::string getTransitionInput(const std::string &transitionKey);
 
 	/**
 	 * @brief Sets a transition input.
@@ -186,40 +180,6 @@ class AUTOMATASIMULATOR_API PDAState {
 	void setTransitionToState(const std::string &transitionKey, const std::string &toState);
 
 	/**
-	 * @brief Gets a transition stack symbol.
-	 * @param transitionKey The key of the transition.
-	 * @return The stack symbol of the transition.
-	 * @throw TransitionNotFoundException If transition is not found.
-	 */
-	std::string getTransitionStackSymbol(const std::string &transitionKey);
-
-	/**
-	 * @brief Sets a transition stack symbol.
-	 * @param transitionKey The key of the transition.
-	 * @param stackSymbol The stack symbol to set.
-	 * @throw TransitionNotFoundException If transition is not found.
-	 * @throw InvalidTransitionException If the transition already exists.
-	 */
-	void setTransitionStackSymbol(const std::string &transitionKey, const std::string &stackSymbol);
-
-	/**
-	 * @brief Gets a transition push symbol.
-	 * @param transitionKey The key of the transition.
-	 * @return The push symbol of the transition.
-	 * @throw TransitionNotFoundException If transition is not found.
-	 */
-	std::string getTransitionPushSymbol(const std::string &transitionKey);
-
-	/**
-	 * @brief Sets a transition push symbol.
-	 * @param transitionKey The key of the transition.
-	 * @param pushSymbol The push symbol to set.
-	 * @throw TransitionNotFoundException If transition is not found.
-	 * @throw InvalidTransitionException If the transition already exists.
-	 */
-	void setTransitionPushSymbol(const std::string &transitionKey, const std::string &pushSymbol);
-
-	/**
 	 * @brief Removes a transition from the state's transitions vector.
 	 * @param transitionKey The key of the transition.
 	 * @throws TransitionNotFoundException If transition is not found.
@@ -234,9 +194,9 @@ class AUTOMATASIMULATOR_API PDAState {
 
 	/**
 	 * @brief Gets transitions from the state.
-	 * @return A vector of transitions that start from the state.
+	 * @return Transitions that start from the state.
 	 */
-	std::vector<PDATransition> getTransitions();
+	std::vector<FATransition> getTransitions();
 
 	/**
 	 * @brief Clears all transitions from the state's transitions vector.

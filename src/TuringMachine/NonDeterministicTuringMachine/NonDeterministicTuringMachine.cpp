@@ -1,6 +1,4 @@
-#define AUTOMATASIMULATOR_EXPORTS
-#include "NonDeterministicTuringMachine.h"
-#include <iostream>
+#include "AutomataSimulator/NonDeterministicTuringMachine.h"=
 
 TMTransition
 NonDeterministicTuringMachine::decideRandomTransition(const std::unordered_set<TMTransition> &transitions) {

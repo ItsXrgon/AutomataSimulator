@@ -1,24 +1,18 @@
 #pragma once
-#include "../AutomatonException/AutomatonException.h"
-#include "TMState/TMState.h"
-#include "TMTape/TMTape.h"
+#include "AutomatonException.h"
+#include "TMState.h"
+#include "TMTape.h"
 #include <stack>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
-
-#ifdef AUTOMATASIMULATOR_EXPORTS
-#define AUTOMATASIMULATOR_API __declspec(dllexport)
-#else
-#define AUTOMATASIMULATOR_API __declspec(dllimport)
-#endif
 
 /**
  * @brief Default blank symbol.
  */
 extern const std::string &DEFAULT_BLANK_SYMBOL;
 
-class AUTOMATASIMULATOR_API TuringMachine {
+class TuringMachine {
   protected:
 	/**
 	 * @brief The input of the automaton.

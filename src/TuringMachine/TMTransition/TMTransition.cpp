@@ -1,5 +1,4 @@
-#define AUTOMATASIMULATOR_EXPORTS
-#include "TMTransition.h"
+#include "AutomataSimulator/TMTransition.h"
 
 TMTransition::TMTransition(const std::string &fromStateKey, const std::string &toStateKey,
                            const std::string &readSymbol, const std::string &writeSymbol, TMDirection direction)

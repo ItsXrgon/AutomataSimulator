@@ -1,6 +1,4 @@
-#define AUTOMATASIMULATOR_EXPORTS
-#include "PushdownAutomaton.h"
-#include <unordered_map>
+#include "AutomataSimulator/PushdownAutomaton.h"
 
 const std::string INITIAL_STACK_SYMBOL = "Z";
 

@@ -1,22 +1,11 @@
 #pragma once
-#include "../FiniteAutomaton.h"
+#include "FiniteAutomaton.h"
+#include "config.h"
 #include <set>
 #include <vector>
 
-#ifdef AUTOMATASIMULATOR_EXPORTS
-#define AUTOMATASIMULATOR_API __declspec(dllexport)
-#else
-#define AUTOMATASIMULATOR_API __declspec(dllimport)
-#endif
-
 /**
  * @brief Represents a deterministic finite automaton.
- * @brief A deterministic finite automaton is defined by a
- * @brief - Finite set of states. Formally defined as Q. including their transitions.
- * @brief - Finite set of input symbols (alphabet). Formally defined as Sigma.
- * @brief - Start state key. Formally defined as q0.
- * @brief - Finite set of accept states.
- * @brief - Current state.
  */
 class AUTOMATASIMULATOR_API DeterministicFiniteAutomaton : public FiniteAutomaton {
   private:
@@ -39,21 +28,21 @@ class AUTOMATASIMULATOR_API DeterministicFiniteAutomaton : public FiniteAutomato
   public:
 	/**
 	 * @brief Sets the input of the automaton.
-	 * @param input The value to load into the tape.
+	 * @param input The value to set.
 	 * @throws InvalidAlphabetException If the input contains symbols not in the alphabet.
 	 */
 	void setInput(const std::vector<std::string> &input) override;
 
 	/**
 	 * @brief Adds to the input of the automaton.
-	 * @param input The value to load into the tape.
+	 * @param input The value to add.
 	 * @throws InvalidAlphabetException If the input contains symbols not in the alphabet.
 	 */
 	void addInput(const std::vector<std::string> &input) override;
 
 	/**
 	 * @brief Sets the input alphabet.
-	 * @param inputAlphabet The value to load into the tape.
+	 * @param inputAlphabet The value to set.
 	 * @param strict If true, will throw an exception if the alphabet symbols are used in transitions.
 	 * @throws InvalidAlphabetException If the alphabet is invalid.
 	 */
@@ -61,7 +50,7 @@ class AUTOMATASIMULATOR_API DeterministicFiniteAutomaton : public FiniteAutomato
 
 	/**
 	 * @brief Adds to the input alphabet.
-	 * @param inputAlphabet The value to load into the tape.
+	 * @param inputAlphabet The value to add.
 	 * @throws InvalidAlphabetException If the alphabet is invalid.
 	 */
 	void addInputAlphabet(const std::vector<std::string> &inputAlphabet);

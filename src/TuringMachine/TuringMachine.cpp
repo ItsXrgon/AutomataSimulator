@@ -1,4 +1,4 @@
-#include "TuringMachine.h"
+#include "AutomataSimulator/TuringMachine.h"
 
 const std::string &DEFAULT_BLANK_SYMBOL = "_";
 

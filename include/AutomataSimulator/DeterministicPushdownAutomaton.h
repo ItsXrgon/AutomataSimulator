@@ -1,24 +1,11 @@
-#pragma once oi
-#include "../PushdownAutomaton.h"
+#pragma once
+#include "PushdownAutomaton.h"
+#include "config.h"
 #include <set>
 #include <vector>
 
-#ifdef AUTOMATASIMULATOR_EXPORTS
-#define AUTOMATASIMULATOR_API __declspec(dllexport)
-#else
-#define AUTOMATASIMULATOR_API __declspec(dllimport)
-#endif
-
 /**
  * @brief Represents a deterministic pushdown automaton.
- * @brief A deterministic pushdown automaton is defined by a
- * @brief - Finite set of states. Formally defined as Q. including their transitions.
- * @brief - Finite set of input symbols (alphabet). Formally defined as Sigma.
- * @brief - Finite set of stack symbols (stack alphabet). Formally defined as Gamma.
- * @brief - Stack with unbounded memory. With initial stack symbol Z.
- * @brief - Start state key. Formally defined as q0.
- * @brief - Finite set of accept states.
- * @brief - Current state.
  */
 class AUTOMATASIMULATOR_API DeterministicPushdownAutomaton : public PushdownAutomaton {
   private:

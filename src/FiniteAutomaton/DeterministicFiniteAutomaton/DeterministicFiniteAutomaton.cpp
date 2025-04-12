@@ -1,6 +1,4 @@
-#define AUTOMATASIMULATOR_EXPORTS
-#include "DeterministicFiniteAutomaton.h"
-#include <iostream>
+#include "AutomataSimulator/DeterministicFiniteAutomaton.h"
 
 void DeterministicFiniteAutomaton::checkAlphabetValidity(const std::vector<std::string> &inputAlphabet) const {
 	for (auto &symbol : inputAlphabet) {

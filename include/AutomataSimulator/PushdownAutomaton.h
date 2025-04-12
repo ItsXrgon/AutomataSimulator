@@ -1,6 +1,6 @@
 #pragma once
-#include "PDAState/PDAState.h"
-#include "PDATransition/PDATransition.h"
+#include "PDAState.h"
+#include "PDATransition.h"
 #include <queue>
 #include <set>
 #include <sstream>
@@ -8,12 +8,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-
-#ifdef AUTOMATASIMULATOR_EXPORTS
-#define AUTOMATASIMULATOR_API __declspec(dllexport)
-#else
-#define AUTOMATASIMULATOR_API __declspec(dllimport)
-#endif
 
 /**
  * @brief Initial stack symbol.
@@ -23,7 +17,7 @@ extern const std::string INITIAL_STACK_SYMBOL;
 /**
  * @brief Represents a pushdown automaton.
  */
-class AUTOMATASIMULATOR_API PushdownAutomaton {
+class PushdownAutomaton {
   protected:
 	/**
 	 * @brief The input of the automaton.
@@ -159,13 +153,13 @@ class AUTOMATASIMULATOR_API PushdownAutomaton {
 
 	/**
 	 * @brief Sets the input of the automaton.
-	 * @param input The value to load into the tape.
+	 * @param input The value to set.
 	 */
 	void setInput(const std::vector<std::string> &input);
 
 	/**
 	 * @brief Adds to the input of the automaton.
-	 * @param input The value to load into the tape.
+	 * @param input The value to add.
 	 */
 	void addInput(const std::vector<std::string> &input);
 
@@ -261,14 +255,14 @@ class AUTOMATASIMULATOR_API PushdownAutomaton {
 
 	/**
 	 * @brief Sets the input alphabet.
-	 * @param inputAlphabet The value to load into the tape.
+	 * @param inputAlphabet The value to load set.
 	 * @param strict If true, will throw an exception if the old symbols are used in transitions.
 	 */
 	void setInputAlphabet(const std::vector<std::string> &inputAlphabet, const bool &strict = true);
 
 	/**
 	 * @brief Adds to the input alphabet.
-	 * @param inputAlphabet The value to load into the tape.
+	 * @param inputAlphabet The value to load add.
 	 */
 	void addInputAlphabet(const std::vector<std::string> &inputAlphabet);
 

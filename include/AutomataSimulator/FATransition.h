@@ -1,18 +1,13 @@
 #pragma once
-#include "../../AutomatonException/AutomatonException.h"
+#include "AutomatonException.h"
+#include "config.h"
 #include <string>
-
-#ifdef AUTOMATASIMULATOR_EXPORTS
-#define AUTOMATASIMULATOR_API __declspec(dllexport)
-#else
-#define AUTOMATASIMULATOR_API __declspec(dllimport)
-#endif
 
 /**
  * @brief Represents a transition between two states in an automaton.
  * A transition is defined by a "from" state, a "to" state, and an input value.
  */
-class AUTOMATASIMULATOR_API PDATransition {
+class AUTOMATASIMULATOR_API FATransition {
   private:
 	/**
 	 * @brief Unique identifier for the transition, formatted as "fromState-toState-Input".
@@ -35,79 +30,62 @@ class AUTOMATASIMULATOR_API PDATransition {
 	std::string input;
 
 	/**
-	 * @brief The top of the stack symbol,
-	 */
-	std::string stackSymbol;
-
-	/**
-	 * @brief The Symbol to be pushed onto the stack.
-	 */
-	std::string pushSymbol;
-
-	/**
 	 * @brief Validates the format of a transition key
 	 */
 	static void validateTransitionKeyFormat(const std::string &key);
 
   public:
-	PDATransition() = default;
-
+	FATransition() = default;
 	/**
 	 * @brief Constructs a new Transition object.
 	 * @param fromState The state key from which the transition starts.
 	 * @param toState The state key to which the transition leads.
 	 * @param input The input value that triggers the transition.
-	 * @param stackSymbol The top of the stack symbol.
-	 * @param pushSymbol The symbol to be pushed onto the stack.
 	 */
-	PDATransition(const std::string &fromStateKey, const std::string &toStateKey, const std::string &input,
-	              const std::string &stackSymbol, const std::string &pushSymbol);
+	FATransition(const std::string &fromStateKey, const std::string &toStateKey, const std::string &input);
 
 	/**
 	 * @brief Copy constructor for the Transition object.
 	 * @param other The Transition object to copy.
 	 */
-	PDATransition(const PDATransition &other);
+	FATransition(const FATransition &other);
 
 	/**
 	 * @brief Copy assignment operator for the Transition object.
 	 * @param other The Transition object to copy.
 	 * @return A reference to the copied Transition object.
 	 */
-	PDATransition &operator=(const PDATransition &other);
+	FATransition &operator=(const FATransition &other);
 
 	/**
 	 * @brief Move constructor for the Transition object.
 	 * @param other The Transition object to move.
 	 */
-	PDATransition(PDATransition &&other) noexcept;
+	FATransition(FATransition &&other) noexcept;
 
 	/**
 	 * @brief Move assignment operator for the Transition object.
 	 * @param other The Transition object to move.
 	 * @return A reference to the moved Transition object.
 	 */
-	PDATransition &operator=(PDATransition &&other) noexcept;
+	FATransition &operator=(FATransition &&other) noexcept;
 
-	bool operator==(const PDATransition &other) const;
+	bool operator==(const FATransition &other) const;
 
 	/**
 	 * @brief Destructor for the Transition object.
 	 */
-	~PDATransition();
+	~FATransition();
 
 	/**
 	 * @brief Generate a unique transition key.
 	 * @param fromStateKey The starting state key.
 	 * @param toStateKey The destination state key.
 	 * @param input The input symbol.
-	 * @param stackSymbol The top of the stack symbol.
-	 * @param pushSymbol The symbol to be pushed onto the stack.
 	 * @return A unique transition key string.
 	 */
 	static std::string generateTransitionKey(const std::string &fromStateKey, const std::string &toStateKey,
-	                                         const std::string &input, const std::string &stackSymbol,
-	                                         const std::string &pushSymbol);
+	                                         const std::string &input);
 
 	/**
 	 * @brief Gets the to state key of a transition from its key.
@@ -131,20 +109,6 @@ class AUTOMATASIMULATOR_API PDATransition {
 	static std::string getInputFromKey(const std::string &key);
 
 	/**
-	 * @brief Gets the stack symbol of a transition from its key.
-	 * @param key The transition key.
-	 * @return The stack symbol.
-	 */
-	static std::string getStackSymbolFromKey(const std::string &key);
-
-	/**
-	 * @brief Gets the push symbol of a transition from its key.
-	 * @param key The transition key.
-	 * @return The push symbol.
-	 */
-	static std::string getPushSymbolFromKey(const std::string &key);
-
-	/**
 	 * @brief Gets the unique key for this transition.
 	 * @return The key string.
 	 */
@@ -154,7 +118,7 @@ class AUTOMATASIMULATOR_API PDATransition {
 	 * @brief Sets the "from" state of this transition.
 	 * @param key The new "from" state key.
 	 */
-	void setFromStateKey(const std::string &key);
+	void setFromStateKey(const std::string &fromStateKey);
 
 	/**
 	 * @brief Gets the "from" state of this transition.
@@ -166,7 +130,7 @@ class AUTOMATASIMULATOR_API PDATransition {
 	 * @brief Sets the "to" state of this transition.
 	 * @param toState The new "to" state.
 	 */
-	void setToStateKey(const std::string &toState);
+	void setToStateKey(const std::string &toStateKey);
 
 	/**
 	 * @brief Gets the "to" state key of this transition.
@@ -187,30 +151,6 @@ class AUTOMATASIMULATOR_API PDATransition {
 	std::string getInput() const;
 
 	/**
-	 * @brief Sets the top of the stack symbol for this transition.
-	 * @param stackSymbol The new stack symbol.
-	 */
-	void setStackSymbol(const std::string &stackSymbol);
-
-	/**
-	 * @brief Gets the top of the stack symbol for this transition.
-	 * @return The stack symbol as a string.
-	 */
-	std::string getStackSymbol() const;
-
-	/**
-	 * @brief Sets the symbol to be pushed onto the stack for this transition.
-	 * @param pushSymbol The new push symbol.
-	 */
-	void setPushSymbol(const std::string &pushSymbol);
-
-	/**
-	 * @brief Gets the symbol to be pushed onto the stack for this transition.
-	 * @return The push symbol as a string.
-	 */
-	std::string getPushSymbol() const;
-
-	/**
 	 * @brief Gets a string representation of this transition.
 	 * @return A string representation of the transition.
 	 */
@@ -218,11 +158,10 @@ class AUTOMATASIMULATOR_API PDATransition {
 };
 
 namespace std {
-template <> struct hash<PDATransition> {
-	size_t operator()(const PDATransition &t) const {
+template <> struct hash<FATransition> {
+	size_t operator()(const FATransition &t) const {
 		size_t hashValue = hash<std::string>()(t.getFromStateKey()) ^ (hash<std::string>()(t.getToStateKey()) << 1) ^
-		                   (hash<std::string>()(t.getInput()) << 2) ^ (hash<std::string>()(t.getStackSymbol()) << 3) ^
-		                   (hash<std::string>()(t.getPushSymbol()) << 4);
+		                   (hash<std::string>()(t.getInput()) << 2);
 		return hashValue;
 	}
 };
