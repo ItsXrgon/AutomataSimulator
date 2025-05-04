@@ -1,5 +1,8 @@
 #include "AutomataSimulator/TMTransition.h"
 
+TMTransition::TMTransition()
+    : fromStateKey(""), toStateKey(""), readSymbol(""), writeSymbol(""), direction(TMDirection::STAY), key("") {}
+
 TMTransition::TMTransition(const std::string &fromStateKey, const std::string &toStateKey,
                            const std::string &readSymbol, const std::string &writeSymbol, TMDirection direction)
     : fromStateKey(fromStateKey), toStateKey(toStateKey), readSymbol(readSymbol), writeSymbol(writeSymbol),

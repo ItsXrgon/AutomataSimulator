@@ -1,5 +1,4 @@
 #pragma once
-#include "AutomatonException.h"
 #include "PDATransition.h"
 #include "config.h"
 #include <string>
@@ -51,7 +50,7 @@ class AUTOMATASIMULATOR_API PDAState {
 	PDATransition *getTransitionInternal(const std::string &key);
 
   public:
-	PDAState() = default;
+	PDAState();
 
 	/**
 	 * @brief Constructs a new State object.

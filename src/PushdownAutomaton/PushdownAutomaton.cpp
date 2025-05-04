@@ -532,6 +532,54 @@ void PushdownAutomaton::clearInputAlphabet(const bool &strict) {
 }
 
 void PushdownAutomaton::setStackAlphabet(const std::vector<std::string> &stackAlphabet, const bool &strict) {
+	std::unordered_map<std::string, std::vector<std::string>> conflictingTransitions;
+	std::unordered_set<std::string> newAlphabet =
+	    std::unordered_set<std::string>(inputAlphabet.begin(), inputAlphabet.end());
+
+	for (auto &pair : states) {
+		std::vector<PDATransition> transitions = pair.second.getTransitions();
+		for (const auto &transition : transitions) {
+			const std::string &stackSymbol = transition.getStackSymbol();
+			bool found = newAlphabet.find(stackSymbol) != newAlphabet.end();
+			if (!found) {
+				if (strict) {
+					conflictingTransitions[stackSymbol].push_back(transition.getKey());
+				} else {
+					pair.second.removeTransition(transition.getKey());
+				}
+			}
+
+			// Check for push symbols
+			std::vector<std::string> pushSymbolsVec = parsePushSymbols(transition.getPushSymbol());
+			for (const auto &pushSymbol : pushSymbolsVec) {
+				found = newAlphabet.find(pushSymbol) != newAlphabet.end();
+				if (!found) {
+					if (strict) {
+						conflictingTransitions[pushSymbol].push_back(transition.getKey());
+					} else {
+						pair.second.removeTransition(transition.getKey());
+					}
+				}
+			}
+		}
+	}
+
+	// If strict mode is enabled and conflicts exist, throw an error
+	if (strict && !conflictingTransitions.empty()) {
+		std::string conflictMessage =
+		    "Setting the alphabet will remove symbols that cannot be removed because they are used in transitions:\n";
+		for (const auto &[symbol, transitions] : conflictingTransitions) {
+			conflictMessage += "Symbol " + symbol + " is part of transitions: [";
+			for (const auto &t : transitions) {
+				conflictMessage += t + ", ";
+			}
+			conflictMessage.erase(conflictMessage.size() - 2, 2); // Remove trailing ", "
+			conflictMessage += "]\n";
+		}
+		throw InvalidAutomatonDefinitionException(
+		    conflictMessage + " If you wish to delete these transitions, call the function again with strict=false.");
+	}
+
 	this->stackAlphabet = std::unordered_set<std::string>(stackAlphabet.begin(), stackAlphabet.end());
 	stackAlphabetCacheInvalidated = true;
 }
@@ -559,6 +607,34 @@ void PushdownAutomaton::removeStackAlphabetSymbol(const std::string &symbol, con
 	// Check if symbol exists
 	if (!stackAlphabetSymbolExists(symbol)) {
 		throw StackAlphabetSymbolNotFoundException(symbol);
+	}
+
+	std::vector<std::string> conflictingTransitions;
+
+	// Check for conflicting transitions
+	for (auto &pair : states) {
+		std::vector<PDATransition> transitions = pair.second.getTransitions();
+		for (const auto &transition : transitions) {
+			if (transition.getStackSymbol() == symbol || transition.getPushSymbol() == symbol) {
+				if (strict) {
+					conflictingTransitions.push_back(transition.getKey());
+				} else {
+					pair.second.removeTransition(transition.getKey());
+				}
+			}
+		}
+	}
+
+	// If strict mode is enabled and conflicts exist, throw an error
+	if (strict && !conflictingTransitions.empty()) {
+		std::string conflictMessage = "Cannot remove symbol " + symbol + " because it is used in transitions: [";
+		for (const auto &t : conflictingTransitions) {
+			conflictMessage += t + ", ";
+		}
+		conflictMessage.erase(conflictMessage.size() - 2, 2); // Remove trailing ", "
+		conflictMessage += "]\nIf you wish to delete these transitions, call the function again with strict=false.";
+
+		throw InvalidAutomatonDefinitionException(conflictMessage);
 	}
 
 	stackAlphabet.erase(symbol);
@@ -894,4 +970,30 @@ void PushdownAutomaton::reset() {
 
 bool PushdownAutomaton::isAccepting() const {
 	return getState(currentState).getIsAccept();
+}
+
+bool PushdownAutomaton::checkNextState(const std::string &key) const {
+	// Check if state exists
+	if (!stateExists(key)) {
+		throw StateNotFoundException(key);
+	}
+
+	const std::string &currentInput = getInput()[inputHead];
+
+	PDAState state = getState(currentState);
+	std::vector<PDATransition> transitions = state.getTransitions();
+
+	std::string stackTop = stack.empty() ? "" : stack.top();
+	for (const auto &transition : transitions) {
+		if (transition.getToStateKey() != key) {
+			continue;
+		}
+		if (transition.getStackSymbol() != stackTop && !transition.getStackSymbol().empty()) {
+			continue;
+		}
+		if (transition.getInput().empty() || transition.getInput() == currentInput) {
+			return true;
+		}
+	}
+	return false;
 }

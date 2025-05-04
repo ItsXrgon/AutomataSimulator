@@ -45,7 +45,7 @@ class AUTOMATASIMULATOR_API TMState {
 	TMTransition *getTransitionInternal(const std::string &key);
 
   public:
-	TMState() = default;
+	TMState();
 
 	/**
 	 * @brief Constructs a new State object.

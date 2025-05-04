@@ -34,6 +34,8 @@ class AUTOMATASIMULATOR_API NonDeterministicTuringMachine : public TuringMachine
 	TMTransition decideRandomTransition(const std::unordered_set<TMTransition> &transitions);
 
   public:
+	virtual ~NonDeterministicTuringMachine() override;
+
 	/**
 	 * @brief Gets the possible current states
 	 * @brief Possible current states are the states that the automata could of

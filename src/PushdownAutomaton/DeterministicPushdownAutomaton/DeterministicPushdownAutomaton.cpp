@@ -1,5 +1,7 @@
 #include "AutomataSimulator/DeterministicPushdownAutomaton.h"
 
+DeterministicPushdownAutomaton::~DeterministicPushdownAutomaton() = default;
+
 bool DeterministicPushdownAutomaton::checkTransitionDeterminisim(const std::string &fromStateKey,
                                                                  const std::string &input,
                                                                  const std::string &stackSymbol) {
@@ -51,8 +53,6 @@ void DeterministicPushdownAutomaton::updateTransitionInput(const std::string &tr
 
 	// Check if the transition is deterministic
 	if (!checkTransitionDeterminisim(fromStateKey, input, stackSymbol)) {
-		std::string toStateKey = PDATransition::getToStateFromKey(transitionKey);
-		std::string pushSymbol = PDATransition::getPushSymbolFromKey(transitionKey);
 		throw InvalidAutomatonDefinitionException("Transition is not deterministic: " + fromStateKey + " -> " +
 		                                          toStateKey + "| input: " + input + " | stack symbol: " + stackSymbol +
 		                                          " | push symbol: " + pushSymbol);
@@ -72,8 +72,6 @@ void DeterministicPushdownAutomaton::updateTransitionFromState(const std::string
 
 	// Check if the transition is deterministic
 	if (!checkTransitionDeterminisim(fromStateKey, input, stackSymbol)) {
-		std::string toStateKey = PDATransition::getToStateFromKey(transitionKey);
-		std::string pushSymbol = PDATransition::getPushSymbolFromKey(transitionKey);
 		throw InvalidAutomatonDefinitionException("Transition is not deterministic: " + fromStateKey + " -> " +
 		                                          toStateKey + "| input: " + input + " | stack symbol: " + stackSymbol +
 		                                          " | push symbol: " + pushSymbol);
@@ -93,8 +91,6 @@ void DeterministicPushdownAutomaton::updateTransitionStackSymbol(const std::stri
 
 	// Check if the transition is deterministic
 	if (!checkTransitionDeterminisim(fromStateKey, input, stackSymbol)) {
-		std::string toStateKey = PDATransition::getToStateFromKey(transitionKey);
-		std::string pushSymbol = PDATransition::getPushSymbolFromKey(transitionKey);
 		throw InvalidAutomatonDefinitionException("Transition is not deterministic: " + fromStateKey + " -> " +
 		                                          toStateKey + "| input: " + input + " | stack symbol: " + stackSymbol +
 		                                          " | push symbol: " + pushSymbol);
@@ -108,9 +104,9 @@ bool DeterministicPushdownAutomaton::processInput() {
 		throw InvalidAutomatonDefinitionException("Current state or start state must be set to run process input");
 	}
 
-	std::string input = "";
+	std::string inputSymbol = "";
 	if (inputHead < this->input.size()) {
-		input = this->input[inputHead];
+		inputSymbol = this->input[inputHead];
 	}
 
 	const std::vector<PDATransition> &transitions = getStateInternal(currentState)->getTransitions();
@@ -122,7 +118,7 @@ bool DeterministicPushdownAutomaton::processInput() {
 			continue;
 		}
 		// Inputs have to match
-		if (transition.getInput() != input && !transition.getInput().empty()) {
+		if (transition.getInput() != inputSymbol && !transition.getInput().empty()) {
 			continue;
 		}
 		if (!transition.getStackSymbol().empty()) {
@@ -134,7 +130,7 @@ bool DeterministicPushdownAutomaton::processInput() {
 		}
 		currentState = transition.getToStateKey();
 		// Only increment the head if the input is a match and the input head is less than the input size
-		const bool &incrementHead = transition.getInput() == input && inputHead < this->input.size();
+		const bool &incrementHead = transition.getInput() == inputSymbol && inputHead < this->input.size();
 		if (incrementHead) {
 			inputHead++;
 		}

@@ -1,5 +1,7 @@
 #include "AutomataSimulator/FATransition.h"
 
+FATransition::FATransition() : fromStateKey(""), toStateKey(""), input(""), key("") {}
+
 FATransition::FATransition(const std::string &fromStateKey, const std::string &toStateKey, const std::string &input)
     : fromStateKey(fromStateKey), toStateKey(toStateKey), input(input) {
 	key = generateTransitionKey(fromStateKey, toStateKey, input);
@@ -34,7 +36,6 @@ FATransition &FATransition::operator=(FATransition &&other) noexcept {
 bool FATransition::operator==(const FATransition &other) const {
 	return fromStateKey == other.fromStateKey && toStateKey == other.toStateKey && input == other.input;
 }
-
 
 FATransition::~FATransition() {}
 

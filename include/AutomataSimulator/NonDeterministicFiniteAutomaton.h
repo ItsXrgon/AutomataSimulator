@@ -34,6 +34,8 @@ class AUTOMATASIMULATOR_API NonDeterministicFiniteAutomaton : public FiniteAutom
 	FATransition decideRandomTransition(const std::unordered_set<FATransition> &transitions);
 
   public:
+	virtual ~NonDeterministicFiniteAutomaton() override;
+
 	/**
 	 * @brief Sets the input of the automaton.
 	 * @param input The value to load into the tape.

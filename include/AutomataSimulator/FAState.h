@@ -1,5 +1,4 @@
 #pragma once
-#include "AutomatonException.h"
 #include "FATransition.h"
 #include "config.h"
 #include <string>
@@ -51,7 +50,7 @@ class AUTOMATASIMULATOR_API FAState {
 	FATransition *getTransitionInternal(const std::string &key);
 
   public:
-	FAState() = default;
+	FAState();
 
 	/**
 	 * @brief Constructs a new State object.

@@ -26,6 +26,8 @@ class AUTOMATASIMULATOR_API DeterministicFiniteAutomaton : public FiniteAutomato
 	bool checkTransitionDeterminisim(const std::string &fromStateKey, const std::string &input);
 
   public:
+	virtual ~DeterministicFiniteAutomaton() override;
+
 	/**
 	 * @brief Sets the input of the automaton.
 	 * @param input The value to set.

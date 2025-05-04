@@ -1,5 +1,4 @@
 #pragma once
-#include "AutomatonException.h"
 #include "TMState.h"
 #include "TMTape.h"
 #include <stack>
@@ -12,7 +11,7 @@
  */
 extern const std::string &DEFAULT_BLANK_SYMBOL;
 
-class TuringMachine {
+class AUTOMATASIMULATOR_API TuringMachine {
   protected:
 	/**
 	 * @brief The input of the automaton.
@@ -100,10 +99,12 @@ class TuringMachine {
 	                        const std::string &readSymbol, const std::string &writeSymbol, TMDirection direction);
 
   public:
+	TuringMachine();
+
 	/**
 	 * @brief Constructs a new TuringMachine Automaton object.
 	 */
-	TuringMachine(std::string blankSymbol = DEFAULT_BLANK_SYMBOL);
+	TuringMachine(std::string blankSymbol);
 
 	/**
 	 * @brief Destructor for the TuringMachine Automaton object.
@@ -484,4 +485,12 @@ class TuringMachine {
 	 * @throws SimulationDepthExceededException If the simulation depth is exceeded.
 	 */
 	virtual bool simulate(const std::vector<std::string> &input, const int &simulationDepth = 50) = 0;
+
+	/**
+	 * @brief Checks if the provided state is valid as the next state the automaton could transition to.
+	 * @param key The key of the state.
+	 * @return True if the input is accepted, false otherwise.
+	 * @throws StateNotFoundException If the state is not found.
+	 */
+	bool checkNextState(const std::string &key) const;
 };

@@ -2,6 +2,12 @@
 
 const std::string &DEFAULT_BLANK_SYMBOL = "_";
 
+TuringMachine::TuringMachine()
+    : startState(""), inputAlphabetCacheInvalidated(false), tapeAlphabetCacheInvalidated(false),
+      statesCacheInvalidated(false) {
+	tape = TMTape(DEFAULT_BLANK_SYMBOL);
+}
+
 TuringMachine::TuringMachine(std::string blankSymbol)
     : startState(""), inputAlphabetCacheInvalidated(false), tapeAlphabetCacheInvalidated(false),
       statesCacheInvalidated(false) {
@@ -499,7 +505,7 @@ void TuringMachine::setTapeAlphabet(const std::vector<std::string> &tapeAlphabet
 	}
 	for (auto &symbol : missingSymbols) {
 		removeInputAlphabetSymbol(symbol);
-	} 
+	}
 
 	tapeAlphabetCacheInvalidated = true;
 }
@@ -527,6 +533,34 @@ void TuringMachine::removeTapeAlphabetSymbol(const std::string &symbol, const bo
 	// Check if symbol exists
 	if (!tapeAlphabetSymbolExists(symbol)) {
 		throw TapeAlphabetSymbolNotFoundException(symbol);
+	}
+
+	std::vector<std::string> conflictingTransitions;
+
+	// Check for conflicting transitions
+	for (auto &pair : states) {
+		std::vector<TMTransition> transitions = pair.second.getTransitions();
+		for (const auto &transition : transitions) {
+			if (transition.getReadSymbol() == symbol || transition.getWriteSymbol() == symbol) {
+				if (strict) {
+					conflictingTransitions.push_back(transition.getKey());
+				} else {
+					pair.second.removeTransition(transition.getKey());
+				}
+			}
+		}
+	}
+
+	// If strict mode is enabled and conflicts exist, throw an error
+	if (strict && !conflictingTransitions.empty()) {
+		std::string conflictMessage = "Cannot remove symbol " + symbol + " because it is used in transitions: [";
+		for (const auto &t : conflictingTransitions) {
+			conflictMessage += t + ", ";
+		}
+		conflictMessage.erase(conflictMessage.size() - 2, 2); // Remove trailing ", "
+		conflictMessage += "]\nIf you wish to delete these transitions, call the function again with strict=false.";
+
+		throw InvalidAutomatonDefinitionException(conflictMessage);
 	}
 
 	if (inputAlphabetSymbolExists(symbol)) {
@@ -558,8 +592,6 @@ void TuringMachine::removeTapeAlphabetSymbols(const std::vector<std::string> &sy
 		throw TapeAlphabetSymbolNotFoundException(missingSymbolsString);
 	}
 
-
-
 	// If no missing symbols found then we remove
 	for (const auto &symbol : symbols) {
 		tapeAlphabet.erase(symbol);
@@ -576,9 +608,22 @@ void TuringMachine::removeTapeAlphabetSymbols(const std::vector<std::string> &sy
 }
 
 void TuringMachine::clearTapeAlphabet(const bool &strict) {
+	for (auto &pair : states) {
+		std::vector<TMTransition> transitions = pair.second.getTransitions();
+		for (const auto &transition : transitions) {
+			if (!transition.getReadSymbol().empty() || !transition.getWriteSymbol().empty()) {
+				if (strict) {
+					throw InvalidAutomatonDefinitionException(
+					    "Cannot clear input alphabet because non-epsilon transitions exist");
+				} else {
+					pair.second.removeTransition(transition.getKey());
+				}
+			}
+		}
+	}
+
 	tapeAlphabet.clear();
 	tapeAlphabetCacheInvalidated = true;
-
 	clearInputAlphabet(strict);
 }
 
@@ -876,4 +921,27 @@ void TuringMachine::reset() {
 
 bool TuringMachine::isAccepting() const {
 	return getState(currentState).getIsAccept();
+}
+
+
+bool TuringMachine::checkNextState(const std::string &key) const {
+	// Check if state exists
+	if (!stateExists(key)) {
+		throw StateNotFoundException(key);
+	}
+
+	const std::string &tapeValue = tape.read();
+
+	TMState state = getState(currentState);
+	std::vector<TMTransition> transitions = state.getTransitions();
+
+	for (const auto &transition : transitions) {
+		if (transition.getToStateKey() != key) {
+			continue;
+		}
+		if (transition.getReadSymbol().empty() || transition.getReadSymbol() == tapeValue) {
+			return true;
+		}
+	}
+	return false;
 }

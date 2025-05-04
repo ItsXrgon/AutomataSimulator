@@ -46,7 +46,7 @@ class AUTOMATASIMULATOR_API TMTransition {
 	static void validateTransitionKeyFormat(const std::string &key);
 
   public:
-	TMTransition() = default;
+	TMTransition();
 
 	/**
 	 * @brief Constructs a new Transition object.

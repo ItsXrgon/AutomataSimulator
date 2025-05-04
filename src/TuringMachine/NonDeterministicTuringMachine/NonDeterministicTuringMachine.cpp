@@ -1,4 +1,6 @@
-#include "AutomataSimulator/NonDeterministicTuringMachine.h"=
+#include "AutomataSimulator/NonDeterministicTuringMachine.h"
+
+NonDeterministicTuringMachine::~NonDeterministicTuringMachine() = default;
 
 TMTransition
 NonDeterministicTuringMachine::decideRandomTransition(const std::unordered_set<TMTransition> &transitions) {
@@ -34,17 +36,17 @@ bool NonDeterministicTuringMachine::processInput() {
 	}
 
 	std::unordered_set<TMTransition> possibleTransitions;
-	std::unordered_set<std::string> possibleCurrentStates;
+	std::unordered_set<std::string> newPossibleCurrentStates;
 
 	const std::vector<TMTransition> &transitions = getStateInternal(currentState)->getTransitions();
-	std::string tapeValue = tape.read();
+	std::string inputSymbol = tape.read();
 
 	for (const auto &transition : transitions) {
-		if (transition.getReadSymbol() != tapeValue && !transition.getReadSymbol().empty()) {
+		if (transition.getReadSymbol() != inputSymbol && !transition.getReadSymbol().empty()) {
 			continue;
 		}
 		possibleTransitions.insert(transition);
-		possibleCurrentStates.insert(transition.getToStateKey());
+		newPossibleCurrentStates.insert(transition.getToStateKey());
 	}
 
 	if (possibleTransitions.empty()) {
@@ -63,7 +65,7 @@ bool NonDeterministicTuringMachine::processInput() {
 	tape.move(transitionChosen.getDirection());
 	currentState = transitionChosen.getToStateKey();
 
-	this->possibleCurrentStates = possibleCurrentStates;
+	this->possibleCurrentStates = newPossibleCurrentStates;
 	possibleCurrentStatesCacheInvalidated = true;
 
 	// Return whether the randomly chosen current state is an accept state
@@ -128,7 +130,6 @@ bool NonDeterministicTuringMachine::simulate(const std::vector<std::string> &inp
 			if (transition.getReadSymbol() != tapeValue && !transition.getReadSymbol().empty()) {
 				continue;
 			}
-			std::cout << transition.toString() << std::endl;
 
 			TMTape branchTape = branch.tape;
 			if (!transition.getWriteSymbol().empty()) {
@@ -142,7 +143,6 @@ bool NonDeterministicTuringMachine::simulate(const std::vector<std::string> &inp
 
 			branches.push({transition.getToStateKey(), branchTape, branch.depth + 1});
 		}
-
 	}
 
 	return false;

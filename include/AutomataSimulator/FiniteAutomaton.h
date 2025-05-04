@@ -1,7 +1,5 @@
 #pragma once
-#include "AutomatonException.h"
 #include "FAState.h"
-#include "FATransition.h"
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
@@ -10,7 +8,7 @@
 /**
  * @brief Represents a finite automaton.
  */
-class FiniteAutomaton {
+class AUTOMATASIMULATOR_API FiniteAutomaton {
   protected:
 	/**
 	 * @brief The input of the automaton.
@@ -258,6 +256,13 @@ class FiniteAutomaton {
 	virtual void setStartState(const std::string &key);
 
 	/**
+	 * @brief Gets a transition from the automaton.
+	 * @param key The key of the transition.
+	 * @throws TransitionNotFoundException If the transition is not found.
+	 */
+	FATransition getTransition(const std::string &key) const;
+
+	/**
 	 * @brief Add a transition to the automaton.
 	 * @param fromStateKey The key of the state to transition from.
 	 * @param toStateKey The key of the state to transition to.
@@ -392,4 +397,12 @@ class FiniteAutomaton {
 	 * @throws InvalidStartStateException If the start state is not set.
 	 */
 	virtual bool simulate(const std::vector<std::string> &input, const int &simulationDepth = 50) = 0;
+
+	/**
+	 * @brief Checks if the provided state is valid as the next state the automaton could transition to.
+	 * @param key The key of the state.
+	 * @return True if the input is accepted, false otherwise.
+	 * @throws StateNotFoundException If the state is not found.
+	 */
+	bool checkNextState(const std::string &key) const;
 };

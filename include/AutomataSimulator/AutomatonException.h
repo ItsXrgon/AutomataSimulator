@@ -1,19 +1,20 @@
 #pragma once
 #include "config.h"
-#include <exception>
+#include <stdexcept>
 #include <string>
 
 /**
  * @brief Base class for custom exceptions related to finite automata constraints.
  */
-class AUTOMATASIMULATOR_API AutomatonException : public std::exception {
+class AutomatonException : std::exception {
   private:
 	std::string message;
 
   public:
-	AutomatonException(const std::string &msg) : message(msg) {}
+	inline AutomatonException(const std::string &msg) : message(msg) {}
+	inline virtual ~AutomatonException() = default;
 
-	const char *what() const noexcept override {
+	inline const char *what() const noexcept override {
 		return message.c_str();
 	}
 };
@@ -23,7 +24,8 @@ class AUTOMATASIMULATOR_API AutomatonException : public std::exception {
  */
 class AUTOMATASIMULATOR_API StateNotFoundException : public AutomatonException {
   public:
-	StateNotFoundException(const std::string &stateKey) : AutomatonException("State not found: " + stateKey) {}
+	inline StateNotFoundException(const std::string &stateKey) : AutomatonException("State not found: " + stateKey) {}
+	inline virtual ~StateNotFoundException() = default;
 };
 
 /**
@@ -31,8 +33,9 @@ class AUTOMATASIMULATOR_API StateNotFoundException : public AutomatonException {
  */
 class AUTOMATASIMULATOR_API InputAlphabetSymbolNotFoundException : public AutomatonException {
   public:
-	InputAlphabetSymbolNotFoundException(const std::string &symbol)
+	inline InputAlphabetSymbolNotFoundException(const std::string &symbol)
 	    : AutomatonException("Input alphabet symbol not found: " + symbol) {}
+	inline virtual ~InputAlphabetSymbolNotFoundException() = default;
 };
 
 /**
@@ -40,8 +43,9 @@ class AUTOMATASIMULATOR_API InputAlphabetSymbolNotFoundException : public Automa
  */
 class AUTOMATASIMULATOR_API StackAlphabetSymbolNotFoundException : public AutomatonException {
   public:
-	StackAlphabetSymbolNotFoundException(const std::string &symbol)
-	    : AutomatonException("Input alphabet symbol not found: " + symbol) {}
+	inline StackAlphabetSymbolNotFoundException(const std::string &symbol)
+	    : AutomatonException("Stack alphabet symbol not found: " + symbol) {}
+	inline virtual ~StackAlphabetSymbolNotFoundException() = default;
 };
 
 /**
@@ -49,8 +53,9 @@ class AUTOMATASIMULATOR_API StackAlphabetSymbolNotFoundException : public Automa
  */
 class AUTOMATASIMULATOR_API TapeAlphabetSymbolNotFoundException : public AutomatonException {
   public:
-	TapeAlphabetSymbolNotFoundException(const std::string &symbol)
+	inline TapeAlphabetSymbolNotFoundException(const std::string &symbol)
 	    : AutomatonException("Tape alphabet symbol not found: " + symbol) {}
+	inline virtual ~TapeAlphabetSymbolNotFoundException() = default;
 };
 
 /**
@@ -58,12 +63,14 @@ class AUTOMATASIMULATOR_API TapeAlphabetSymbolNotFoundException : public Automat
  */
 class AUTOMATASIMULATOR_API TransitionNotFoundException : public AutomatonException {
   public:
-	TransitionNotFoundException(const std::string &fromStateKey, const std::string &toStateKey,
+	inline TransitionNotFoundException(const std::string &fromStateKey, const std::string &toStateKey,
 	                            const std::string &input)
 	    : AutomatonException("Transition not found: " + fromStateKey + " -> " + input + " -> " + toStateKey) {}
 
-	TransitionNotFoundException(const std::string &key)
+	inline TransitionNotFoundException(const std::string &key)
 	    : AutomatonException("Transition with key " + key + " not found") {}
+
+	inline virtual ~TransitionNotFoundException() = default;
 };
 
 /**
@@ -71,7 +78,8 @@ class AUTOMATASIMULATOR_API TransitionNotFoundException : public AutomatonExcept
  */
 class AUTOMATASIMULATOR_API InvalidAlphabetException : public AutomatonException {
   public:
-	InvalidAlphabetException(const std::string &msg) : AutomatonException("Invalid alphabet: " + msg) {}
+	inline InvalidAlphabetException(const std::string &msg) : AutomatonException("Invalid alphabet: " + msg) {}
+	inline virtual ~InvalidAlphabetException() = default;
 };
 
 /**
@@ -79,7 +87,8 @@ class AUTOMATASIMULATOR_API InvalidAlphabetException : public AutomatonException
  */
 class AUTOMATASIMULATOR_API InvalidStartStateException : public AutomatonException {
   public:
-	InvalidStartStateException(const std::string &msg) : AutomatonException("Invalid start state: " + msg) {}
+	inline InvalidStartStateException(const std::string &msg) : AutomatonException("Invalid start state: " + msg) {}
+	inline virtual ~InvalidStartStateException() = default;
 };
 
 /**
@@ -87,7 +96,8 @@ class AUTOMATASIMULATOR_API InvalidStartStateException : public AutomatonExcepti
  */
 class AUTOMATASIMULATOR_API InvalidTransitionException : public AutomatonException {
   public:
-	InvalidTransitionException(const std::string &msg) : AutomatonException("Invalid transition: " + msg) {}
+	inline InvalidTransitionException(const std::string &msg) : AutomatonException("Invalid transition: " + msg) {}
+	inline virtual ~InvalidTransitionException() = default;
 };
 
 /**
@@ -95,6 +105,7 @@ class AUTOMATASIMULATOR_API InvalidTransitionException : public AutomatonExcepti
  */
 class AUTOMATASIMULATOR_API InvalidAutomatonDefinitionException : public AutomatonException {
   public:
-	InvalidAutomatonDefinitionException(const std::string &msg)
+	inline  InvalidAutomatonDefinitionException(const std::string &msg)
 	    : AutomatonException("Invalid automaton definition: " + msg) {}
+	inline  virtual ~InvalidAutomatonDefinitionException() = default;
 };

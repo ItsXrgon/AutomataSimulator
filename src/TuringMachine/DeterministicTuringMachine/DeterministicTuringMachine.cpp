@@ -1,5 +1,7 @@
 #include "AutomataSimulator/DeterministicTuringMachine.h"
 
+DeterministicTuringMachine::~DeterministicTuringMachine() = default;
+
 bool DeterministicTuringMachine::checkTransitionDeterminisim(const std::string &fromStateKey,
                                                              const std::string &readSymbol) {
 	TMState *fromState = getStateInternal(fromStateKey);
@@ -66,9 +68,6 @@ void DeterministicTuringMachine::updateTransitionReadSymbol(const std::string &t
 
 	// Check if the transition is deterministic
 	if (!checkTransitionDeterminisim(fromStateKey, readSymbol)) {
-		std::string toStateKey = TMTransition::getToStateFromKey(transitionKey);
-		std::string writeSymbol = TMTransition::getWriteSymbolFromKey(transitionKey);
-		TMDirection direction = TMTransition::getDirectionFromKey(transitionKey);
 		throw InvalidAutomatonDefinitionException("Transition already exists: " + fromStateKey + " -> " + toStateKey +
 		                                          " | read symbol: " + readSymbol + " | write symbol: " + writeSymbol +
 		                                          " | direction: " + TMDirectionHelper::toString(direction));
@@ -82,7 +81,7 @@ bool DeterministicTuringMachine::processInput() {
 		throw InvalidAutomatonDefinitionException("Current state or start state must be set to run process input");
 	}
 
-	const std::string &input = tape.read();
+	const std::string &inputSymbol = tape.read();
 
 	const std::vector<TMTransition> &transitions = getStateInternal(currentState)->getTransitions();
 	std::string tapeValue = tape.read();

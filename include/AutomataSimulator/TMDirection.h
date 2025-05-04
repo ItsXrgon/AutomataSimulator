@@ -7,7 +7,7 @@
  */
 enum class AUTOMATASIMULATOR_API TMDirection { LEFT, RIGHT, STAY };
 
-class AUTOMATASIMULATOR_API TMDirectionHelper {
+class TMDirectionHelper {
   public:
 	static std::string toString(TMDirection direction) {
 		switch (direction) {

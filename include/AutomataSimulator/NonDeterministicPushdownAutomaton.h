@@ -40,6 +40,8 @@ class AUTOMATASIMULATOR_API NonDeterministicPushdownAutomaton : public PushdownA
 	std::string serializeStack(const std::stack<std::string> &stack);
 
   public:
+	virtual ~NonDeterministicPushdownAutomaton() override;
+
 	/**
 	 * @brief Gets the possible current states
 	 * @brief Possible current states are the states that the automata could of

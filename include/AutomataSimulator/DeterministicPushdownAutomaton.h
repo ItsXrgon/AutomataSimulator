@@ -18,6 +18,8 @@ class AUTOMATASIMULATOR_API DeterministicPushdownAutomaton : public PushdownAuto
 	                                 const std::string &stackSymbol);
 
   public:
+	virtual ~DeterministicPushdownAutomaton() override;
+
 	/**
 	 * @brief Add a transition between 2 states to the automaton.
 	 * @param fromStateKey The key of the state to transition from.

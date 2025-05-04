@@ -19,6 +19,8 @@ class AUTOMATASIMULATOR_API DeterministicTuringMachine : public TuringMachine {
 	bool checkTransitionDeterminisim(const std::string &fromStateKey, const std::string &readSymbol);
 
   public:
+	virtual ~DeterministicTuringMachine() override;
+
 	/**
 	 * @brief Add a transition between 2 states to the automaton.
 	 * @param fromStateKey The key of the state to transition from.

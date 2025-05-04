@@ -1,16 +1,17 @@
 cmake_minimum_required(VERSION 3.16)
-project(AutomataSimulator)
+
+project(AutomataSimulator VERSION 1.0.0 LANGUAGES CXX)
+
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Define the library type (SHARED for DLL)
-option(BUILD_SHARED_LIBS "Build AutomataSimulator as a shared library" ON)
+if(WIN32)
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+endif()
 
-# Include directory for public headers
 include_directories(include)
 
-# Add source directory
 add_subdirectory(src)
 
-# Enable testing
-enable_testing()
-add_subdirectory(Tests)
+install(DIRECTORY include/ DESTINATION include
+        FILES_MATCHING PATTERN "*.h")

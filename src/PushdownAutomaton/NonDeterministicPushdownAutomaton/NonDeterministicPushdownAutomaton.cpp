@@ -1,5 +1,7 @@
 #include "AutomataSimulator/NonDeterministicPushdownAutomaton.h"
 
+NonDeterministicPushdownAutomaton::~NonDeterministicPushdownAutomaton() = default;
+
 PDATransition
 NonDeterministicPushdownAutomaton::decideRandomTransition(const std::unordered_set<PDATransition> &transitions) {
 	int randomIndex = rand() % transitions.size();
@@ -45,9 +47,9 @@ bool NonDeterministicPushdownAutomaton::processInput() {
 		throw InvalidAutomatonDefinitionException("Current state or start state must be set to run process input");
 	}
 
-	std::string input = "";
+	std::string inputSymbol = "";
 	if (inputHead < this->input.size()) {
-		input = this->input[inputHead];
+		inputSymbol = this->input[inputHead];
 	}
 
 	std::unordered_set<PDATransition> possibleTransitions;
@@ -60,7 +62,7 @@ bool NonDeterministicPushdownAutomaton::processInput() {
 		if (transition.getStackSymbol() != stackTop && !transition.getStackSymbol().empty()) {
 			continue;
 		}
-		if (transition.getInput() == input || transition.getInput().empty()) {
+		if (transition.getInput() == inputSymbol || transition.getInput().empty()) {
 			possibleTransitions.insert(transition);
 			possibleCurrentStates.insert(transition.getToStateKey());
 		}
@@ -85,7 +87,7 @@ bool NonDeterministicPushdownAutomaton::processInput() {
 		stack.push(*it);
 	}
 	// Only increment the head if the input is a match
-	const bool &incrementHead = transitionChosen.getInput() == input && inputHead < this->input.size();
+	const bool &incrementHead = transitionChosen.getInput() == inputSymbol && inputHead < this->input.size();
 	if (incrementHead) {
 		inputHead++;
 	}
@@ -184,4 +186,6 @@ bool NonDeterministicPushdownAutomaton::simulate(const std::vector<std::string> 
 			}
 		}
 	}
+
+	return false;
 }

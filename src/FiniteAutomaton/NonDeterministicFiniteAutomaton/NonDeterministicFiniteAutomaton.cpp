@@ -1,5 +1,7 @@
 #include "AutomataSimulator/NonDeterministicFiniteAutomaton.h"
 
+NonDeterministicFiniteAutomaton::~NonDeterministicFiniteAutomaton() = default;
+
 FATransition
 NonDeterministicFiniteAutomaton::decideRandomTransition(const std::unordered_set<FATransition> &transitions) {
 	int randomIndex = rand() % transitions.size();
@@ -146,9 +148,9 @@ bool NonDeterministicFiniteAutomaton::processInput() {
 		throw InvalidAutomatonDefinitionException("Current state or start state must be set to run process input");
 	}
 
-	std::string input = "";
+	std::string inputSymbol = "";
 	if (inputHead < this->input.size()) {
-		input = this->input[inputHead];
+		inputSymbol = this->input[inputHead];
 	}
 
 	std::unordered_set<FATransition> possibleTransitions;
@@ -157,7 +159,7 @@ bool NonDeterministicFiniteAutomaton::processInput() {
 	const std::vector<FATransition> &transitions = getStateInternal(currentState)->getTransitions();
 
 	for (const auto &transition : transitions) {
-		if (transition.getInput() != input && !transition.getInput().empty()) {
+		if (transition.getInput() != inputSymbol && !transition.getInput().empty()) {
 			continue;
 		}
 
@@ -174,7 +176,7 @@ bool NonDeterministicFiniteAutomaton::processInput() {
 	// Update current state to the chosen transition
 	currentState = transitionChosen.getToStateKey();
 	// Only increment the head if the input is a match
-	const bool &incrementHead = transitionChosen.getInput() == input && inputHead < this->input.size();
+	const bool &incrementHead = transitionChosen.getInput() == inputSymbol && inputHead < this->input.size();
 	if (incrementHead) {
 		inputHead++;
 	}

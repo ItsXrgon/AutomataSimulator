@@ -45,7 +45,7 @@ class AUTOMATASIMULATOR_API PDATransition {
 	static void validateTransitionKeyFormat(const std::string &key);
 
   public:
-	PDATransition() = default;
+	PDATransition();
 
 	/**
 	 * @brief Constructs a new Transition object.

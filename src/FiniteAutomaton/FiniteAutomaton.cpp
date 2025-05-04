@@ -458,6 +458,11 @@ void FiniteAutomaton::setStartState(const std::string &key) {
 	}
 }
 
+FATransition FiniteAutomaton::getTransition(const std::string &key) const {
+	const std::string &stateKey = FATransition::getFromStateFromKey(key);
+	return getState(stateKey).getTransition(key);
+}
+
 void FiniteAutomaton::addTransition(const std::string &fromStateKey, const std::string &toStateKey,
                                     const std::string &input) {
 	validateTransition(fromStateKey, toStateKey, input);
@@ -665,4 +670,26 @@ void FiniteAutomaton::reset() {
 
 bool FiniteAutomaton::isAccepting() const {
 	return getState(currentState).getIsAccept();
+}
+
+bool FiniteAutomaton::checkNextState(const std::string& key) const {
+	// Check if state exists
+	if (!stateExists(key)) {
+		throw StateNotFoundException(key);
+	}
+	
+
+	const std::string &currentInput = getInput()[inputHead];
+
+	FAState state = getState(currentState);
+	std::vector<FATransition> transitions = state.getTransitions();
+	for (const auto &transition : transitions) {
+		if (transition.getToStateKey() != key) {
+			continue;
+		}
+		if (transition.getInput().empty() || transition.getInput() == currentInput) {
+			return true;
+		}
+	}
+	return false;
 }

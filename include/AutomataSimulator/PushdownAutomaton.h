@@ -1,6 +1,5 @@
 #pragma once
 #include "PDAState.h"
-#include "PDATransition.h"
 #include <queue>
 #include <set>
 #include <sstream>
@@ -17,7 +16,7 @@ extern const std::string INITIAL_STACK_SYMBOL;
 /**
  * @brief Represents a pushdown automaton.
  */
-class PushdownAutomaton {
+class AUTOMATASIMULATOR_API PushdownAutomaton {
   protected:
 	/**
 	 * @brief The input of the automaton.
@@ -508,4 +507,12 @@ class PushdownAutomaton {
 	 * @throws SimulationDepthExceededException If the simulation depth is exceeded.
 	 */
 	virtual bool simulate(const std::vector<std::string> &input, const int &simulationDepth = 50) = 0;
+
+	/**
+	 * @brief Checks if the provided state is valid as the next state the automaton could transition to.
+	 * @param key The key of the state.
+	 * @return True if the input is accepted, false otherwise.
+	 * @throws StateNotFoundException If the state is not found.
+	 */
+	bool checkNextState(const std::string &key) const;
 };

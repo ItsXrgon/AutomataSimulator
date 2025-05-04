@@ -1,5 +1,8 @@
 #include "AutomataSimulator/FAState.h"
 
+
+FAState::FAState() : key(""), label(""), isAccept(false), transitionsCacheInvalidated(false) {}
+
 FAState::FAState(const std::string &label, const bool &isAccept)
     : key(label), label(label), isAccept(isAccept), transitionsCacheInvalidated(false) {}
 

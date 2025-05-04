@@ -1,5 +1,7 @@
 #include "AutomataSimulator/DeterministicFiniteAutomaton.h"
 
+DeterministicFiniteAutomaton::~DeterministicFiniteAutomaton() = default;
+
 void DeterministicFiniteAutomaton::checkAlphabetValidity(const std::vector<std::string> &inputAlphabet) const {
 	for (auto &symbol : inputAlphabet) {
 		if (symbol == "") {
@@ -138,12 +140,12 @@ bool DeterministicFiniteAutomaton::processInput() {
 		return getStateInternal(currentState)->getIsAccept();
 	}
 
-	const std::string &input = this->input[inputHead];
+	const std::string &inputSymbol = this->input[inputHead];
 
 	const std::vector<FATransition> &transitions = getStateInternal(currentState)->getTransitions();
 
 	for (const auto &transition : transitions) {
-		if (transition.getInput() != input) {
+		if (transition.getInput() != inputSymbol) {
 			continue;
 		}
 		currentState = transition.getToStateKey();

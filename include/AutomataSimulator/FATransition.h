@@ -35,7 +35,8 @@ class AUTOMATASIMULATOR_API FATransition {
 	static void validateTransitionKeyFormat(const std::string &key);
 
   public:
-	FATransition() = default;
+	FATransition();
+
 	/**
 	 * @brief Constructs a new Transition object.
 	 * @param fromState The state key from which the transition starts.
@@ -91,6 +92,7 @@ class AUTOMATASIMULATOR_API FATransition {
 	 * @brief Gets the to state key of a transition from its key.
 	 * @param key The transition key.
 	 * @return to state key.
+	 * @throws TransitionNotFoundException if the transition key format is invalid.
 	 */
 	static std::string getFromStateFromKey(const std::string &key);
 
@@ -98,6 +100,7 @@ class AUTOMATASIMULATOR_API FATransition {
 	 * @brief Gets the from state key of a transition from its key.
 	 * @param key The transition key.
 	 * @return from state key.
+	 * @throws TransitionNotFoundException if the transition key format is invalid.
 	 */
 	static std::string getToStateFromKey(const std::string &key);
 
@@ -105,6 +108,7 @@ class AUTOMATASIMULATOR_API FATransition {
 	 * @brief Gets the input value of a transition from its key.
 	 * @param key The transition key.
 	 * @return The input value.
+	 * @throws TransitionNotFoundException if the transition key format is invalid.
 	 */
 	static std::string getInputFromKey(const std::string &key);
 
