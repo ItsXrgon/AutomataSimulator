@@ -6,7 +6,7 @@
 /**
  * @brief Base class for custom exceptions related to finite automata constraints.
  */
-class AutomatonException : std::exception {
+class AUTOMATASIMULATOR_API AutomatonException : public std::exception {
   private:
 	std::string message;
 

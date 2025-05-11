@@ -19,28 +19,35 @@ typedef struct {
 	char *message;
 } AutomatonError;
 
-// Initialize a default error (success)
 inline AutomatonError create_success_error() {
-	AutomatonError error;
+	AutomatonError error{};
 	error.code = AUTOMATON_OK;
 	error.message = nullptr;
 	return error;
 }
 
-// Create an error with message
-inline AutomatonError create_error(AutomatonErrorCode code, const char *message) {
-	AutomatonError error;
-	error.code = code;
-	error.message = message ? strdup(message) : nullptr;
-	return error;
+inline void copy_automaton_error(AutomatonError *dest, const AutomatonError *src) {
+	dest->code = src->code;
+	if (src->message) {
+		char *new_msg = strdup(src->message);
+		if (!new_msg) {
+			throw std::bad_alloc();
+		}
+		dest->message = new_msg;
+	} else {
+		dest->message = nullptr;
+	}
 }
 
-// Free error resources
-inline void free_automaton_error(AutomatonError *error) {
-	if (error && error->message) {
-		free(error->message);
-		error->message = nullptr;
+inline AutomatonError create_error(AutomatonErrorCode code, const char *message) {
+	AutomatonError error{};
+	error.code = code;
+	try {
+		error.message = message ? strdup(message) : nullptr;
+	} catch (...) {
+		error.message = nullptr;
 	}
+	return error;
 }
 
 // Map C++ exceptions to AutomatonError

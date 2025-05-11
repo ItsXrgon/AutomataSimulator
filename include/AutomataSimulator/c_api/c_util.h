@@ -22,16 +22,15 @@ template <typename Func> inline void wrap_result(Func func, AutomatonError *erro
 		func();
 	} catch (const std::exception &ex) {
 		local_error = handle_exception_with_message(ex);
-		if (error) {
-			*error = local_error;
-		} else {
-			free_automaton_error(&local_error);
-		}
-		return;
 	}
 
 	if (error) {
-		*error = local_error;
+		try {
+			copy_automaton_error(error, &local_error);
+		} catch (...) {
+			error->code = local_error.code;
+			error->message = nullptr;
+		}
 	}
 }
 
@@ -59,14 +58,17 @@ inline T wrap_result(Func func, AutomatonError *error = nullptr, T default_value
 		local_error = handle_exception_with_message(ex);
 		if (error) {
 			*error = local_error;
-		} else {
-			free_automaton_error(&local_error);
 		}
 		return default_value;
 	}
 
 	if (error) {
-		*error = local_error;
+		try {
+			copy_automaton_error(error, &local_error);
+		} catch (...) {
+			error->code = local_error.code;
+			error->message = nullptr;
+		}
 	}
 	return result;
 }
@@ -74,5 +76,14 @@ inline T wrap_result(Func func, AutomatonError *error = nullptr, T default_value
 AUTOMATASIMULATOR_EXTERN_C_BEGIN
 
 AUTOMATASIMULATOR_EXPORT inline void free_c_string(char *str);
+
+AUTOMATASIMULATOR_EXPORT inline void free_automaton_error(AutomatonError *error) {
+	if (error) {
+		if (error->message) {
+			free(error->message);
+			error->message = nullptr;
+		}
+	}
+}
 
 AUTOMATASIMULATOR_EXTERN_C_END
