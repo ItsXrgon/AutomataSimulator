@@ -1,55 +1,77 @@
 #include "AutomataSimulator/TMTape.h"
+#include <sstream>
 
-TMTape::TMTape() : blankSymbol("_"), headPosition(0) {}
+TMTape::TMTape() : blankSymbol("_"), headIndex(0) {
+	tape.push_back(blankSymbol);
+	head = tape.begin();
+}
 
-TMTape::TMTape(std::string blankSymbol) : blankSymbol(blankSymbol), headPosition(0) {}
+TMTape::TMTape(std::string blankSymbol) : blankSymbol(blankSymbol), headIndex(0) {
+	tape.push_back(blankSymbol);
+	head = tape.begin();
+}
 
-TMTape::TMTape(const TMTape &other)
-    : tape(other.tape), headPosition(other.headPosition), blankSymbol(other.blankSymbol) {}
+TMTape::TMTape(const TMTape &other) : tape(other.tape), blankSymbol(other.blankSymbol), headIndex(other.headIndex) {
+	head = tape.begin();
+	std::advance(head, headIndex);
+}
 
 TMTape &TMTape::operator=(const TMTape &other) {
 	if (this != &other) {
 		tape = other.tape;
-		headPosition = other.headPosition;
 		blankSymbol = other.blankSymbol;
+		headIndex = other.headIndex;
+		head = tape.begin();
+		std::advance(head, headIndex);
 	}
 	return *this;
 }
 
 TMTape::TMTape(TMTape &&other) noexcept
-    : tape(std::move(other.tape)), headPosition(other.headPosition), blankSymbol(other.blankSymbol) {}
+    : tape(std::move(other.tape)), blankSymbol(std::move(other.blankSymbol)), headIndex(other.headIndex) {
+	head = tape.begin();
+	std::advance(head, headIndex);
+}
 
 TMTape &TMTape::operator=(TMTape &&other) noexcept {
 	if (this != &other) {
 		tape = std::move(other.tape);
-		headPosition = other.headPosition;
-		blankSymbol = other.blankSymbol;
+		blankSymbol = std::move(other.blankSymbol);
+		headIndex = other.headIndex;
+		head = tape.begin();
+		std::advance(head, headIndex);
 	}
 	return *this;
 }
 
 TMTape::~TMTape() {}
 
-void TMTape::setTape(const std::map<int, std::string> &tape) {
-	this->tape = tape;
-}
-
 void TMTape::loadInput(const std::vector<std::string> &input) {
 	tape.clear();
-	headPosition = 0;
-	for (int i = 0; i < input.size(); i++) {
-		tape[i] = input[i];
+	for (const auto &s : input) {
+		tape.push_back(s);
 	}
+	if (tape.empty()) {
+		tape.push_back(blankSymbol);
+	}
+	head = tape.begin();
+	headIndex = 0;
 }
 
-std::map<int, std::string> TMTape::getTape() const {
+std::list<std::string> TMTape::getTape() const {
 	return tape;
 }
 
-void TMTape::setBlankSymbol(std::string blankSymbol) {
-	for (auto &pair : tape) {
-		if (pair.second == this->blankSymbol) {
-			pair.second = blankSymbol;
+void TMTape::setTape(const std::list<std::string> &newTape) {
+	tape = newTape;
+	head = tape.begin();
+	headIndex = 0;
+}
+
+void TMTape::setBlankSymbol(const std::string &blankSymbol) {
+	for (auto &s : tape) {
+		if (s == this->blankSymbol) {
+			s = blankSymbol;
 		}
 	}
 	this->blankSymbol = blankSymbol;
@@ -60,37 +82,49 @@ std::string TMTape::getBlankSymbol() const {
 }
 
 void TMTape::setHeadPosition(const int &position) {
-	headPosition = position;
+	if (position < 0)
+		return;
+	while (position >= static_cast<int>(tape.size())) {
+		tape.push_back(blankSymbol);
+	}
+	head = tape.begin();
+	std::advance(head, position);
+	headIndex = position;
 }
 
 int TMTape::getHeadPosition() const {
-	return headPosition;
+	return headIndex;
 }
 
 std::string TMTape::read() const {
-	auto it = tape.find(headPosition);
-	if (it == tape.end()) {
-		return blankSymbol; // Return default blank symbol if headPosition not in tape
-	}
-	return it->second;
+	return *head;
 }
 
-void TMTape::write(std::string symbol) {
-	tape.insert_or_assign(headPosition, symbol);
+void TMTape::write(const std::string &symbol) {
+	*head = symbol;
 }
 
 void TMTape::moveLeft() {
-	if (isAtLeftEnd()) {
+	if (head == tape.begin()) {
 		return;
 	}
-	headPosition--;
+
+	--head;
+	--headIndex;
 }
 
 void TMTape::moveRight() {
-	headPosition++;
+	++head;
+	++headIndex;
+
+	if (head == tape.end()) {
+		// Append blank and reposition head
+		tape.push_back(blankSymbol);
+		head = std::prev(tape.end());
+	}
 }
 
-void TMTape::move(TMDirection direction) {
+void TMTape::move(const TMDirection &direction) {
 	switch (direction) {
 	case TMDirection::LEFT:
 		moveLeft();
@@ -98,38 +132,41 @@ void TMTape::move(TMDirection direction) {
 	case TMDirection::RIGHT:
 		moveRight();
 		break;
+	case TMDirection::STAY:
 	default:
 		break;
 	}
 }
+
 bool TMTape::isEmpty() const {
 	return tape.empty();
 }
 
 void TMTape::reset() {
 	tape.clear();
-	headPosition = 0;
+	tape.push_back(blankSymbol);
+	head = tape.begin();
+	headIndex = 0;
 }
 
 bool TMTape::isAtLeftEnd() const {
-	return headPosition == 0;
+	return head == tape.begin();
 }
 
 std::string TMTape::toString() const {
-	std::string tapeStr = "[";
-
-	// Iterate through the tape and append the symbol avoiding invalid string position
-	for (const auto &pair : tape) {
-		if (pair.first == headPosition) {
-			tapeStr += "(" + pair.second + "), ";
+	std::ostringstream oss;
+	oss << "[";
+	int i = 0;
+	for (auto it = tape.begin(); it != tape.end(); ++it, ++i) {
+		if (i == headIndex) {
+			oss << "(" << *it << ")";
 		} else {
-			tapeStr += pair.second + ", ";
+			oss << *it;
+		}
+		if (std::next(it) != tape.end()) {
+			oss << ", ";
 		}
 	}
-
-	if (tapeStr.size() > 1) {
-		tapeStr.erase(tapeStr.size() - 2, 2);
-	}
-	tapeStr += "]";
-	return tapeStr;
+	oss << "]";
+	return oss.str();
 }

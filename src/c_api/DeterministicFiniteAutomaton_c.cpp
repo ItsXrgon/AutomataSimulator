@@ -14,7 +14,7 @@ void DFA_destroy(DFAHandle dfa, AutomatonError *error) {
 }
 
 const StringArray DFA_getInput(DFAHandle dfa, AutomatonError *error) {
-	return wrap_result<StringArray>(
+	return wrap_result<const StringArray>(
 	    [&]() { return convertToStringArray(reinterpret_cast<DeterministicFiniteAutomaton *>(dfa)->getInput()); },
 	    error);
 }
@@ -38,8 +38,8 @@ void DFA_addInput(DFAHandle dfa, const char **input, const size_t length, Automa
 }
 
 const int DFA_getInputHead(DFAHandle dfa, AutomatonError *error) {
-	return wrap_result<int>([&]() { return reinterpret_cast<DeterministicFiniteAutomaton *>(dfa)->getInputHead(); },
-	                        error);
+	return wrap_result<const int>(
+	    [&]() { return reinterpret_cast<DeterministicFiniteAutomaton *>(dfa)->getInputHead(); }, error);
 }
 
 void DFA_setInputHead(DFAHandle dfa, const int head, AutomatonError *error) {
@@ -47,12 +47,12 @@ void DFA_setInputHead(DFAHandle dfa, const int head, AutomatonError *error) {
 }
 
 const bool DFA_stateExists(DFAHandle dfa, const char *key, AutomatonError *error) {
-	return wrap_result<bool>([&]() { return reinterpret_cast<DeterministicFiniteAutomaton *>(dfa)->stateExists(key); },
-	                         error);
+	return wrap_result<const bool>(
+	    [&]() { return reinterpret_cast<DeterministicFiniteAutomaton *>(dfa)->stateExists(key); }, error);
 }
 
 const bool DFA_inputAlphabetSymbolExists(DFAHandle dfa, const char *symbol, AutomatonError *error) {
-	return wrap_result<bool>(
+	return wrap_result<const bool>(
 	    [&]() { return reinterpret_cast<DeterministicFiniteAutomaton *>(dfa)->inputAlphabetSymbolExists(symbol); },
 	    error);
 }
@@ -76,7 +76,7 @@ void DFA_setCurrentState(DFAHandle dfa, const char *state, AutomatonError *error
 }
 
 const FAStateHandle DFA_getState(DFAHandle dfa, const char *key, AutomatonError *error) {
-	return wrap_result<FAStateHandle>(
+	return wrap_result<const FAStateHandle>(
 	    [&]() {
 		    return reinterpret_cast<FAStateHandle>(
 		        new FAState(reinterpret_cast<DeterministicFiniteAutomaton *>(dfa)->getState(key)));
@@ -85,7 +85,7 @@ const FAStateHandle DFA_getState(DFAHandle dfa, const char *key, AutomatonError 
 }
 
 const FAStateArray DFA_getStates(DFAHandle dfa, AutomatonError *error) {
-	return wrap_result<FAStateArray>(
+	return wrap_result<const FAStateArray>(
 	    [&]() {
 		    auto states = reinterpret_cast<DeterministicFiniteAutomaton *>(dfa)->getStates();
 
@@ -139,7 +139,7 @@ void DFA_addInputAlphabet(DFAHandle dfa, const char **inputAlphabet, const size_
 }
 
 const StringArray DFA_getInputAlphabet(DFAHandle dfa, AutomatonError *error) {
-	return wrap_result<StringArray>(
+	return wrap_result<const StringArray>(
 	    [&]() {
 		    return convertToStringArray(reinterpret_cast<DeterministicFiniteAutomaton *>(dfa)->getInputAlphabet());
 	    },
@@ -185,13 +185,13 @@ void DFA_addTransition(DFAHandle dfa, const char *fromStateKey, const char *toSt
 	    error);
 }
 
-FATransitionHandle DFA_getTransition(DFAHandle dfa, const char *key, AutomatonError *error) {  
-   return wrap_result<FATransitionHandle>(  
-       [&]() {  
-           return reinterpret_cast<FATransitionHandle>(  
-               new FATransition(reinterpret_cast<DeterministicFiniteAutomaton *>(dfa)->getTransition(key)));  
-       },  
-       error);  
+const FATransitionHandle DFA_getTransition(DFAHandle dfa, const char *key, AutomatonError *error) {
+	return wrap_result<const FATransitionHandle>(
+	    [&]() {
+		    return reinterpret_cast<FATransitionHandle>(
+		        new FATransition(reinterpret_cast<DeterministicFiniteAutomaton *>(dfa)->getTransition(key)));
+	    },
+	    error);
 }
 
 void DFA_updateTransitionInput(DFAHandle dfa, const char *transitionKey, const char *input, AutomatonError *error) {
@@ -273,7 +273,7 @@ void DFA_clearAcceptStates(DFAHandle dfa, AutomatonError *error) {
 }
 
 const FAStateArray DFA_getAcceptStates(DFAHandle dfa, AutomatonError *error) {
-	return wrap_result<FAStateArray>(
+	return wrap_result<const FAStateArray>(
 	    [&]() {
 		    auto states = reinterpret_cast<DeterministicFiniteAutomaton *>(dfa)->getAcceptStates();
 
@@ -295,21 +295,26 @@ void DFA_reset(DFAHandle dfa, AutomatonError *error) {
 }
 
 const bool DFA_isAccepting(DFAHandle dfa, AutomatonError *error) {
-	return wrap_result<bool>([&]() { return reinterpret_cast<DeterministicFiniteAutomaton *>(dfa)->isAccepting(); },
-	                         error);
+	return wrap_result<const bool>(
+	    [&]() { return reinterpret_cast<DeterministicFiniteAutomaton *>(dfa)->isAccepting(); }, error);
 }
 
 bool DFA_processInput(DFAHandle dfa, AutomatonError *error) {
-	return wrap_result<bool>([&]() { return reinterpret_cast<DeterministicFiniteAutomaton *>(dfa)->processInput(); },
-	                         error);
+	return wrap_result<const bool>(
+	    [&]() { return reinterpret_cast<DeterministicFiniteAutomaton *>(dfa)->processInput(); }, error);
 }
 
 const bool DFA_simulate(DFAHandle dfa, const char **input, const size_t length, const int simulationDepth,
                         AutomatonError *error) {
-	return wrap_result<bool>(
+	return wrap_result<const bool>(
 	    [&]() {
 		    std::vector<std::string> input_vec(input, input + length);
 		    return reinterpret_cast<DeterministicFiniteAutomaton *>(dfa)->simulate(input_vec, simulationDepth);
 	    },
 	    error);
+}
+
+const bool DFA_checkNextState(DFAHandle dfa, const char *key, AutomatonError *error) {
+	return wrap_result<const bool>(
+	    [&]() { return reinterpret_cast<DeterministicFiniteAutomaton *>(dfa)->checkNextState(key); }, error);
 }

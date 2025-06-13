@@ -48,7 +48,7 @@ void FATransition::validateTransitionKeyFormat(const std::string &key) {
 	// Expected format: fromState-toState-input
 	int delimiterCount = std::count(key.begin(), key.end(), '-');
 	if (delimiterCount != 2) {
-		throw TransitionNotFoundException("Invalid FA transition key format: " + key);
+		throw InvalidTransitionException("Invalid FA transition key format: " + key);
 	}
 }
 

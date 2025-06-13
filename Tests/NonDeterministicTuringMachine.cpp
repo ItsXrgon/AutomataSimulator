@@ -1115,8 +1115,6 @@ TEST_F(NTM_Test, ProcessInput_ShouldAcceptValidSequence) {
 
 	automaton->setInput({"0", "0", "0", "0"});
 
-	std::map<int, std::string> tape = automaton->getTape();
-
 	automaton->processInput();
 }
 

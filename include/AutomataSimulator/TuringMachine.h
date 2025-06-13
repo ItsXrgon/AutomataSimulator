@@ -104,7 +104,7 @@ class AUTOMATASIMULATOR_API TuringMachine {
 	/**
 	 * @brief Constructs a new TuringMachine Automaton object.
 	 */
-	TuringMachine(std::string blankSymbol);
+	TuringMachine(const std::string &blankSymbol);
 
 	/**
 	 * @brief Destructor for the TuringMachine Automaton object.
@@ -155,13 +155,48 @@ class AUTOMATASIMULATOR_API TuringMachine {
 	 * @brief This resets the tape and tape head.
 	 * @param tape The tape as an int - char map.
 	 */
-	void setTape(std::map<int, std::string> &tape);
+	void setTape(std::list<std::string> &tape);
 
 	/**
 	 * @brief Gets the tape.
 	 * @return The tape as char vector.
 	 */
-	std::map<int, std::string> getTape() const;
+	std::list<std::string> getTape() const;
+
+	/**
+	 * Sets the tape head
+	 * @param headIndex the new head index
+	 */
+	void setTapeHead(const int &headIndex);
+
+	/**
+	 * Gets the tape head
+	 * @return the index of the head
+	 */
+	int getTapehead() const;
+
+	/**
+	 * Resets the tape
+	 */
+	void resetTape();
+
+	/**
+	 * Moves tape head according to direction provided
+	 * @param direction The direction to move
+	 */
+	void moveTapeHead(const TMDirection &direction);
+
+	/**
+	 * Writes to the tape
+	 * @param symbol The symbol to write to the tape
+	 */
+	void writeTape(const std::string &symbol);
+
+	/**
+	 * Reads from the tape
+	 * @returm The symbol read from the tape
+	 */
+	std::string readTape() const;
 
 	/**
 	 * @brief Adds a state to the automaton.
@@ -295,7 +330,7 @@ class AUTOMATASIMULATOR_API TuringMachine {
 
 	/**
 	 * @brief Remove a symbol from the stack alphabet
-	 * @brief This will also remove the symbol from the input alphabet if present.	
+	 * @brief This will also remove the symbol from the input alphabet if present.
 	 * @param symbol The symbol to remove
 	 * @throws InputAlphabetSymbolNotFoundException If the alphabet symbol is not found.
 	 */
@@ -316,6 +351,13 @@ class AUTOMATASIMULATOR_API TuringMachine {
 	void clearTapeAlphabet(const bool &strict = true);
 
 	/**
+	 * @brief Gets the start state key of the automaton.
+	 * @return The start state key of the automaton.
+	 * @throws InvalidStartStateException If the start state is not set.
+	 */
+	std::string getStartState() const;
+
+	/**
 	 * @brief Sets the start state key of the automaton.
 	 * @param key The state key.
 	 * @throws InvalidStartStateException If the state is not in the automaton.
@@ -323,11 +365,11 @@ class AUTOMATASIMULATOR_API TuringMachine {
 	void setStartState(const std::string &key);
 
 	/**
-	 * @brief Gets the start state key of the automaton.
-	 * @return The start state key of the automaton.
-	 * @throws InvalidStartStateException If the start state is not set.
+	 * @brief Gets a transition from the automaton.
+	 * @param key The key of the transition.
+	 * @throws TransitionNotFoundException If the transition is not found.
 	 */
-	std::string getStartState() const;
+	TMTransition getTransition(const std::string &key) const;
 
 	/**
 	 * @brief Add a transition between 2 states to the automaton.

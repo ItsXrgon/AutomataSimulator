@@ -32,15 +32,15 @@ FAState *FiniteAutomaton::getStateInternal(const std::string &key) {
 	return &(it->second);
 }
 
-bool FiniteAutomaton::stateExists(const std::string &key) const {
+const bool FiniteAutomaton::stateExists(const std::string &key) const {
 	return states.find(key) != states.end();
 }
 
-bool FiniteAutomaton::inputAlphabetSymbolExists(const std::string &symbol) const {
+const bool FiniteAutomaton::inputAlphabetSymbolExists(const std::string &symbol) const {
 	return inputAlphabet.find(symbol) != inputAlphabet.end();
 }
 
-std::vector<std::string> FiniteAutomaton::getInput() const {
+const std::vector<std::string> FiniteAutomaton::getInput() const {
 	return input;
 }
 
@@ -53,7 +53,7 @@ void FiniteAutomaton::addInput(const std::vector<std::string> &input) {
 	this->input.insert(this->input.end(), input.begin(), input.end());
 }
 
-int FiniteAutomaton::getInputHead() const {
+const int FiniteAutomaton::getInputHead() const {
 	return inputHead;
 }
 
@@ -74,6 +74,16 @@ void FiniteAutomaton::addState(const std::string &label, const bool &isAccept) {
 	}
 
 	FAState state(label, isAccept);
+
+	// Check if start state is empty, if so set it to the new state
+	if (startState.empty()) {
+		startState = label;
+	}
+
+	// Check if current state is empty, if so set it to the new state
+	if (currentState.empty()) {
+		currentState = label;
+	}
 
 	// Update the vector and invalidate conversion cache
 	states[state.getKey()] = state;
@@ -100,7 +110,7 @@ void FiniteAutomaton::updateStateLabel(const std::string &key, const std::string
 	statesCacheInvalidated = true;
 }
 
-std::string FiniteAutomaton::getCurrentState() const {
+const std::string FiniteAutomaton::getCurrentState() const {
 	// If there is no current state and no start state to fallback to then throw error
 	if (currentState.empty() && startState.empty()) {
 		throw InvalidAutomatonDefinitionException("Current state and start state are not set");
@@ -132,7 +142,7 @@ FAState FiniteAutomaton::getState(const std::string &key) const {
 	return it->second;
 }
 
-std::vector<FAState> FiniteAutomaton::getStates() {
+const std::vector<FAState> FiniteAutomaton::getStates() {
 	// if the conversion cache from unordered_map to vector is not valid then recompute
 	if (statesCacheInvalidated) {
 		cachedStates.clear();
@@ -309,7 +319,7 @@ void FiniteAutomaton::addInputAlphabet(const std::vector<std::string> &inputAlph
 	inputAlphabetCacheInvalidated = true;
 }
 
-std::vector<std::string> FiniteAutomaton::getInputAlphabet() {
+const std::vector<std::string> FiniteAutomaton::getInputAlphabet() {
 	// if the conversion cache from unordered_set to vector is not valid then recompute
 	if (inputAlphabetCacheInvalidated) {
 		cachedInputAlphabet.clear();
@@ -438,7 +448,7 @@ void FiniteAutomaton::clearInputAlphabet(const bool &strict) {
 	inputAlphabetCacheInvalidated = true;
 }
 
-std::string FiniteAutomaton::getStartState() const {
+const std::string FiniteAutomaton::getStartState() const {
 	if (startState.empty()) {
 		throw InvalidStartStateException("Start state is not set");
 	}
@@ -668,21 +678,20 @@ void FiniteAutomaton::reset() {
 	inputHead = 0;
 }
 
-bool FiniteAutomaton::isAccepting() const {
+const bool FiniteAutomaton::isAccepting() const {
 	return getState(currentState).getIsAccept();
 }
 
-bool FiniteAutomaton::checkNextState(const std::string& key) const {
+const bool FiniteAutomaton::checkNextState(const std::string &key) const {
 	// Check if state exists
 	if (!stateExists(key)) {
 		throw StateNotFoundException(key);
 	}
-	
 
 	const std::string &currentInput = getInput()[inputHead];
 
 	FAState state = getState(currentState);
-	std::vector<FATransition> transitions = state.getTransitions();
+	const std::vector<FATransition> &transitions = state.getTransitions();
 	for (const auto &transition : transitions) {
 		if (transition.getToStateKey() != key) {
 			continue;

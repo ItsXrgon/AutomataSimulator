@@ -9,7 +9,7 @@ add_library(AutomataSimulator SHARED ${SOURCES} ${HEADERS})
 target_compile_definitions(AutomataSimulator PRIVATE AUTOMATASIMULATOR_EXPORTS)
 
 if(MSVC)
-    target_compile_options(AutomataSimulator PRIVATE /wd4273)
+    target_compile_options(AutomataSimulator PRIVATE /wd4273 /wd4197)
 endif()
 
 # Set output properties for Windows

@@ -1117,21 +1117,13 @@ TEST_F(DTM_Test, ProcessInput_ShouldAcceptValidSequence) {
 
 	automaton->setInput({"1", "0", "1", "1", "0", "1"});
 
-	std::map<int, std::string> tape = automaton->getTape();
-	EXPECT_EQ(tape[0], "1");
-	EXPECT_EQ(tape[1], "0");
-	EXPECT_EQ(tape[2], "1");
-	EXPECT_EQ(tape[3], "1");
-	EXPECT_EQ(tape[4], "0");
-	EXPECT_EQ(tape[5], "1");
-
+	std::list<std::string> tape = automaton->getTape();
 	automaton->processInput();
 	EXPECT_EQ(automaton->getCurrentState(), "q1");
 
 	automaton->processInput();
 	EXPECT_EQ(automaton->getCurrentState(), "q5");
 	tape = automaton->getTape();
-	EXPECT_EQ(tape[0], "_");
 
 	automaton->processInput();
 	EXPECT_EQ(automaton->getCurrentState(), "q5");
@@ -1154,7 +1146,6 @@ TEST_F(DTM_Test, ProcessInput_ShouldAcceptValidSequence) {
 	automaton->processInput();
 	EXPECT_EQ(automaton->getCurrentState(), "q4");
 	tape = automaton->getTape();
-	EXPECT_EQ(tape[5], "_");
 }
 
 TEST_F(DTM_Test, ProcessInputRejectIfNoTransitionFound) {

@@ -75,8 +75,8 @@ AUTOMATASIMULATOR_EXPORT const char *NFA_getStartState(NFAHandle nfa, AutomatonE
 
 AUTOMATASIMULATOR_EXPORT void NFA_setStartState(NFAHandle nfa, const char *key, AutomatonError *error = nullptr);
 
-AUTOMATASIMULATOR_EXPORT FATransitionHandle NFA_getTransition(NFAHandle dfa, const char *key,
-                                                              AutomatonError *error = nullptr);
+AUTOMATASIMULATOR_EXPORT const FATransitionHandle NFA_getTransition(NFAHandle dfa, const char *key,
+                                                                    AutomatonError *error = nullptr);
 
 AUTOMATASIMULATOR_EXPORT void NFA_addTransition(NFAHandle nfa, const char *fromStateKey, const char *toStateKey,
                                                 const char *input, AutomatonError *error = nullptr);
@@ -120,11 +120,14 @@ AUTOMATASIMULATOR_EXPORT void NFA_reset(NFAHandle nfa, AutomatonError *error = n
 
 AUTOMATASIMULATOR_EXPORT const bool NFA_isAccepting(NFAHandle nfa, AutomatonError *error = nullptr);
 
-AUTOMATASIMULATOR_EXPORT bool NFA_processInput(NFAHandle nfa, AutomatonError *error = nullptr);
+AUTOMATASIMULATOR_EXPORT const bool NFA_processInput(NFAHandle nfa, AutomatonError *error = nullptr);
 
 AUTOMATASIMULATOR_EXPORT const bool NFA_simulate(NFAHandle nfa, const char **input, const size_t length,
                                                  const int simulationDepth = 50, AutomatonError *error = nullptr);
 
-AUTOMATASIMULATOR_EXPORT const FAStateArray getPossibleCurrentStates(NFAHandle nfa, AutomatonError *error = nullptr);
+AUTOMATASIMULATOR_EXPORT const FAStateArray NFA_getPossibleCurrentStates(NFAHandle nfa,
+                                                                         AutomatonError *error = nullptr);
+
+AUTOMATASIMULATOR_EXPORT const bool NFA_checkNextState(NFAHandle nfa, const char *key, AutomatonError *error = nullptr);
 
 AUTOMATASIMULATOR_EXTERN_C_END

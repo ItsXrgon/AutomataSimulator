@@ -8,7 +8,7 @@ TuringMachine::TuringMachine()
 	tape = TMTape(DEFAULT_BLANK_SYMBOL);
 }
 
-TuringMachine::TuringMachine(std::string blankSymbol)
+TuringMachine::TuringMachine(const std::string &blankSymbol)
     : startState(""), inputAlphabetCacheInvalidated(false), tapeAlphabetCacheInvalidated(false),
       statesCacheInvalidated(false) {
 	tape = TMTape(blankSymbol);
@@ -101,12 +101,40 @@ void TuringMachine::addInput(const std::vector<std::string> &input) {
 	this->tape.loadInput(this->input);
 }
 
-std::map<int, std::string> TuringMachine::getTape() const {
+std::list<std::string> TuringMachine::getTape() const {
 	return tape.getTape();
 }
 
-void TuringMachine::setTape(std::map<int, std::string> &tape) {
+void TuringMachine::setTape(std::list<std::string> &tape) {
 	this->tape.setTape(tape);
+}
+
+void TuringMachine::setTapeHead(const int &headIndex) {
+	tape.setHeadPosition(headIndex);
+}
+
+int TuringMachine::getTapehead() const {
+	return tape.getHeadPosition();
+}
+
+void TuringMachine::resetTape() {
+	tape.reset();
+}
+
+void TuringMachine::moveTapeHead(const TMDirection &direction) {
+	tape.move(direction);
+}
+
+void TuringMachine::writeTape(const std::string &symbol) {
+	if (symbol.empty() && symbol != tape.getBlankSymbol() && !tapeAlphabetSymbolExists(symbol)) {
+		throw TapeAlphabetSymbolNotFoundException("Symbol not in tape alphabet: " + symbol);
+	}
+
+	tape.write(symbol);
+}
+
+std::string TuringMachine::readTape() const {
+	return tape.read();
 }
 
 bool TuringMachine::stateExists(const std::string &key) const {
@@ -128,6 +156,16 @@ void TuringMachine::addState(const std::string &label, const bool &isAccept) {
 	}
 
 	TMState state(label, isAccept);
+
+	// Check if start state is empty, if so set it to the new state
+	if (startState.empty()) {
+		startState = label;
+	}
+
+	// Check if current state is empty, if so set it to the new state
+	if (currentState.empty()) {
+		currentState = label;
+	}
 
 	// Update the vector and invalidate conversion cache
 	states[state.getKey()] = state;
@@ -640,6 +678,11 @@ void TuringMachine::setStartState(const std::string &key) {
 	}
 }
 
+TMTransition TuringMachine::getTransition(const std::string &key) const {
+	const std::string &stateKey = TMTransition::getFromStateFromKey(key);
+	return getState(stateKey).getTransition(key);
+}
+
 void TuringMachine::addTransition(const std::string &fromStateKey, const std::string &toStateKey,
                                   const std::string &readSymbol, const std::string &writeSymbol,
                                   TMDirection direction) {
@@ -923,7 +966,6 @@ bool TuringMachine::isAccepting() const {
 	return getState(currentState).getIsAccept();
 }
 
-
 bool TuringMachine::checkNextState(const std::string &key) const {
 	// Check if state exists
 	if (!stateExists(key)) {
@@ -933,7 +975,7 @@ bool TuringMachine::checkNextState(const std::string &key) const {
 	const std::string &tapeValue = tape.read();
 
 	TMState state = getState(currentState);
-	std::vector<TMTransition> transitions = state.getTransitions();
+	const std::vector<TMTransition> &transitions = state.getTransitions();
 
 	for (const auto &transition : transitions) {
 		if (transition.getToStateKey() != key) {

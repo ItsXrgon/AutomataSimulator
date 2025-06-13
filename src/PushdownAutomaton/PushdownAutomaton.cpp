@@ -150,6 +150,37 @@ void PushdownAutomaton::setStack(std::stack<std::string> stack) {
 	this->stack = stack;
 }
 
+void PushdownAutomaton::pushStack(const std::string &symbol) {
+	if (symbol.empty() || !stackAlphabetSymbolExists(symbol)) {
+		throw StackAlphabetSymbolNotFoundException("Symbol not in alphabet");
+	}
+
+	stack.push(symbol);
+}
+
+std::string PushdownAutomaton::popStack() {
+	if (stack.empty()) {
+		return "";
+	}
+
+	const std::string &top = stack.top();
+	stack.pop();
+
+	return top;
+}
+
+std::string PushdownAutomaton::peekStack() const {
+	if (stack.empty()) {
+		return "";
+	}
+
+	return stack.top();
+}
+
+void PushdownAutomaton::resetStack() {
+	stack = std::stack<std::string>();
+}
+
 bool PushdownAutomaton::stateExists(const std::string &key) const {
 	return states.find(key) != states.end();
 }
@@ -169,6 +200,16 @@ void PushdownAutomaton::addState(const std::string &label, const bool &isAccept)
 	}
 
 	PDAState state(label, isAccept);
+
+	// Check if start state is empty, if so set it to the new state
+	if (startState.empty()) {
+		startState = label;
+	}
+
+	// Check if current state is empty, if so set it to the new state
+	if (currentState.empty()) {
+		currentState = label;
+	}
 
 	// Update the vector and invalidate conversion cache
 	states[state.getKey()] = state;
@@ -694,6 +735,11 @@ void PushdownAutomaton::setStartState(const std::string &key) {
 	}
 }
 
+PDATransition PushdownAutomaton::getTransition(const std::string &key) const {
+	const std::string &stateKey = PDATransition::getFromStateFromKey(key);
+	return getState(stateKey).getTransition(key);
+}
+
 void PushdownAutomaton::addTransition(const std::string &fromStateKey, const std::string &toStateKey,
                                       const std::string &input, const std::string &stackSymbol,
                                       const std::string &pushSymbol) {
@@ -981,9 +1027,9 @@ bool PushdownAutomaton::checkNextState(const std::string &key) const {
 	const std::string &currentInput = getInput()[inputHead];
 
 	PDAState state = getState(currentState);
-	std::vector<PDATransition> transitions = state.getTransitions();
+	const std::vector<PDATransition> &transitions = state.getTransitions();
 
-	std::string stackTop = stack.empty() ? "" : stack.top();
+	const std::string &stackTop = stack.empty() ? "" : stack.top();
 	for (const auto &transition : transitions) {
 		if (transition.getToStateKey() != key) {
 			continue;

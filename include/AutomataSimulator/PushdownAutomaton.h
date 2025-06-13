@@ -187,6 +187,29 @@ class AUTOMATASIMULATOR_API PushdownAutomaton {
 	void setStack(std::stack<std::string> stack);
 
 	/**
+	 * Pushes a symbol onto the stack
+	 * @param symbol The symbol to push
+	 */
+	void pushStack(const std::string &symbol);
+
+	/**
+	 * Pops a symbol from the stack
+	 * @return the popped symbol
+	 */
+	std::string popStack();
+
+	/**
+	 * Read the top symbol from the stack
+	 * @return the top symbol
+	 */
+	std::string peekStack() const;
+
+	/**
+	 * Resets the stack
+	 */
+	void resetStack();
+
+	/**
 	 * @brief Adds a state to the automaton.
 	 * @param label The label for the state.
 	 * @param isAccept Whether the state is an accept state or not.
@@ -335,6 +358,13 @@ class AUTOMATASIMULATOR_API PushdownAutomaton {
 	void clearStackAlphabet(const bool &strict = true);
 
 	/**
+	 * @brief Gets the start state key of the automaton.
+	 * @return The start state key of the automaton.
+	 * @throws InvalidStartStateException If the start state is not set.
+	 */
+	std::string getStartState() const;
+
+	/**
 	 * @brief Sets the start state key of the automaton.
 	 * @param key The state key.
 	 * @throws InvalidStartStateException If the state is not in the automaton.
@@ -342,11 +372,11 @@ class AUTOMATASIMULATOR_API PushdownAutomaton {
 	void setStartState(const std::string &key);
 
 	/**
-	 * @brief Gets the start state key of the automaton.
-	 * @return The start state key of the automaton.
-	 * @throws InvalidStartStateException If the start state is not set.
+	 * @brief Gets a transition from the automaton.
+	 * @param key The key of the transition.
+	 * @throws TransitionNotFoundException If the transition is not found.
 	 */
-	std::string getStartState() const;
+	PDATransition getTransition(const std::string &key) const;
 
 	/**
 	 * @brief Add a transition between 2 states to the automaton.

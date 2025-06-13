@@ -123,7 +123,7 @@ void NonDeterministicFiniteAutomaton::updateTransitionInput(const std::string &t
 	FiniteAutomaton::updateTransitionInput(transitionKey, input);
 }
 
-std::vector<std::string> NonDeterministicFiniteAutomaton::getPossibleCurrentStates() {
+const std::vector<std::string> NonDeterministicFiniteAutomaton::getPossibleCurrentStates() {
 	// if the conversion cache from unordered_set to vector is not valid then recompute
 	if (possibleCurrentStatesCacheInvalidated) {
 		cachedPossibleCurrentStates.clear();
@@ -143,7 +143,7 @@ void NonDeterministicFiniteAutomaton::reset() {
 	possibleCurrentStatesCacheInvalidated = true;
 }
 
-bool NonDeterministicFiniteAutomaton::processInput() {
+const bool NonDeterministicFiniteAutomaton::processInput() {
 	if (currentState.empty()) {
 		throw InvalidAutomatonDefinitionException("Current state or start state must be set to run process input");
 	}
@@ -205,7 +205,7 @@ template <> struct hash<Visited> {
 };
 } // namespace std
 
-bool NonDeterministicFiniteAutomaton::simulate(const std::vector<std::string> &input, const int &simulationDepth) {
+const bool NonDeterministicFiniteAutomaton::simulate(const std::vector<std::string> &input, const int &simulationDepth) {
 	if (startState.empty()) {
 		throw InvalidStartStateException("Start state must be set to run simulate");
 	}

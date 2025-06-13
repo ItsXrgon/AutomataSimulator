@@ -121,7 +121,7 @@ class AUTOMATASIMULATOR_API NonDeterministicFiniteAutomaton : public FiniteAutom
 	 * chosen in the last simulation based on the previous current state
 	 * @return The possible current states of the automaton.
 	 */
-	std::vector<std::string> getPossibleCurrentStates();
+	const std::vector<std::string> getPossibleCurrentStates();
 
 	/**
 	 * @brief Reset the NFA to the start state.
@@ -137,7 +137,7 @@ class AUTOMATASIMULATOR_API NonDeterministicFiniteAutomaton : public FiniteAutom
 	 * @throws InvalidAlphabetException If the alphabet is not set.
 	 * @throws InputConsumedException If the input head exceeds the length of the input.
 	 */
-	bool processInput() override;
+	const bool processInput() override;
 
 	/**
 	 * @brief Simulates the NFA on a given input string.
@@ -145,5 +145,5 @@ class AUTOMATASIMULATOR_API NonDeterministicFiniteAutomaton : public FiniteAutom
 	 * @return True if the input is accepted, false otherwise.
 	 * @throws InvalidStartStateException If the start state is not set.
 	 */
-	bool simulate(const std::vector<std::string> &input, const int &simulationDepth = 50) override;
+	const bool simulate(const std::vector<std::string> &input, const int &simulationDepth = 50) override;
 };

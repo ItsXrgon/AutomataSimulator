@@ -741,7 +741,7 @@ TEST_F(NFA_Test, ClearTransitions_RemovesAllTransitions) {
 
 	automaton->clearTransitions();
 
-	for (auto &state : automaton->getStates()) {
+	for (auto state : automaton->getStates()) {
 		EXPECT_TRUE(state.getTransitions().empty());
 	}
 }
@@ -903,7 +903,7 @@ TEST_F(NFA_Test, ProcessInput_ShouldUpdatePossibleCurrentStates) {
 
 	automaton->setInput({"0", "1"});
 	automaton->processInput();
-	std::vector<std::string> &possibleStates = automaton->getPossibleCurrentStates();
+	std::vector<std::string> possibleStates = automaton->getPossibleCurrentStates();
 
 	EXPECT_EQ(possibleStates.size(), 1);
 	EXPECT_TRUE(std::find(possibleStates.begin(), possibleStates.end(), "q0") != possibleStates.end());

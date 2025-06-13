@@ -38,7 +38,8 @@ void NFA_addInput(NFAHandle nfa, const char **input, const size_t length, Automa
 }
 
 const int NFA_getInputHead(NFAHandle nfa, AutomatonError *error) {
-	return wrap_result<int>([&]() { return reinterpret_cast<NonDeterministicFiniteAutomaton *>(nfa)->getInputHead(); },
+	return wrap_result<const int>(
+	    [&]() { return reinterpret_cast<NonDeterministicFiniteAutomaton *>(nfa)->getInputHead(); },
 	                        error);
 }
 
@@ -47,12 +48,12 @@ void NFA_setInputHead(NFAHandle nfa, const int head, AutomatonError *error) {
 }
 
 const bool NFA_stateExists(NFAHandle nfa, const char *key, AutomatonError *error) {
-	return wrap_result<bool>(
+	return wrap_result<const bool>(
 	    [&]() { return reinterpret_cast<NonDeterministicFiniteAutomaton *>(nfa)->stateExists(key); }, error);
 }
 
 const bool NFA_inputAlphabetSymbolExists(NFAHandle nfa, const char *symbol, AutomatonError *error) {
-	return wrap_result<bool>(
+	return wrap_result<const bool>(
 	    [&]() { return reinterpret_cast<NonDeterministicFiniteAutomaton *>(nfa)->inputAlphabetSymbolExists(symbol); },
 	    error);
 }
@@ -77,7 +78,7 @@ void NFA_setCurrentState(NFAHandle nfa, const char *state, AutomatonError *error
 }
 
 const FAStateHandle NFA_getState(NFAHandle nfa, const char *key, AutomatonError *error) {
-	return wrap_result<FAStateHandle>(
+	return wrap_result<const FAStateHandle>(
 	    [&]() {
 		    return reinterpret_cast<FAStateHandle>(
 		        new FAState(reinterpret_cast<NonDeterministicFiniteAutomaton *>(nfa)->getState(key)));
@@ -86,7 +87,7 @@ const FAStateHandle NFA_getState(NFAHandle nfa, const char *key, AutomatonError 
 }
 
 const FAStateArray NFA_getStates(NFAHandle nfa, AutomatonError *error) {
-	return wrap_result<FAStateArray>(
+	return wrap_result<const FAStateArray>(
 	    [&]() {
 		    auto states = reinterpret_cast<NonDeterministicFiniteAutomaton *>(nfa)->getStates();
 
@@ -140,7 +141,7 @@ void NFA_addInputAlphabet(NFAHandle nfa, const char **inputAlphabet, const size_
 }
 
 const StringArray NFA_getInputAlphabet(NFAHandle nfa, AutomatonError *error) {
-	return wrap_result<StringArray>(
+	return wrap_result<const StringArray>(
 	    [&]() {
 		    return convertToStringArray(reinterpret_cast<NonDeterministicFiniteAutomaton *>(nfa)->getInputAlphabet());
 	    },
@@ -177,7 +178,7 @@ void NFA_setStartState(NFAHandle nfa, const char *key, AutomatonError *error) {
 	wrap_result([&]() { reinterpret_cast<NonDeterministicFiniteAutomaton *>(nfa)->setStartState(key); }, error);
 }
 
-FATransitionHandle DFA_getTransition(NFAHandle nfa, const char *key, AutomatonError *error) {
+const FATransitionHandle NFA_getTransition(NFAHandle nfa, const char *key, AutomatonError *error) {
 	return wrap_result<FATransitionHandle>(
 	    [&]() {
 		    return reinterpret_cast<FATransitionHandle>(
@@ -278,7 +279,7 @@ void NFA_clearAcceptStates(NFAHandle nfa, AutomatonError *error) {
 }
 
 const FAStateArray NFA_getAcceptStates(NFAHandle nfa, AutomatonError *error) {
-	return wrap_result<FAStateArray>(
+	return wrap_result<const FAStateArray>(
 	    [&]() {
 		    auto states = reinterpret_cast<NonDeterministicFiniteAutomaton *>(nfa)->getAcceptStates();
 
@@ -300,18 +301,20 @@ void NFA_reset(NFAHandle nfa, AutomatonError *error) {
 }
 
 const bool NFA_isAccepting(NFAHandle nfa, AutomatonError *error) {
-	return wrap_result<bool>([&]() { return reinterpret_cast<NonDeterministicFiniteAutomaton *>(nfa)->isAccepting(); },
+	return wrap_result<const bool>(
+	    [&]() { return reinterpret_cast<NonDeterministicFiniteAutomaton *>(nfa)->isAccepting(); },
 	                         error);
 }
 
-bool NFA_processInput(NFAHandle nfa, AutomatonError *error) {
-	return wrap_result<bool>([&]() { return reinterpret_cast<NonDeterministicFiniteAutomaton *>(nfa)->processInput(); },
+const bool NFA_processInput(NFAHandle nfa, AutomatonError *error) {
+	return wrap_result<const bool>(
+	    [&]() { return reinterpret_cast<NonDeterministicFiniteAutomaton *>(nfa)->processInput(); },
 	                         error);
 }
 
 const bool NFA_simulate(NFAHandle nfa, const char **input, const size_t length, const int simulationDepth,
                         AutomatonError *error) {
-	return wrap_result<bool>(
+	return wrap_result<const bool>(
 	    [&]() {
 		    std::vector<std::string> input_vec(input, input + length);
 		    return reinterpret_cast<NonDeterministicFiniteAutomaton *>(nfa)->simulate(input_vec, simulationDepth);
@@ -319,8 +322,8 @@ const bool NFA_simulate(NFAHandle nfa, const char **input, const size_t length, 
 	    error);
 }
 
-const FAStateArray getPossibleCurrentStates(NFAHandle nfa, AutomatonError *error) {
-	return wrap_result<FAStateArray>(
+const FAStateArray NFA_getPossibleCurrentStates(NFAHandle nfa, AutomatonError *error) {
+	return wrap_result<const FAStateArray>(
 	    [&]() {
 		    auto states = reinterpret_cast<NonDeterministicFiniteAutomaton *>(nfa)->getPossibleCurrentStates();
 
@@ -335,4 +338,9 @@ const FAStateArray getPossibleCurrentStates(NFAHandle nfa, AutomatonError *error
 		    return array;
 	    },
 	    error);
+}
+
+const bool NFA_checkNextState(NFAHandle nfa, const char *key, AutomatonError *error) {
+	return wrap_result<const bool>(
+	    [&]() { return reinterpret_cast<NonDeterministicFiniteAutomaton *>(nfa)->checkNextState(key); }, error);
 }

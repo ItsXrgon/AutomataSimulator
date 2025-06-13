@@ -91,7 +91,7 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	 * @brief Gets the input of the automaton.
 	 * @return The input of the automaton.
 	 */
-	std::vector<std::string> getInput() const;
+	const std::vector<std::string> getInput() const;
 
 	/**
 	 * @brief Sets the input of the automaton.
@@ -111,7 +111,7 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	 * @brief Gets the current input head of the automaton.
 	 * @return The current input head of the automaton.
 	 */
-	int getInputHead() const;
+	const int getInputHead() const;
 
 	/**
 	 * @brief Sets the current input head of the automaton.
@@ -124,14 +124,14 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	 * @param key The key of the state.
 	 * @return Bool indicating whether the state exists or not.
 	 */
-	bool stateExists(const std::string &key) const;
+	const bool stateExists(const std::string &key) const;
 
 	/**
 	 * @brief Check if the input alphabet symbol exists
 	 * @param key The input alphabet symbol.
 	 * @return Bool indicating whether the symbol exists or not.
 	 */
-	bool inputAlphabetSymbolExists(const std::string &symbol) const;
+	const bool inputAlphabetSymbolExists(const std::string &symbol) const;
 
 	/**
 	 * @brief Adds a state to the automaton.
@@ -155,7 +155,7 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	 * @return The current state of the automaton.
 	 * @throws StateNotFoundException If the current state and start state are not set.
 	 */
-	std::string getCurrentState() const;
+	const std::string getCurrentState() const;
 
 	/**
 	 * @brief Sets the current state of the automaton.
@@ -176,7 +176,7 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	 * @brief Gets the states of the automaton.
 	 * @return The states of the automaton.
 	 */
-	std::vector<FAState> getStates();
+	const std::vector<FAState> getStates();
 
 	/**
 	 * @brief Removes a state from the automaton.
@@ -217,7 +217,7 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	 * @brief Gets the input alphabet of the automaton.
 	 * @return The alphabet of the automaton.
 	 */
-	std::vector<std::string> getInputAlphabet();
+	const std::vector<std::string> getInputAlphabet();
 
 	/**
 	 * @brief Remove a symbol from the input alphabet
@@ -246,7 +246,7 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	 * @return The start state key of the automaton.
 	 * @throws InvalidStartStateException If the start state is not set.
 	 */
-	std::string getStartState() const;
+	const std::string getStartState() const;
 
 	/**
 	 * @brief Sets the start state key of the automaton.
@@ -361,7 +361,7 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	/**
 	 * @brief Clears the accept states of the automaton.
 	 */
-	void clearAcceptStates();	
+	void clearAcceptStates();
 
 	/**
 	 * @brief Gets the accept states of the automaton.
@@ -378,7 +378,7 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	 * @brief Returns whether the automata is currenty in an accept state or not.
 	 * @return True if the automaton is in an accept state.
 	 */
-	bool isAccepting() const;
+	const bool isAccepting() const;
 
 	/**
 	 * @brief Moves the automaton to the next state based on the current input head.
@@ -387,7 +387,7 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	 * @throws InvalidAlphabetException If the alphabet is not set.
 	 * @throws InputConsumedException If the input head exceeds the length of the input.
 	 */
-	virtual bool processInput() = 0;
+	virtual const bool processInput() = 0;
 
 	/**
 	 * @brief Simulates the automaton on a given input string and depth.
@@ -396,7 +396,7 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	 * @return True if the input is accepted, false otherwise.
 	 * @throws InvalidStartStateException If the start state is not set.
 	 */
-	virtual bool simulate(const std::vector<std::string> &input, const int &simulationDepth = 50) = 0;
+	virtual const bool simulate(const std::vector<std::string> &input, const int &simulationDepth = 50) = 0;
 
 	/**
 	 * @brief Checks if the provided state is valid as the next state the automaton could transition to.
@@ -404,5 +404,5 @@ class AUTOMATASIMULATOR_API FiniteAutomaton {
 	 * @return True if the input is accepted, false otherwise.
 	 * @throws StateNotFoundException If the state is not found.
 	 */
-	bool checkNextState(const std::string &key) const;
+	const bool checkNextState(const std::string &key) const;
 };

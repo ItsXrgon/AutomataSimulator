@@ -27,9 +27,19 @@ inline AutomatonError create_success_error() {
 }
 
 inline void copy_automaton_error(AutomatonError *dest, const AutomatonError *src) {
+	if (!dest || !src)
+		return;
+
+	// Free previous message to avoid memory leak
+	if (dest->message) {
+		free(dest->message);
+		dest->message = nullptr;
+	}
+
 	dest->code = src->code;
+
 	if (src->message) {
-		char *new_msg = strdup(src->message);
+		char *new_msg = _strdup(src->message);
 		if (!new_msg) {
 			throw std::bad_alloc();
 		}
@@ -39,11 +49,12 @@ inline void copy_automaton_error(AutomatonError *dest, const AutomatonError *src
 	}
 }
 
+
 inline AutomatonError create_error(AutomatonErrorCode code, const char *message) {
 	AutomatonError error{};
 	error.code = code;
 	try {
-		error.message = message ? strdup(message) : nullptr;
+		error.message = message ? _strdup(message) : nullptr;
 	} catch (...) {
 		error.message = nullptr;
 	}

@@ -97,7 +97,7 @@ class AUTOMATASIMULATOR_API DeterministicFiniteAutomaton : public FiniteAutomato
 	 * @throws InvalidAlphabetException If the alphabet is not set.
 	 * @throws InputConsumedException If the input head exceeds the length of the input.
 	 */
-	bool processInput() override;
+	const bool processInput() override;
 
 	/**
 	 * @brief Simulates the automaton on a given input string and depth.
@@ -107,5 +107,5 @@ class AUTOMATASIMULATOR_API DeterministicFiniteAutomaton : public FiniteAutomato
 	 * @return True if the input is accepted, false otherwise.
 	 * @throws InvalidStartStateException If the start state is not set.
 	 */
-	bool simulate(const std::vector<std::string> &input, const int &simulationDepth = 50) override;
+	const bool simulate(const std::vector<std::string> &input, const int &simulationDepth = 50) override;
 };

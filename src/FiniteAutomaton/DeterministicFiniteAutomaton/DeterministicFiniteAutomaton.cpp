@@ -131,7 +131,7 @@ void DeterministicFiniteAutomaton::updateTransitionFromState(const std::string &
 	FiniteAutomaton::updateTransitionFromState(transitionKey, fromStateKey);
 }
 
-bool DeterministicFiniteAutomaton::processInput() {
+const bool DeterministicFiniteAutomaton::processInput() {
 	if (currentState.empty()) {
 		throw InvalidAutomatonDefinitionException("Current state or start state must be set to run process input");
 	}
@@ -155,7 +155,7 @@ bool DeterministicFiniteAutomaton::processInput() {
 	return false;
 }
 
-bool DeterministicFiniteAutomaton::simulate(const std::vector<std::string> &input, const int &simulationDepth) {
+const bool DeterministicFiniteAutomaton::simulate(const std::vector<std::string> &input, const int &simulationDepth) {
 	if (startState.empty()) {
 		throw InvalidStartStateException("Start state must be set to run simulate");
 	}

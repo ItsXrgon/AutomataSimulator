@@ -706,7 +706,7 @@ TEST_F(DFA_Test, ClearTransitions_RemovesAllTransitions) {
 
 	automaton->clearTransitions();
 
-	for (auto &state : automaton->getStates()) {
+	for (auto state : automaton->getStates()) {
 		EXPECT_TRUE(state.getTransitions().empty());
 	}
 }

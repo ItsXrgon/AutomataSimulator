@@ -76,7 +76,7 @@ AUTOMATASIMULATOR_EXPORT const char *DFA_getStartState(DFAHandle dfa, AutomatonE
 
 AUTOMATASIMULATOR_EXPORT void DFA_setStartState(DFAHandle dfa, const char *key, AutomatonError *error = nullptr);
 
-AUTOMATASIMULATOR_EXPORT FATransitionHandle DFA_getTransition(DFAHandle dfa, const char *key,
+AUTOMATASIMULATOR_EXPORT const FATransitionHandle DFA_getTransition(DFAHandle dfa, const char *key,
                                                               AutomatonError *error = nullptr);
 
 AUTOMATASIMULATOR_EXPORT void DFA_addTransition(DFAHandle dfa, const char *fromStateKey, const char *toStateKey,
@@ -125,5 +125,7 @@ AUTOMATASIMULATOR_EXPORT bool DFA_processInput(DFAHandle dfa, AutomatonError *er
 
 AUTOMATASIMULATOR_EXPORT const bool DFA_simulate(DFAHandle dfa, const char **input, const size_t length,
                                                  const int simulationDepth = 50, AutomatonError *error = nullptr);
+
+AUTOMATASIMULATOR_EXPORT const bool DFA_checkNextState(DFAHandle dfa, const char *key, AutomatonError *error = nullptr);
 
 AUTOMATASIMULATOR_EXTERN_C_END

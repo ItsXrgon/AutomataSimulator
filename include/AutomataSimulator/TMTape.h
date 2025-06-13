@@ -1,7 +1,7 @@
 #pragma once
 #include "AutomatonException.h"
 #include "TMDirection.h"
-#include <map>
+#include <list>
 #include <string>
 #include <vector>
 
@@ -10,12 +10,17 @@ class TMTape {
 	/**
 	 * @brief The tape of the Turing Machine.
 	 */
-	std::map<int, std::string> tape;
+	std::list<std::string> tape;
+
+	/**
+	 *  The current tape head
+	 */
+	std::list<std::string>::iterator head;
 
 	/**
 	 * @brief The position of the head on the tape.
 	 */
-	int headPosition;
+	int headIndex;
 
 	/**
 	 * @brief The blank symbol of the tape.
@@ -68,13 +73,13 @@ class TMTape {
 	 * @brief Gets the tape of the Turing Machine.
 	 * @return The tape of the Turing Machine.
 	 */
-	std::map<int, std::string> getTape() const;
+	std::list<std::string> getTape() const;
 
 	/**
 	 * @brief Sets the tape to the new tape.
 	 * @param tape The new tape to set.
 	 */
-	void setTape(const std::map<int, std::string> &tape);
+	void setTape(const std::list<std::string> &tape);
 
 	/**
 	 * @brief Loads the input onto the tape.
@@ -87,7 +92,7 @@ class TMTape {
 	 * @brief This update all blank symbols on the tape to the new symbol.
 	 * @param blankSymbol The blank symbol to set.
 	 */
-	void setBlankSymbol(std::string blankSymbol);
+	void setBlankSymbol(const std::string &blankSymbol);
 
 	/**
 	 * @brief Gets the blank symbol of the tape.
@@ -116,12 +121,12 @@ class TMTape {
 	 * @brief Writes a symbol to the tape
 	 * @param symbol The symbol to write
 	 */
-	void write(std::string symbol);
+	void write(const std::string &symbol);
 
 	/**
 	 * @brief Moves the the tape according to direction given.
 	 */
-	void move(TMDirection direction);
+	void move(const TMDirection &direction);
 
 	/**
 	 * @brief Moves the head of the tape to the left
